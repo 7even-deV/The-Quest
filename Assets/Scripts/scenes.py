@@ -1,20 +1,9 @@
 import pygame
 
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, SILVER, ARCADE, BLACK
+from .tools import Timer
 from .players import Player
 from .enemies import Enemy
-
-
-# Screen size
-SCREEN_WIDTH = 600
-SCREEN_HEIGHT = 800
-
-# Set framerate
-FPS = 60
-
-# Define colours (R, G, B)
-BLACK = (0, 0, 0)
-GRAY = (128, 128, 128)
-WHITE = (255, 255, 255)
 
 
 class Scene():
@@ -22,6 +11,8 @@ class Scene():
     def __init__(self, screen):
         self.screen = screen
         self.clock = pygame.time.Clock()
+
+        self.timer = Timer() # Create self.timer
 
     def main_loop(self):
         pass
@@ -50,7 +41,7 @@ class Menu(Scene):
                         exit()
 
             # Draw background
-            self.screen.fill(WHITE)
+            self.screen.fill(SILVER)
             # Update screen
             pygame.display.update()
 
@@ -104,7 +95,7 @@ class Game(Scene):
                         pass
 
             # Background color
-            self.screen.fill(GRAY)
+            self.screen.fill(ARCADE)
 
             # Area - update and draw
             self.player.update()

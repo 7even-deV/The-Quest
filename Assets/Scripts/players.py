@@ -1,5 +1,7 @@
 import pygame
 
+from .manager import player_img
+
 
 class Player(pygame.sprite.Sprite):
 
@@ -9,7 +11,7 @@ class Player(pygame.sprite.Sprite):
         self.speed = speed
 
         # Load player image
-        self.image = pygame.image.load('Assets/Images/player.png').convert_alpha()
+        self.image = pygame.image.load(player_img).convert_alpha()
         # Get player rect
         self.rect = self.image.get_rect(**kwargs)
 

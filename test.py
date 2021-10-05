@@ -24,3 +24,25 @@ def ai(self):
                     self.idling = False
 
         # print(self.move_counter)
+
+
+
+class Timer():
+
+    def __init__(self):
+        self.counter = 0
+        self.aux = 1
+
+    def time(self, timer, *events):
+        self.counter += 1
+        if self.counter > timer * 100:
+            self.counter = 0
+            return events
+
+    def total_time(self, get_ticks):
+        ticks = get_ticks // 1000
+        if self.aux == ticks:
+            self.aux += 1
+            return print(ticks)
+
+self.timer = Timer(pygame.time.get_ticks()) # Create self.timer

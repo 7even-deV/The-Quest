@@ -1,6 +1,8 @@
 import pygame
 import random
 
+from .manager import enemy_img
+
 
 class Enemy(pygame.sprite.Sprite):
 

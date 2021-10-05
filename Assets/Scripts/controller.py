@@ -1,10 +1,8 @@
 import pygame
 
 from . import __author__
+from .scenes import Menu, Game, Record
 
-
-# Initialize pygame
-pygame.init()
 
 # Screen size
 SCREEN_WIDTH = 600
@@ -15,30 +13,26 @@ BG = (8, 8, 8)
 
 
 class Controller():
+    # Initialize pygame
+    pygame.init()
 
     def __init__(self):
         # Create window
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("The Quest")
 
+        # List of all scenes
+        self.scene_list = [Menu(self.screen), Game(self.screen), Record(self.screen)]
+
     def launch_manager(self):
+        i = 0
         # Main loop
-        run = True
-        while run:
+        while True:
+            # Manage each scene
+            self.scene_list[i].main_loop()
 
-            # Update background
-            self.screen.fill(BG)
-
-            # Event handler
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    run = False
-
-            # Update display
-            pygame.display.update()
-
-        # Quit pygame
-        pygame.quit()
+            # Cycle through each scene until reset to 0
+            i = (i + 1) % len(self.scene_list)
 
     def __del__(self):
         print(__author__)

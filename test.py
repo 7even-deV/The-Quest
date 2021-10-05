@@ -1,34 +1,26 @@
-import pygame
+def ai(self):
+        if not self.idling and random.randint(0, 100) == 0:
+            self.idling = True
+            self.idling_counter = 100
+            print(True)
+        else:
+            if not self.idling:
+                if self.direction_x == 1:
+                    self.ai_moving_right = True
+                else: self.ai_moving_right = False
+                if self.direction_x == -1:
+                    self.ai_moving_left = True
+                else: self.ai_moving_left = False
 
-from . import __author__
+                # self.ai_moving_left = not self.ai_moving_right
+                # self.move_counter += 1
 
+                # if self.move_counter > self.rect.width:
+                #     self.direction_x *= -1
+                #     self.move_counter *= -1
+            else:
+                self.idling_counter -= 1
+                if self.idling_counter <= 0:
+                    self.idling = False
 
-class Controller():
-    pygame.init()
-
-    def __init__(self):
-        # Create window
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        pygame.display.set_caption("The Quest")
-
-    def launch_manager(self):
-        # Main loop
-        run = True
-        while run:
-
-            # Update background
-            self.screen.fill(BG)
-
-            # Event handler
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    run = False
-
-            # Update display
-            pygame.display.update()
-
-        # Quit pygame
-        pygame.quit()
-
-    def __del__(self):
-        print(__author__)
+        # print(self.move_counter)

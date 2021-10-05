@@ -1,5 +1,12 @@
 import pygame
 
+from .players import Player
+from .enemies import Enemy
+
+
+# Screen size
+SCREEN_WIDTH = 600
+SCREEN_HEIGHT = 800
 
 # Set framerate
 FPS = 60
@@ -52,6 +59,9 @@ class Game(Scene):
 
     def __init__(self, screen):
         super().__init__(screen)
+        # Create player
+        self.player = Player(self.screen, 2, center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//1.1))
+        self.enemy = Enemy(self.screen, 2, center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//10.1))
 
     def main_loop(self):
         run = True
@@ -66,6 +76,15 @@ class Game(Scene):
 
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT: # Moving left
+                        self.player.moving_left = True
+                    if event.key == pygame.K_RIGHT: # Moving right
+                        self.player.moving_right = True
+                    if event.key == pygame.K_UP: # Moving up
+                        pass
+                    if event.key == pygame.K_DOWN: # Moving down
+                        pass
+
                     if event.key == pygame.K_SPACE:  # Turbo
                         pass
                     if event.key == pygame.K_RETURN:  # Pause and Settings
@@ -73,8 +92,27 @@ class Game(Scene):
                     if event.key == pygame.K_ESCAPE:  # Exit game
                         run = False
 
-            # Draw background
+                # keyboard release
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_LEFT: # Moving left
+                        self.player.moving_left = False
+                    if event.key == pygame.K_RIGHT: # Moving right
+                        self.player.moving_right = False
+                    if event.key == pygame.K_UP: # Moving up
+                        pass
+                    if event.key == pygame.K_DOWN: # Moving down
+                        pass
+
+            # Background color
             self.screen.fill(GRAY)
+
+            # Area - update and draw
+            self.player.update()
+            self.player.draw()
+
+            self.enemy.update()
+            self.enemy.draw()
+
             # Update screen
             pygame.display.update()
 

@@ -1,12 +1,8 @@
 import pygame
 
 from . import __author__
-from .scenes import Menu, Game, Record
+from .scenes import Menu, Game, Record, SCREEN_WIDTH, SCREEN_HEIGHT
 
-
-# Screen size
-SCREEN_WIDTH = 600
-SCREEN_HEIGHT = 800
 
 # Background color
 BG = (8, 8, 8)

@@ -6,3 +6,4 @@ Commit processing:
 2. Create all workspace
 3. Create class: Controller
 4. Create class: Scene - Menu, Game, Record
+5. Create class: Player & Enemy

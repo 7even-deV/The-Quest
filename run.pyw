@@ -1,1 +1,1 @@
-from Assets import main
+from Assets.Scripts import main

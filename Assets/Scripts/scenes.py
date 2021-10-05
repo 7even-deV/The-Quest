@@ -1,7 +1,8 @@
 import pygame
 
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, SILVER, ARCADE, BLACK
-from .tools import Timer
+from .manager import statue_img
+from .tools import Timer, Icon
 from .players import Player
 from .enemies import Enemy
 
@@ -22,8 +23,14 @@ class Menu(Scene):
 
     def __init__(self, screen):
         super().__init__(screen)
+        self.symbol = Icon(self.screen, 'symbol', center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//1.47))
+        self.spaceship = Icon(self.screen, 'spaceship', center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2.5))
+        self.statue = pygame.image.load(statue_img).convert_alpha()
+
 
     def main_loop(self):
+        select = 0
+
         run = True
         while run:
             for event in pygame.event.get():
@@ -33,6 +40,15 @@ class Menu(Scene):
 
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT: # Back select
+                        if select > 0:
+                            select -= 1
+                        else: select = 2
+                    if event.key == pygame.K_RIGHT: # Next select
+                        if select < 2:
+                            select += 1
+                        else: select = 0
+
                     if event.key == pygame.K_SPACE:  # Play game
                         run = False
                     if event.key == pygame.K_RETURN:  # Show record
@@ -40,8 +56,18 @@ class Menu(Scene):
                     if event.key == pygame.K_ESCAPE:  # Quit game
                         exit()
 
-            # Draw background
-            self.screen.fill(SILVER)
+            # Background color
+            self.screen.fill(ARCADE)
+
+            self.screen.blit(self.statue, (0, SCREEN_HEIGHT//4))
+
+            # Area - update and draw
+            self.symbol.update(select)
+            self.spaceship.update(select)
+
+            self.symbol.draw()
+            self.spaceship.draw()
+
             # Update screen
             pygame.display.update()
 

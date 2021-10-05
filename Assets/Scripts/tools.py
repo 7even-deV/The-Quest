@@ -1,5 +1,7 @@
 import pygame
 
+from .manager import icon_type_function
+
 
 class Timer():
 
@@ -85,3 +87,31 @@ class Sprite_sheet(pygame.sprite.Sprite):
     def draw(self):
         # Draw player on screen
         self.screen.blit(self.image, self.rect)
+
+
+class Icon(Sprite_sheet):
+
+    def __init__(self, screen, icon_type, **kwargs):
+        icon_img, icon_type_dict = icon_type_function(icon_type)
+        super().__init__(icon_img)
+        self.screen = screen
+
+        # Load icon image
+        self.create_animation(100, 100, icon_type_dict)
+        self.image = self.animation_dict[self.action][self.frame_index]
+        # Get icon rect
+        self.rect = self.image.get_rect(**kwargs)
+
+    def update(self, select):
+        # Update player events
+        self.update_animation()
+        self.icon_select(select)
+
+    def icon_select(self, select):
+        # Select icon type
+        if select == 0:
+            self.update_action('dps')
+        if select == 1:
+            self.update_action('tank')
+        if select == 2:
+            self.update_action('heal')

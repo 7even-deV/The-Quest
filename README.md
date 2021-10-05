@@ -9,3 +9,4 @@ Commit processing:
 5. Create class: Player & Enemy
 6. Create script: manager, settings and tools
 7. Create class: Sprite_sheet (tools)
+8. Create select: symbol & spaceship (class Menu)

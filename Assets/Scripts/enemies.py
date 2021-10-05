@@ -11,10 +11,10 @@ class Enemy(Sprite_sheet):
         self.screen = screen
         self.speed = speed
 
-        # Load player image
+        # Load enemy image
         self.create_animation(100, 100, enemy_action_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
-        # Get player rect
+        # Get enemy rect
         self.rect = self.image.get_rect(**kwargs)
 
         self.delta_x = 0

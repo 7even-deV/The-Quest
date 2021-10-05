@@ -1,17 +1,19 @@
 import pygame
 
-from .manager import player_img
+from .manager import player_img, player_action_dict
+from .tools import Sprite_sheet
 
 
-class Player(pygame.sprite.Sprite):
+class Player(Sprite_sheet):
 
     def __init__(self, screen, speed, **kwargs):
-        super().__init__()
+        super().__init__(player_img)
         self.screen = screen
         self.speed = speed
 
         # Load player image
-        self.image = pygame.image.load(player_img).convert_alpha()
+        self.create_animation(100, 100, player_action_dict)
+        self.image = self.animation_dict[self.action][self.frame_index]
         # Get player rect
         self.rect = self.image.get_rect(**kwargs)
 
@@ -25,30 +27,33 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         # Update player events
+        self.update_animation()
         self.move()
 
     def move(self):
         # Reset movement variables
         self.delta_x = 0
         self.delta_y = 0
+        self.update_action('idle')
 
         # Assign bools if moving left or right or up or down
         if self.moving_left:
             self.delta_x = -self.speed
+            self.update_action('left')
 
         if self.moving_right:
             self.delta_x = self.speed
+            self.update_action('right')
 
         if self.moving_up:
             self.delta_y = -self.speed
+            self.update_action('idle')
 
         if self.moving_down:
             self.delta_y = self.speed
+            self.update_action('idle')
+
 
         # Update rectangle position
         self.rect.x += self.delta_x
         self.rect.y += self.delta_y
-
-    def draw(self):
-        # Draw player on screen
-        self.screen.blit(self.image, self.rect)

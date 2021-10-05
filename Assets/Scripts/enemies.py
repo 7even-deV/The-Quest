@@ -1,18 +1,19 @@
-import pygame
-import random
+import pygame, random
 
-from .manager import enemy_img
+from .manager import enemy_img, enemy_action_dict
+from .tools import Sprite_sheet
 
 
-class Enemy(pygame.sprite.Sprite):
+class Enemy(Sprite_sheet):
 
     def __init__(self, screen, speed, **kwargs):
-        super().__init__()
+        super().__init__(enemy_img)
         self.screen = screen
         self.speed = speed
 
         # Load player image
-        self.image = pygame.image.load('Assets/Images/enemy.png').convert_alpha()
+        self.create_animation(100, 100, enemy_action_dict)
+        self.image = self.animation_dict[self.action][self.frame_index]
         # Get player rect
         self.rect = self.image.get_rect(**kwargs)
 
@@ -32,6 +33,7 @@ class Enemy(pygame.sprite.Sprite):
 
     def update(self):
         # Update player events
+        self.update_animation()
         self.ai()
         self.move()
 
@@ -39,23 +41,28 @@ class Enemy(pygame.sprite.Sprite):
         # Reset movement variables
         self.delta_x = 0
         self.delta_y = 0
+        self.update_action('idle')
 
         # Assign bools if moving left or right or up or down
         if self.ai_moving_left:
             self.delta_x = -self.speed
             self.direction_x = -1
+            self.update_action('left')
 
         if self.ai_moving_right:
             self.delta_x = self.speed
             self.direction_x = 1
+            self.update_action('right')
 
         if self.ai_moving_up:
             self.delta_y = -self.speed
             self.direction_y = -1
+            self.update_action('idle')
 
         if self.ai_moving_down:
             self.delta_y = self.speed
             self.direction_y = 1
+            self.update_action('idle')
 
         # Update rectangle position
         self.rect.x += self.delta_x
@@ -63,7 +70,3 @@ class Enemy(pygame.sprite.Sprite):
 
     def ai(self):
         pass
-
-    def draw(self):
-        # Draw player on screen
-        self.screen.blit(self.image, self.rect)

@@ -20,7 +20,7 @@ class Controller():
         self.scene_list = [Menu(self.screen), Game(self.screen), Record(self.screen)]
 
     def launch_manager(self):
-        i = 0
+        i = 1
         # Main loop
         while True:
             # Manage each scene

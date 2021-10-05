@@ -8,3 +8,4 @@ Commit processing:
 4. Create class: Scene - Menu, Game, Record
 5. Create class: Player & Enemy
 6. Create script: manager, settings and tools
+7. Create class: Sprite_sheet (tools)

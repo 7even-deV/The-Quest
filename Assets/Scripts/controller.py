@@ -21,11 +21,12 @@ class Controller():
 
     def launch_manager(self):
         i = 0
+        select = 0
         # Main loop
         while True:
             # Manage each scene
             self.scene_caption(i)
-            self.scene_list[i].main_loop()
+            select = self.scene_list[i].main_loop(select)
 
             # Cycle through each scene until reset to 0
             i = (i + 1) % len(self.scene_list)

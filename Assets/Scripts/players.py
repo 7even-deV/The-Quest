@@ -1,12 +1,13 @@
 import pygame
 
-from .manager import player_img, player_action_dict
+from .manager import player_select_function
 from .tools import Sprite_sheet
 
 
 class Player(Sprite_sheet):
 
-    def __init__(self, screen, speed, **kwargs):
+    def __init__(self, screen, select, speed, **kwargs):
+        player_img, player_action_dict = player_select_function(select)
         super().__init__(player_img)
         self.screen = screen
         self.speed = speed

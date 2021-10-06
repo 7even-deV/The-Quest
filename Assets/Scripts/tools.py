@@ -62,7 +62,7 @@ class Sprite_sheet(pygame.sprite.Sprite):
 
         return self.animation_dict
 
-    def update_animation(self, animation_cooldown=100):
+    def update_animation(self, animation_cooldown=100, repeated_frame=0):
         # Update image depending on current frame
         self.image = self.animation_dict[self.action][self.frame_index]
         # Check if enough time has passed since the last update
@@ -70,7 +70,7 @@ class Sprite_sheet(pygame.sprite.Sprite):
             self.update_time = pygame.time.get_ticks() # Current time
             self.frame_index += 1
         # If the animation has move out the reset back to the start
-        if self.frame_index >= len(self.animation_dict[self.action]):
+        if self.frame_index >= len(self.animation_dict[self.action]) - repeated_frame:
             if self.action == 'destroy':
                 self.kill() # Kill the animation
             else:

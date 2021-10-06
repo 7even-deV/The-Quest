@@ -20,6 +20,7 @@ class Enemy(Sprite_sheet):
         self.delta_x = 0
         self.delta_y = 0
 
+        # Define enemy action variables
         self.ai_moving_left = False
         self.ai_moving_right = False
         self.ai_moving_up = False
@@ -32,7 +33,7 @@ class Enemy(Sprite_sheet):
         self.move_counter = 0
 
     def update(self):
-        # Update player events
+        # Update enemy events
         self.update_animation()
         self.ai()
         self.move()

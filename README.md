@@ -11,3 +11,4 @@ Commit processing:
 7. Create class: Sprite_sheet (tools)
 8. Create select: symbol & spaceship (class Menu)
 9. Create class: Foreground, Background and Farground
+10. Create script: obstacles (class Meteor)

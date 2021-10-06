@@ -44,3 +44,14 @@ enemy_action_dict = {
 }
 
 bg_img = 'Assets/Images/background.jpg'
+
+meteor_img = 'Assets/Images/meteor.png'
+meteor_action_dict = {
+    'turn_l': (8, 4, 1, 1),
+    'turn_r': (8, 4, 5, 1),
+}
+
+explosion_img = 'Assets/Images/explosion.png'
+explosion_dict = {
+    'destroy': (8, 8),
+}

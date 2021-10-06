@@ -21,6 +21,7 @@ class Player(Sprite_sheet):
         self.delta_x = 0
         self.delta_y = 0
 
+        # Define player action variables
         self.moving_left = False
         self.moving_right = False
         self.moving_up = False

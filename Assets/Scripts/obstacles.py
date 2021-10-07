@@ -31,19 +31,40 @@ class Meteor(Sprite_sheet):
         self.moving_x = False
         self.delta_x = 0
         self.delta_y = random.randint(1.0, 2.0)
+        self.collide = False
 
     def update(self, speed_y):
         # Update meteor events
         self.update_animation(self.animation_cooldown, 1)
-        self.update_action('turn_l')
 
         if not self.moving_x and self.rect.bottom > 0:
             self.moving_x = True
             self.delta_x = random.randint(-1.0, 1.0)
 
+        # Check if going off the edges of the screen
+        if self.rect.right < 0 or self.rect.left > self.screen_width or self.rect.top > self.screen_height:
+            self.kill() # Kill the object
+        elif not self.collide:
+            self.update_action('turn_l')
+
         # Update rectangle position
         self.rect.x += self.delta_x
         self.rect.y += self.delta_y + speed_y
+
+    def check_collision(self, other):
+        if not self.collide:
+            margin_width = other.rect.width // 4
+            margin_height = other.rect.height // 4
+            if self.rect.right >= other.rect.left + margin_width and self.rect.left <= other.rect.right - margin_width and \
+                self.rect.bottom >= other.rect.top + margin_height and self.rect.top <= other.rect.bottom - margin_height:
+                self.collide = True
+                other.collide = True
+                other.rect.x += (self.delta_x - other.delta_x) * 2
+                other.rect.y += (self.delta_y - other.delta_y) * 2
+                other.health -= 10
+                self.delta_x = self.delta_y = 0
+                self.animation_cooldown = self.animation_cooldown // 2
+                self.update_action('destroy')
 
     def draw(self):
         image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height))

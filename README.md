@@ -12,3 +12,4 @@ Commit processing:
 8. Create select: symbol & spaceship (class Menu)
 9. Create class: Foreground, Background and Farground
 10. Create script: obstacles (class Meteor)
+11. Create collision: Player, Enemy and Meteor

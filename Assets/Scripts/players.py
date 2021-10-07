@@ -6,11 +6,13 @@ from .tools import Sprite_sheet
 
 class Player(Sprite_sheet):
 
-    def __init__(self, screen, select, speed, **kwargs):
+    def __init__(self, screen, screen_width, screen_height, select, speed, **kwargs):
         player_img, player_action_dict = player_select_function(select)
         super().__init__(player_img)
         self.screen = screen
         self.speed = speed
+        self.screen_width = screen_width
+        self.screen_height = screen_height
 
         # Load player image
         self.create_animation(100, 100, player_action_dict)
@@ -18,10 +20,20 @@ class Player(Sprite_sheet):
         # Get player rect
         self.rect = self.image.get_rect(**kwargs)
 
+        self.alive = True
+        self.health = 100
+        self.max_health = self.health
+
         self.delta_x = 0
         self.delta_y = 0
+        self.margin_x = self.rect.width // 10
+        self.margin_y = self.rect.height // 10
 
         # Define player action variables
+        self.spawn = True
+        self.turbo = False
+        self.collide = False
+
         self.moving_left = False
         self.moving_right = False
         self.moving_up = False
@@ -39,23 +51,58 @@ class Player(Sprite_sheet):
         self.update_action('idle')
 
         # Assign bools if moving left or right or up or down
-        if self.moving_left:
-            self.delta_x = -self.speed
-            self.update_action('left')
+        if not self.spawn and not self.turbo and not self.collide:
+            if self.moving_left:
+                self.delta_x = -self.speed
+                self.update_action('left')
 
-        if self.moving_right:
-            self.delta_x = self.speed
-            self.update_action('right')
+            if self.moving_right:
+                self.delta_x = self.speed
+                self.update_action('right')
 
-        if self.moving_up:
-            self.delta_y = -self.speed
-            self.update_action('idle')
+            if self.moving_up:
+                self.delta_y = -self.speed
 
-        if self.moving_down:
-            self.delta_y = self.speed
-            self.update_action('idle')
+            if self.moving_down:
+                self.delta_y = self.speed
 
+        # Check if going off the edges of the screen
+        if self.rect.left + self.delta_x < self.margin_x:
+            if self.rect.left + self.delta_x < self.margin_x - 1:
+                self.delta_x = 0.1
+            else: self.delta_x = 0
+
+        if self.rect.right + self.delta_x > self.screen_width - self.margin_x:
+            if self.rect.right + self.delta_x > self.screen_width - self.margin_x + 1:
+                self.delta_x = -0.1
+            else: self.delta_x = 0
+
+        if self.rect.top + self.delta_y < self.margin_y * 10:
+            if self.rect.top + self.delta_y < self.margin_y * 10 - 1:
+                self.delta_y = 0.1
+            else: self.delta_y = 0
+
+        if self.rect.bottom + self.delta_y > self.screen_height - self.margin_y:
+            if self.rect.bottom + self.delta_y > self.screen_height - self.margin_y + 1:
+                self.delta_y = -0.1
+            else: self.delta_y = 0
 
         # Update rectangle position
         self.rect.x += self.delta_x
         self.rect.y += self.delta_y
+
+    def check_collision(self, *args):
+        # Check for collision
+        for sprite in args:
+            # Check for collision in the x direction
+            if sprite.colliderect(self.rect.x + self.delta_x, self.rect.y, self.rect.w, self.rect.h):
+                self.delta_x = 0
+
+            # Check for collision in the y direction
+            if sprite.colliderect(self.rect.x, self.rect.y + self.delta_y, self.rect.w, self.rect.h):
+                self.delta_y = 0
+
+        # Check if the collision with the enemy
+        if pygame.sprite.spritecollide(self, args, False):
+            # self.health -= 10
+            pass

@@ -6,7 +6,6 @@ from .manager import logo_icon
 from .scenes import Menu, Game, Record
 
 
-
 class Controller():
     # Initialize pygame
     pygame.init()

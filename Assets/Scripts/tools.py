@@ -18,6 +18,7 @@ class Timer():
 class Sprite_sheet(pygame.sprite.Sprite):
 
     def __init__(self, *args):
+        super().__init__()
         self.sheet = pygame.image.load(*args).convert_alpha()
         self.animation_dict = {}
         self.update_time = pygame.time.get_ticks()

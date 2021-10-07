@@ -49,11 +49,11 @@ class Menu(Scene):
                             select += 1
                         else: select = 0
 
-                    if event.key == pygame.K_SPACE:  # Play game
+                    if event.key == pygame.K_SPACE: # Play game
                         run = False
-                    if event.key == pygame.K_RETURN:  # Show record
+                    if event.key == pygame.K_RETURN: # Show record
                         pass
-                    if event.key == pygame.K_ESCAPE:  # Quit game
+                    if event.key == pygame.K_ESCAPE: # Quit game
                         exit()
 
             # Background color
@@ -83,6 +83,9 @@ class Game(Scene):
         self.bg = Background(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, bg_img)
         self.fg = Farground(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, 50)
 
+        self.meteor_group = pygame.sprite.Group()
+        self.enemy_group = pygame.sprite.Group()
+
     def meteor_surge(self, level, surge_num):
         self.meteor_list = []
         for number in range(surge_num):
@@ -95,8 +98,9 @@ class Game(Scene):
 
     def process_data(self, select):
         # Create player
-        self.player = Player(self.screen, select, 2, center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//1.1))
-        self.meteor_surge(1, 3)
+        self.player = Player(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, select, 2, midtop=(SCREEN_WIDTH//2, SCREEN_HEIGHT))
+        self.meteor_surge(1, 1)
+        self.enemy_group.add(self.enemy)
 
     def main_loop(self, select):
         self.process_data(select)
@@ -120,15 +124,15 @@ class Game(Scene):
                     if event.key == pygame.K_RIGHT: # Moving right
                         self.player.moving_right = True
                     if event.key == pygame.K_UP: # Moving up
-                        pass
+                        self.player.moving_up = True
                     if event.key == pygame.K_DOWN: # Moving down
-                        pass
+                        self.player.moving_down = True
 
-                    if event.key == pygame.K_SPACE:  # Turbo
+                    if event.key == pygame.K_SPACE: # Turbo
+                        self.player.turbo = True
+                    if event.key == pygame.K_RETURN: # Pause and Settings
                         pass
-                    if event.key == pygame.K_RETURN:  # Pause and Settings
-                        pass
-                    if event.key == pygame.K_ESCAPE:  # Exit game
+                    if event.key == pygame.K_ESCAPE: # Exit game
                         run = False
 
                 # keyboard release
@@ -138,38 +142,54 @@ class Game(Scene):
                     if event.key == pygame.K_RIGHT: # Moving right
                         self.player.moving_right = False
                     if event.key == pygame.K_UP: # Moving up
-                        pass
+                        self.player.moving_up = False
                     if event.key == pygame.K_DOWN: # Moving down
-                        pass
+                        self.player.moving_down = False
+
+                    if event.key == pygame.K_SPACE: # Turbo
+                        self.player.turbo = False
 
             # Update the time of the next surge of meteors
-            if not surge_start and self.timer.time(10, True):
+            if not surge_start and self.timer.time(1, True):
                 surge_start = True
 
             elif surge_start:
                 # Add the next surge when the previous surge ends
-                if surge_index < len(self.meteor_list) - 1:
-                    surge_index += 1
-                    surge_start = False
+                if surge_index < len(self.meteor_list):
+                    if len(self.meteor_group) == 0:
+                        self.meteor_group.add(self.meteor_list[surge_index])
+                        surge_index += 1
+                        surge_start = False
 
             # Background color
             self.screen.fill(ARCADE)
 
             # Area - update and draw
-            self.bg.update(self.player.delta_x, self.player.delta_y)
-            self.fg.update(self.player.delta_x, self.player.delta_y)
+            self.bg.update(self.player.delta_x, self.player.turbo)
+            self.fg.update(self.player.delta_x, self.player.turbo)
             self.bg.draw()
             self.fg.draw()
 
+            if self.player.spawn and self.timer.time(1, True):
+                self.player.spawn = False
+
+            if self.player.alive:
+                if self.player.collide and self.timer.time(0.1, True):
+                    self.player.collide = False
+
+            self.player.check_collision()
             self.player.update()
             self.player.draw()
 
-            for meteor in self.meteor_list[surge_index]:
-                meteor.update(self.player.delta_y)
+            for meteor in self.meteor_group:
+                meteor.check_collision(self.player)
+                meteor.update(self.player.turbo)
                 meteor.draw()
 
-            self.enemy.update()
-            self.enemy.draw()
+            for enemy in self.enemy_group:
+                enemy.check_collision(self.player)
+                enemy.update()
+                enemy.draw()
 
             # Update screen
             pygame.display.update()
@@ -192,11 +212,11 @@ class Record(Scene):
 
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE:  # Restart game
+                    if event.key == pygame.K_SPACE: # Restart game
                         pass
-                    if event.key == pygame.K_RETURN:  # Show menu
+                    if event.key == pygame.K_RETURN: # Show menu
                         run = False
-                    if event.key == pygame.K_ESCAPE:  # Quit game
+                    if event.key == pygame.K_ESCAPE: # Quit game
                         exit()
 
             # Draw background

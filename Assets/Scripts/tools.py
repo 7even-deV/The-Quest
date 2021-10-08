@@ -1,6 +1,7 @@
 import pygame
 
 from .manager import icon_type_function
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FONTS, COLOURS
 
 
 class Timer():
@@ -88,6 +89,53 @@ class Sprite_sheet(pygame.sprite.Sprite):
     def draw(self):
         # Draw player on screen
         self.screen.blit(self.image, self.rect)
+
+
+class Canvas(pygame.sprite.Sprite):
+    def __init__(self, **kwargs):
+        super().__init__()
+        self._text = ""
+        self.kwargs = kwargs
+
+        self.x = self._keys('x') or self.is_right() or 20
+        self.y = self._keys('y') or 10
+        self.letter_f = self._keys('letter_f') or FONTS[0]
+        self.size = self._keys('size') or 28
+        self.color = self._keys('color') or COLOURS('WHITE')
+
+        self.font = pygame.font.Font(f"Assets/Fonts/{self.letter_f}.ttf", self.size)
+        self.image = self.font.render(self._text, True, self.color)
+        self.rect = self.image.get_rect(x=self.x, y=self.y)
+
+    def update(self):
+        self.image = self.font.render(self._text, True, self.color)
+        self.rect = self.image.get_rect(x=self.x, y=self.y)
+        self.is_right_text()
+        self.is_right()
+        self.is_center()
+
+    def _keys(self, key):
+        return key in self.kwargs.keys() and self.kwargs[key]
+
+    def is_right_text(self):
+        if self._keys('right_text'):
+            self.x = SCREEN_WIDTH - (20 + len(self.text) * 12)
+
+    def is_right(self):
+        if self._keys('right'):
+            self.x = SCREEN_WIDTH - (20 + len(self.text) * 15)
+
+    def is_center(self):
+        if self._keys('center'):
+            self.x = SCREEN_WIDTH // 2 - self.rect.w // 2
+
+    @property
+    def text(self):
+        return self._text
+
+    @text.setter
+    def text(self, value):
+        self._text = str(value)
 
 
 class Icon(Sprite_sheet):

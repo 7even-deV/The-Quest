@@ -81,7 +81,7 @@ class Enemy(Sprite_sheet):
     #     if pygame.sprite.spritecollide(self, player, False):
     #         self.update_action('destroy')
 
-    def check_collision(self, other):
+    def check_collision(self, other, sfx):
         if not self.collide:
             margin_width = other.rect.width // 4
             margin_height = other.rect.height // 4
@@ -95,6 +95,7 @@ class Enemy(Sprite_sheet):
                 self.delta_x = self.delta_y = 0
                 self.animation_cooldown = self.animation_cooldown // 2
                 self.update_action('destroy')
+                sfx.play()
 
     def ai(self):
         pass

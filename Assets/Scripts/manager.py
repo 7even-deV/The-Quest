@@ -55,3 +55,22 @@ explosion_img = 'Assets/Images/explosion.png'
 explosion_dict = {
     'destroy': (8, 8),
 }
+
+
+game_over_img = 'Assets/Images/game_over.png'
+
+
+# Load music and sounds
+scene_music_list = ['music_menu', 'music_game', 'music_record']
+def load_music(scene_music):
+    return f'Assets/Audio/music/{scene_music_list[scene_music]}.ogg'
+
+sound_list = [
+    'select', 'select_loop', 'portal_loop',
+    'confirm', 'start', 'pause',
+    'move', 'backmove', 'turbo', 'explosion',
+    'win', 'death', 'game_over',
+]
+def load_sound(sfx):
+    if sfx in sound_list:
+        return f'Assets/Audio/sound/{sfx}.ogg'

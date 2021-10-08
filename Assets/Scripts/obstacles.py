@@ -51,7 +51,7 @@ class Meteor(Sprite_sheet):
         self.rect.x += self.delta_x
         self.rect.y += self.delta_y + speed_y
 
-    def check_collision(self, other):
+    def check_collision(self, other, sfx):
         if not self.collide:
             margin_width = other.rect.width // 4
             margin_height = other.rect.height // 4
@@ -65,6 +65,7 @@ class Meteor(Sprite_sheet):
                 self.delta_x = self.delta_y = 0
                 self.animation_cooldown = self.animation_cooldown // 2
                 self.update_action('destroy')
+                sfx.play()
 
     def draw(self):
         image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height))

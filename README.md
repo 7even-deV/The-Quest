@@ -13,3 +13,4 @@ Commit processing:
 9. Create class: Foreground, Background and Farground
 10. Create script: obstacles (class Meteor)
 11. Create collision: Player, Enemy and Meteor
+12. Create import: music, sounds and texts

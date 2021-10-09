@@ -15,3 +15,4 @@ Commit processing:
 11. Create collision: Player, Enemy and Meteor
 12. Create import: music, sounds and texts
 13. Create Canvas: lives, health, level, timer, highscore, score
+14. Create script: weapons (class Bullet and Missile)

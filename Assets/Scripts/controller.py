@@ -21,7 +21,7 @@ class Controller():
         self.scene_list = [Menu(self.screen), Game(self.screen), Record(self.screen)]
 
     def launch_manager(self):
-        i = 1
+        i = 0
         select = 0
         level = 1
         score = 0

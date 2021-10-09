@@ -123,34 +123,57 @@ class Game(Scene):
         self.bg = Background(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, bg_img)
         self.fg  = Farground(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, 50)
 
-        self.lives_view     = Canvas(size=22, color=COLOR('YELLOW'), letter_f=FONTS[3])
-        self.health_view    = Canvas(size=22, y=40, letter_f=FONTS[3])
-        self.level_view     = Canvas(size=22, center=True, color=COLOR('GREEN'), letter_f=FONTS[3])
+        self.lives_view     = Canvas(size=20, color=COLOR('YELLOW'), letter_f=FONTS[3])
+        self.health_view    = Canvas(size=15, y=35, letter_f=FONTS[3])
+        self.ammo_load_view = Canvas(size=15, y=50, letter_f=FONTS[3])
+        self.level_view     = Canvas(size=20, center=True, color=COLOR('GREEN'), letter_f=FONTS[3])
         self.timer_view     = Canvas(size=22, center=True, y=SCREEN_HEIGHT*0.06, letter_f=FONTS[1])
-        self.highscore_view = Canvas(size=22, right_text=True, color=COLOR('RED'), letter_f=FONTS[3])
+        self.highscore_view = Canvas(size=15, right_text=True, color=COLOR('RED'), letter_f=FONTS[3])
         self.score_view     = Canvas(size=22, y=40, right=True, letter_f=FONTS[3])
 
         self.paused         = Canvas(size=80, center=True, y=SCREEN_HEIGHT//3, color=COLOR('RED'))
         self.vol_browse     = Canvas(center=True, y=SCREEN_HEIGHT//2, color=COLOR('YELLOW'))
 
-        self.meteor_group = pygame.sprite.Group()
-        self.enemy_group  = pygame.sprite.Group()
-        self.ui_bar       = pygame.sprite.Group()
-        self.settings     = pygame.sprite.Group()
+        self.bullet_group    = pygame.sprite.Group()
+        self.missile_group   = pygame.sprite.Group()
+        self.enemy_group     = pygame.sprite.Group()
+        self.meteor_group    = pygame.sprite.Group()
+        self.explosion_group = pygame.sprite.Group()
 
-        self.ui_bar.add(self.lives_view, self.health_view, self.level_view, self.timer_view, self.highscore_view, self.score_view)
+        self.ui_bar          = pygame.sprite.Group()
+        self.settings        = pygame.sprite.Group()
+
+        self.group_list = [self.bullet_group, self.missile_group, self.enemy_group, self.meteor_group, self.explosion_group]
+
+        self.ui_bar.add(self.lives_view, self.health_view, self.ammo_load_view, self.level_view, self.timer_view, self.highscore_view, self.score_view)
         self.settings.add(self.paused, self.vol_browse)
 
         # Sounds fx
-        self.move_fx      = self.sound('move')
-        self.backmove_fx  = self.sound('backmove')
-        self.turbo_fx     = self.sound('turbo')
-        self.explosion_fx = self.sound('explosion')
+        self.move_fx        = self.sound('move')
+        self.backmove_fx    = self.sound('backmove')
+        self.turbo_fx       = self.sound('turbo')
+        self.explosion_fx   = self.sound('explosion')
 
-        self.pause_fx     = self.sound('pause')
-        self.select_fx    = self.sound('select')
-        self.win_fx       = self.sound('win')
-        self.game_over_fx = self.sound('game_over')
+        self.bullet_fx      = self.sound('bullet')
+        self.empty_ammo_fx  = self.sound('empty_ammo')
+        self.missile_fx     = self.sound('missile')
+        self.missile_cd_fx  = self.sound('missile_countdown')
+        self.missile_exp_fx = self.sound('missile_explosion')
+        self.empty_load_fx  = self.sound('empty_load')
+
+        self.pause_fx       = self.sound('pause')
+        self.select_fx      = self.sound('select')
+        self.win_fx         = self.sound('win')
+        self.game_over_fx   = self.sound('game_over')
+
+    # Function to reset level
+    def reset_level(self):
+        self.bullet_group.empty()
+        self.missile_group.empty()
+        self.explosion_group.empty()
+        self.enemy_group.empty()
+        self.meteor_group.empty()
+        self.meteor_list = self.meteor_list_copy
 
     def meteor_surge(self, level, surge_num):
         self.meteor_list = []
@@ -164,11 +187,10 @@ class Game(Scene):
 
     def process_data(self, select, level, score):
         # Create sprites
-        self.player = Player(self.screen, select, score, 2)
-        self.enemy  = Enemy(self.screen, 2, center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//5))
-        self.meteor_group.empty()
         self.meteor_surge(level, 1)
-        self.enemy_group.empty()
+        self.meteor_list_copy = self.meteor_list.copy()
+        self.player = Player(self.screen, select, score, 2, level*100, level, self.group_list)
+        self.enemy  = Enemy(self.screen, 2, center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//5))
         self.enemy_group.add(self.enemy)
 
         # Create game timer
@@ -178,9 +200,15 @@ class Game(Scene):
         self.process_data(select, level, score)
         vol = self.volume()
         pause = False
+        restart = False
 
         surge_start = False
         surge_index = 0
+
+        shoot = False
+        shoot_bullets = False
+        throw = False
+        throw_missiles = False
 
         run = True
         while run:
@@ -221,8 +249,15 @@ class Game(Scene):
                             self.move_fx.play()
 
                     if event.key == pygame.K_SPACE: # Turbo
-                        self.player.turbo = True
-                        self.turbo_fx.play()
+                        if self.player.alive:
+                            self.player.turbo = True
+                            self.turbo_fx.play()
+                        else: restart = True
+                    if event.key == pygame.K_r: # Shoot bullets
+                        shoot = True
+                    if event.key == pygame.K_e: # Throw missiles
+                        throw = True
+
                     if event.key == pygame.K_RETURN: # Pause and Settings
                         if pause:
                             pause = False
@@ -242,6 +277,13 @@ class Game(Scene):
                         self.player.moving_up = False
                     if event.key == pygame.K_DOWN: # Moving down
                         self.player.moving_down = False
+
+                    if event.key == pygame.K_r:
+                        shoot = False
+                        shoot_bullets = False
+                    if event.key == pygame.K_e:
+                        throw = False
+                        throw_missiles = False
 
                     if event.key == pygame.K_SPACE: # Turbo
                         self.player.turbo = False
@@ -284,6 +326,22 @@ class Game(Scene):
                     if self.player.collide and self.game_timer.counter(1, True):
                         self.player.collide = False
 
+                    # Shoot bullets
+                    if shoot and not shoot_bullets:
+                        self.player.shoot(self.empty_ammo_fx, self.bullet_fx)
+                        shoot_bullets = True
+
+                    # Throw missiles
+                    elif throw and not throw_missiles:
+                        self.player.throw(self.empty_load_fx, self.missile_fx, self.missile_cd_fx, self.missile_exp_fx)
+                        throw_missiles = True
+
+                else: # Restart the level if the player has lost
+                    if restart:
+                        self.reset_level()
+                        self.process_data(select, level, score)
+                        restart = False
+
                 self.bg.update(self.player.delta_x, self.player.turbo)
                 self.fg.update(self.player.delta_x, self.player.turbo)
                 self.bg.draw()
@@ -303,6 +361,14 @@ class Game(Scene):
                     enemy.update()
                     enemy.draw()
 
+                self.bullet_group.update()
+                self.missile_group.update()
+                self.explosion_group.update()
+
+                self.bullet_group.draw(self.screen)
+                self.missile_group.draw(self.screen)
+                self.explosion_group.draw(self.screen)
+
                 # Zone for user interface bar
                 pygame.draw.rect(self.screen, COLOR('ARCADE'), (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT//10))
                 pygame.draw.line(self.screen, COLOR('SILVER'), (0, SCREEN_HEIGHT//10), (SCREEN_WIDTH, SCREEN_HEIGHT//10), 4)
@@ -321,6 +387,7 @@ class Game(Scene):
 
                 self.lives_view.text     = f"Lives: {self.player.lives}"
                 self.health_view.text    = f"Health: {self.player.health}"
+                self.ammo_load_view.text = f"ammo: {self.player.ammo} | load: {self.player.load}"
                 self.level_view.text     = f"Level - {level} - "
                 self.timer_view.text     = f"Time: {self.game_timer.text_time}"
                 self.highscore_view.text = f"Highscore: {self.highscore}"

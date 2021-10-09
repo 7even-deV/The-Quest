@@ -33,6 +33,8 @@ class Meteor(Sprite_sheet):
         self.delta_y = random.randint(1.0, 2.0)
         self.collide = False
 
+        self.health = 100
+
     def update(self, speed_y):
         # Update meteor events
         self.update_animation(self.animation_cooldown, 1)
@@ -64,6 +66,6 @@ class Meteor(Sprite_sheet):
                 other.health -= 10
                 other.score += 10
                 self.delta_x = self.delta_y = 0
-                self.animation_cooldown = self.animation_cooldown // 2
+                self.animation_cooldown = self.animation_cooldown // 4
                 self.update_action('destroy')
                 sfx.play()

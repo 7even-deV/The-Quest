@@ -19,8 +19,6 @@ class Enemy(Sprite_sheet):
         # Get enemy rect
         self.rect = self.image.get_rect(**kwargs)
 
-        self.health = 100
-
         self.delta_x = 0
         self.delta_y = 0
 
@@ -30,6 +28,8 @@ class Enemy(Sprite_sheet):
         self.ai_moving_up = False
         self.ai_moving_down = False
         self.collide = False
+
+        self.health = 100
 
         # AI specific variables
         self.vision = pygame.Rect(0, 0, 300, 400)
@@ -93,7 +93,7 @@ class Enemy(Sprite_sheet):
                 other.health -= 10
                 other.score += 10
                 self.delta_x = self.delta_y = 0
-                self.animation_cooldown = self.animation_cooldown // 2
+                self.animation_cooldown = self.animation_cooldown // 4
                 self.update_action('destroy')
                 sfx.play()
 

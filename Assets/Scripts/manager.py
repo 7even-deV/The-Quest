@@ -51,7 +51,9 @@ meteor_action_dict = {
     'turn_r': (8, 4, 5, 1),
 }
 
-explosion_img = 'Assets/Images/explosion.png'
+explosion_1_img = 'Assets/Images/explosion_1.png'
+explosion_2_img = 'Assets/Images/explosion_2.png'
+explosion_3_img = 'Assets/Images/explosion_3.png'
 explosion_dict = {
     'destroy': (8, 8),
 }

@@ -1,18 +1,54 @@
 import pygame
 
 from .manager import icon_type_function
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FONTS, COLOURS
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FONTS, COLOR
 
 
 class Timer():
 
-    def __init__(self):
-        self.counter = 0
+    def __init__(self, FPS):
+        self.start_time = pygame.time.get_ticks()
+        self.frame_num = 0
+        self.frame_rate = FPS
 
-    def time(self, timer, *events):
-        self.counter += 1
-        if self.counter > timer * 100:
-            self.counter = 0
+    # Counter for seconds
+    def counter(self, timer, *events):
+        current_time = pygame.time.get_ticks()
+        if current_time - self.start_time > timer * 1000:
+            self.start_time = pygame.time.get_ticks()
+            return events
+
+    # Delay for seconds
+    def delay(self, timer, *events):
+        # Calculate time left
+        self.time_left = self.frame_num // self.frame_rate
+        # Divide by 60 to get total minutes
+        minutes = self.time_left // 60
+        # Use the modulo operator to get the seconds
+        seconds = self.time_left % 60
+
+        if self.time_left == timer:
+            return events
+
+    # Countdown for minutes
+    def countdown(self, timer, turbo=False, *events):
+        self.level_time = timer * 60
+        # Calculate time left
+        self.time_left = self.level_time - (self.frame_num // self.frame_rate)
+        # Divide by 60 to get total minutes
+        minutes = self.time_left // 60
+        # Use the modulo operator to get the seconds
+        seconds = self.time_left % 60
+        # Use string format for leading zeros
+        self.text_time = "{0:02}:{1:02}".format(minutes, seconds)
+
+        if turbo: # Reduce time if turbo is used
+            self.frame_num += 2
+        else: self.frame_num += 1
+
+        if self.time_left < 0:
+            self.time_left = 0
+            self.frame_num = 0
             return events
 
 
@@ -22,9 +58,13 @@ class Sprite_sheet(pygame.sprite.Sprite):
         super().__init__()
         self.sheet = pygame.image.load(*args).convert_alpha()
         self.animation_dict = {}
-        self.update_time = pygame.time.get_ticks()
         self.action = 0
         self.frame_index = 0
+        self.update_time = pygame.time.get_ticks()
+        self.animation_cooldown = 100
+
+        self.flip_x = False
+        self.flip_y = False
 
     def get_image(self, width, height, frame_x, frame_y, scale):
         image = pygame.Surface((width, height)).convert_alpha()
@@ -87,8 +127,10 @@ class Sprite_sheet(pygame.sprite.Sprite):
             self.update_time = pygame.time.get_ticks()
 
     def draw(self):
-        # Draw player on screen
-        self.screen.blit(self.image, self.rect)
+        image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height))
+        image = pygame.transform.flip(image, self.flip_x, self.flip_y)
+        image.set_colorkey(False)
+        self.screen.blit(image, self.rect)
 
 
 class Canvas(pygame.sprite.Sprite):
@@ -101,7 +143,7 @@ class Canvas(pygame.sprite.Sprite):
         self.y = self._keys('y') or 10
         self.letter_f = self._keys('letter_f') or FONTS[0]
         self.size = self._keys('size') or 28
-        self.color = self._keys('color') or COLOURS('WHITE')
+        self.color = self._keys('color') or COLOR('WHITE')
 
         self.font = pygame.font.Font(f"Assets/Fonts/{self.letter_f}.ttf", self.size)
         self.image = self.font.render(self._text, True, self.color)

@@ -21,14 +21,16 @@ class Controller():
         self.scene_list = [Menu(self.screen), Game(self.screen), Record(self.screen)]
 
     def launch_manager(self):
-        i = 0
+        i = 1
         select = 0
+        level = 1
+        score = 0
         # Main loop
         while True:
             # Manage each scene
             self.scene_caption(i)
             self.scene_music(i, 0.5)
-            select = self.scene_list[i].main_loop(select)
+            select, level, score = self.scene_list[i].main_loop(select, level, score)
 
             # Cycle through each scene until reset to 0
             i = (i + 1) % len(self.scene_list)

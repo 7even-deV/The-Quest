@@ -1,28 +1,29 @@
 import pygame
 
 from .manager import player_select_function
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT
 from .tools import Sprite_sheet
 
 
 class Player(Sprite_sheet):
 
-    def __init__(self, screen, screen_width, screen_height, select, speed, **kwargs):
+    def __init__(self, screen, select, score, speed, **kwargs):
         player_img, player_action_dict = player_select_function(select)
         super().__init__(player_img)
         self.screen = screen
         self.speed = speed
-        self.screen_width = screen_width
-        self.screen_height = screen_height
 
         # Load player image
         self.create_animation(100, 100, player_action_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
         # Get player rect
-        self.rect = self.image.get_rect(**kwargs)
+        self.rect = self.image.get_rect(midtop=(SCREEN_WIDTH//2, SCREEN_HEIGHT))
 
         self.alive = True
+        self.lives = 3
         self.health = 100
         self.max_health = self.health
+        self.score = score
 
         self.delta_x = 0
         self.delta_y = 0
@@ -72,8 +73,8 @@ class Player(Sprite_sheet):
                 self.delta_x = 0.1
             else: self.delta_x = 0
 
-        if self.rect.right + self.delta_x > self.screen_width - self.margin_x:
-            if self.rect.right + self.delta_x > self.screen_width - self.margin_x + 1:
+        if self.rect.right + self.delta_x > SCREEN_WIDTH - self.margin_x:
+            if self.rect.right + self.delta_x > SCREEN_WIDTH - self.margin_x + 1:
                 self.delta_x = -0.1
             else: self.delta_x = 0
 
@@ -82,8 +83,8 @@ class Player(Sprite_sheet):
                 self.delta_y = 0.1
             else: self.delta_y = 0
 
-        if self.rect.bottom + self.delta_y > self.screen_height - self.margin_y:
-            if self.rect.bottom + self.delta_y > self.screen_height - self.margin_y + 1:
+        if self.rect.bottom + self.delta_y > SCREEN_HEIGHT - self.margin_y:
+            if self.rect.bottom + self.delta_y > SCREEN_HEIGHT - self.margin_y + 1:
                 self.delta_y = -0.1
             else: self.delta_y = 0
 

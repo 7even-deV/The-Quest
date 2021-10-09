@@ -1,6 +1,6 @@
 import pygame, random
 
-from .manager import meteor_img, meteor_action_dict, explosion_img, explosion_dict
+from .manager import meteor_img, meteor_action_dict, explosion_1_img, explosion_dict
 from .tools import Sprite_sheet
 
 
@@ -14,7 +14,7 @@ class Meteor(Sprite_sheet):
 
         # Load meteor and explosion image
         self.create_animation(128, 128, meteor_action_dict)
-        self.sheet = pygame.image.load(explosion_img).convert_alpha()
+        self.sheet = pygame.image.load(explosion_1_img).convert_alpha()
         self.create_animation(128, 128, {'destroy': (6, 8, 2)})
         self.image = self.animation_dict[self.action][self.frame_index]
         # Get random meteor rect
@@ -62,13 +62,8 @@ class Meteor(Sprite_sheet):
                 other.rect.x += (self.delta_x - other.delta_x) * 2
                 other.rect.y += (self.delta_y - other.delta_y) * 2
                 other.health -= 10
+                other.score += 10
                 self.delta_x = self.delta_y = 0
                 self.animation_cooldown = self.animation_cooldown // 2
                 self.update_action('destroy')
                 sfx.play()
-
-    def draw(self):
-        image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height))
-        image = pygame.transform.flip(image, self.flip_x, self.flip_y)
-        image.set_colorkey(False)
-        self.screen.blit(image, self.rect)

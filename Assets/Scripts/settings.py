@@ -15,7 +15,7 @@ LOGO = 500
 FPS = 60
 
 # Define colours (R, G, B)
-def COLOURS(color_key):
+def COLOR(color_key):
     color_dict = {
         'BLACK'  : (0, 0, 0),
         'DARK'   : (64, 64, 64),
@@ -41,4 +41,4 @@ def COLOURS(color_key):
 
         'ARCADE' : (8, 8, 8),
     }
-    return color_dict[color_key]
+    return color_dict[color_key.upper()]

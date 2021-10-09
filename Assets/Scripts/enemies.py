@@ -1,6 +1,6 @@
 import pygame, random
 
-from .manager import enemy_img, enemy_action_dict, explosion_img
+from .manager import enemy_img, enemy_action_dict, explosion_2_img, explosion_dict
 from .tools import Sprite_sheet
 
 
@@ -13,8 +13,8 @@ class Enemy(Sprite_sheet):
 
         # Load enemy image
         self.create_animation(100, 100, enemy_action_dict)
-        self.sheet = pygame.image.load(explosion_img).convert_alpha()
-        self.create_animation(128, 128, {'destroy': (6, 8, 2)})
+        self.sheet = pygame.image.load(explosion_2_img).convert_alpha()
+        self.create_animation(100, 100, explosion_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
         # Get enemy rect
         self.rect = self.image.get_rect(**kwargs)
@@ -23,7 +23,6 @@ class Enemy(Sprite_sheet):
 
         self.delta_x = 0
         self.delta_y = 0
-        self.animation_cooldown = 100
 
         # Define enemy action variables
         self.ai_moving_left = False
@@ -92,6 +91,7 @@ class Enemy(Sprite_sheet):
                 other.rect.x += (self.delta_x - other.delta_x) * 2
                 other.rect.y += (self.delta_y - other.delta_y) * 2
                 other.health -= 10
+                other.score += 10
                 self.delta_x = self.delta_y = 0
                 self.animation_cooldown = self.animation_cooldown // 2
                 self.update_action('destroy')

@@ -1,6 +1,6 @@
 import pygame
 
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FONTS, FPS, LOGO, COLOURS
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FONTS, FPS, LOGO, COLOR
 from .manager import statue_img, bg_img, game_over_img, load_sound
 from .tools import Timer, Canvas, Icon
 from .environment import Foreground, Background, Farground
@@ -12,10 +12,10 @@ from .enemies import Enemy
 class Scene():
 
     def __init__(self, screen):
-        self.screen = screen
-        self.clock  = pygame.time.Clock()
+        self.screen = screen # Parameterize the screen for all scenes
+        self.clock  = pygame.time.Clock() # Manage screen refresh rate
 
-        self.timer = Timer() # Create self.timer
+        self.highscore = 0
 
     def sound(self, sfx, volume=0.5):
         fx = pygame.mixer.Sound(load_sound(sfx))
@@ -24,9 +24,6 @@ class Scene():
 
     def volume(self, vol=0):
         return round(pygame.mixer.music.get_volume() + vol, 1)
-
-    def color(self, color_key):
-        return COLOURS(color_key.upper())
 
 
 class Menu(Scene):
@@ -44,9 +41,15 @@ class Menu(Scene):
         self.confirm_fx     = self.sound('confirm')
         self.start_fx       = self.sound('start')
 
-    def main_loop(self, select):
+        # Create menu timer
+        self.menu_timer = Timer(FPS)
+
+    def main_loop(self, select, level, score):
         run = True
         while run:
+            # Limit frames per second
+            self.clock.tick(FPS)
+
             for event in pygame.event.get():
                 # Quit game
                 if event.type == pygame.QUIT:
@@ -90,40 +93,53 @@ class Menu(Scene):
                     if event.key == pygame.K_DOWN: # Moving down
                         self.player.moving_down = False
 
-            # Background color
-            self.screen.fill(self.color('ARCADE'))
+            # Clear screen and set background color
+            self.screen.fill(COLOR('ARCADE'))
+
+            ''' --- AREA TO UPDATE AND DRAW --- '''
 
             self.screen.blit(self.statue, (0, SCREEN_HEIGHT//4))
 
-            # Area - update and draw
             self.symbol.update(select)
             self.spaceship.update(select)
 
             self.symbol.draw()
             self.spaceship.draw()
 
+            # Limit delay without event activity
+            if self.menu_timer.countdown(1, True):
+                run = False
+
             # Update screen
             pygame.display.update()
 
-        return select
+        return select, level, score
 
 
 class Game(Scene):
 
     def __init__(self, screen):
         super().__init__(screen)
-        self.paused     = Canvas(size=80, center=True, y=SCREEN_HEIGHT//3, color=self.color('RED'))
-        self.vol_browse = Canvas(center=True, y=SCREEN_HEIGHT//2, color=self.color('YELLOW'))
-
-        self.enemy   = Enemy(self.screen, 2, center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//10.1))
         self.bg = Background(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, bg_img)
         self.fg  = Farground(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, 50)
 
+        self.lives_view     = Canvas(size=22, color=COLOR('YELLOW'), letter_f=FONTS[3])
+        self.health_view    = Canvas(size=22, y=40, letter_f=FONTS[3])
+        self.level_view     = Canvas(size=22, center=True, color=COLOR('GREEN'), letter_f=FONTS[3])
+        self.timer_view     = Canvas(size=22, center=True, y=SCREEN_HEIGHT*0.06, letter_f=FONTS[1])
+        self.highscore_view = Canvas(size=22, right_text=True, color=COLOR('RED'), letter_f=FONTS[3])
+        self.score_view     = Canvas(size=22, y=40, right=True, letter_f=FONTS[3])
+
+        self.paused         = Canvas(size=80, center=True, y=SCREEN_HEIGHT//3, color=COLOR('RED'))
+        self.vol_browse     = Canvas(center=True, y=SCREEN_HEIGHT//2, color=COLOR('YELLOW'))
+
         self.meteor_group = pygame.sprite.Group()
         self.enemy_group  = pygame.sprite.Group()
+        self.ui_bar       = pygame.sprite.Group()
         self.settings     = pygame.sprite.Group()
-        self.settings.add(self.paused, self.vol_browse)
 
+        self.ui_bar.add(self.lives_view, self.health_view, self.level_view, self.timer_view, self.highscore_view, self.score_view)
+        self.settings.add(self.paused, self.vol_browse)
 
         # Sounds fx
         self.move_fx      = self.sound('move')
@@ -133,6 +149,7 @@ class Game(Scene):
 
         self.pause_fx     = self.sound('pause')
         self.select_fx    = self.sound('select')
+        self.win_fx       = self.sound('win')
         self.game_over_fx = self.sound('game_over')
 
     def meteor_surge(self, level, surge_num):
@@ -145,23 +162,29 @@ class Game(Scene):
 
             self.meteor_list.append(temp_list)
 
-    def process_data(self, select):
-        # Create player
-        self.player = Player(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, select, 2, midtop=(SCREEN_WIDTH//2, SCREEN_HEIGHT))
-        self.meteor_surge(1, 1)
+    def process_data(self, select, level, score):
+        # Create sprites
+        self.player = Player(self.screen, select, score, 2)
+        self.enemy  = Enemy(self.screen, 2, center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//5))
+        self.meteor_group.empty()
+        self.meteor_surge(level, 1)
+        self.enemy_group.empty()
         self.enemy_group.add(self.enemy)
 
-    def main_loop(self, select):
-        self.process_data(select)
-        surge_start = False
-        surge_index = 0
+        # Create game timer
+        self.game_timer = Timer(FPS)
 
+    def main_loop(self, select, level, score):
+        self.process_data(select, level, score)
         vol = self.volume()
         pause = False
 
+        surge_start = False
+        surge_index = 0
+
         run = True
         while run:
-            # Clock FPS
+            # Limit frames per second
             self.clock.tick(FPS)
 
             for event in pygame.event.get():
@@ -224,41 +247,43 @@ class Game(Scene):
                         self.player.turbo = False
                         self.backmove_fx.play()
 
-            # Pause and volume control
-            self.paused.text = "P A U S E"
+            # Clear screen and set background color
+            self.screen.fill(COLOR('ARCADE'))
 
-            if vol == 0.0 or vol == 1.0:
-                self.vol_browse.color = self.color('ORANGE')
-            else: self.vol_browse.color = self.color('YELLOW')
-            self.vol_browse.text = f"Press <UP or DOWN> to vol:  {vol}"
-
-            # Update the time of the next surge of meteors
-            if not surge_start and self.timer.time(8, True):
-                surge_start = True
-
-            elif surge_start:
-                # Add the next surge when the previous surge ends
-                if surge_index < len(self.meteor_list):
-                    if len(self.meteor_group) == 0:
-                        self.meteor_group.add(self.meteor_list[surge_index])
-                        surge_index += 1
-                        surge_start = False
-
-            # Background color
-            self.screen.fill(self.color('ARCADE'))
-
-            # Area - update and draw
-            if self.player.spawn and self.timer.time(1, True):
-                self.player.spawn = False
-
-            if self.player.alive:
-                if self.player.collide and self.timer.time(0.1, True):
-                    self.player.collide = False
+            ''' --- AREA TO UPDATE AND DRAW --- '''
 
             if pause:
+                # Pause and volume control
+                self.paused.text = "P A U S E"
+
+                if vol == 0.0 or vol == 1.0:
+                    self.vol_browse.color = COLOR('ORANGE')
+                else: self.vol_browse.color = COLOR('YELLOW')
+                self.vol_browse.text = f"Press <UP or DOWN> to vol:  {vol}"
+
                 self.settings.update()
                 self.settings.draw(self.screen)
+
             else:
+                # Update the time of the next surge of meteors
+                if not surge_start and self.game_timer.delay(level * 60 // 4 * (surge_index + 1), True):
+                    surge_start = True
+
+                elif surge_start:
+                    # Add the next surge when the previous surge ends
+                    if surge_index < len(self.meteor_list):
+                        if len(self.meteor_group) == 0:
+                            self.meteor_group.add(self.meteor_list[surge_index])
+                            surge_index += 1
+                            surge_start = False
+
+                if self.player.spawn and self.game_timer.counter(2, True):
+                    self.player.spawn = False
+
+                if self.player.alive:
+                    if self.player.collide and self.game_timer.counter(1, True):
+                        self.player.collide = False
+
                 self.bg.update(self.player.delta_x, self.player.turbo)
                 self.fg.update(self.player.delta_x, self.player.turbo)
                 self.bg.draw()
@@ -278,10 +303,35 @@ class Game(Scene):
                     enemy.update()
                     enemy.draw()
 
+                # Zone for user interface bar
+                pygame.draw.rect(self.screen, COLOR('ARCADE'), (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT//10))
+                pygame.draw.line(self.screen, COLOR('SILVER'), (0, SCREEN_HEIGHT//10), (SCREEN_WIDTH, SCREEN_HEIGHT//10), 4)
+
+                # Level countdown
+                if self.game_timer.countdown(level, self.player.turbo, True):
+                    run = False
+                    level += 1
+                    self.win_fx.play()
+
+                elif self.player.health <= 0:
+                    run = False
+                    self.player.lives -= 1
+                    self.player.score = 0
+                    self.game_over_fx.play()
+
+                self.lives_view.text     = f"Lives: {self.player.lives}"
+                self.health_view.text    = f"Health: {self.player.health}"
+                self.level_view.text     = f"Level - {level} - "
+                self.timer_view.text     = f"Time: {self.game_timer.text_time}"
+                self.highscore_view.text = f"Highscore: {self.highscore}"
+                self.score_view.text     = f"Score: {self.player.score}"
+                self.ui_bar.update()
+                self.ui_bar.draw(self.screen)
+
             # Update screen
             pygame.display.update()
 
-        return select
+        return select, level, self.player.score
 
 
 class Record(Scene):
@@ -292,9 +342,15 @@ class Record(Scene):
         self.logo_x = (SCREEN_WIDTH - LOGO) // 2
         self.logo_y = SCREEN_HEIGHT
 
-    def main_loop(self, select):
+        # Create record timer
+        self.record_timer = Timer(FPS)
+
+    def main_loop(self, select, level, score):
         run = True
         while run:
+            # Limit frames per second
+            self.clock.tick(FPS)
+
             for event in pygame.event.get():
                 # Quit game
                 if event.type == pygame.QUIT:
@@ -309,17 +365,22 @@ class Record(Scene):
                     if event.key == pygame.K_ESCAPE: # Quit game
                         exit()
 
-            # Draw background
-            self.screen.fill(self.color('BLACK'))
+            # Clear screen and set background color
+            self.screen.fill(COLOR('BLACK'))
 
-            # Area - update and draw
+            ''' --- AREA TO UPDATE AND DRAW --- '''
+
             if self.logo_y > self.logo_x:
-                self.logo_y -= 0.2
+                self.logo_y -= 2
             self.screen.blit(self.game_over_logo, (self.logo_x, self.logo_y))
+
+            # Limit delay without event activity
+            if self.record_timer.countdown(1, True):
+                run = False
 
             # Update screen
             pygame.display.update()
 
         self.logo_y = SCREEN_HEIGHT
 
-        return select
+        return select, level, score

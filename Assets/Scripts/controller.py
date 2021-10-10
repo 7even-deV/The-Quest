@@ -1,8 +1,8 @@
 import pygame
 
 from . import __author__
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, CAPTION
-from .manager import logo_icon, load_music
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, CAPTION, LEVEL
+from .manager import logo_icon
 from .scenes import Menu, Game, Record
 
 
@@ -23,13 +23,13 @@ class Controller():
     def launch_manager(self):
         i = 0
         select = 0
-        level = 1
+        level = LEVEL
         score = 0
         # Main loop
         while True:
             # Manage each scene
             self.scene_caption(i)
-            self.scene_music(i, 0.5)
+            self.scene_list[i].scene_music(i, 0.5)
             select, level, score = self.scene_list[i].main_loop(select, level, score)
 
             # Cycle through each scene until reset to 0
@@ -37,11 +37,6 @@ class Controller():
 
     def scene_caption(self, index):
         pygame.display.set_caption(CAPTION[0] + CAPTION[1][index])
-
-    def scene_music(self, index, volume):
-        pygame.mixer.music.load(load_music(index))
-        pygame.mixer.music.set_volume(volume)
-        pygame.mixer.music.play(-1, 0.0, 1000)
 
     def __del__(self):
         print(__author__)

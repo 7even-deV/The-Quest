@@ -14,6 +14,20 @@ LOGO = 500
 # Set framerate
 FPS = 60
 
+# Define game variables
+LEVEL = 1
+SURGE_NUM = 1
+
+enemy_select = 0
+enemy_dict = {
+    'scale' : [2, 1],
+    'ammo'  : [100, 1],
+    'load'  : [0, 0],
+    'exp'   : [20, 10],
+    'pos_x' : [SCREEN_WIDTH//2, -100],
+    'pos_y' : [-100, SCREEN_HEIGHT//4],
+}
+
 # Define colours (R, G, B)
 def COLOR(color_key):
     color_dict = {

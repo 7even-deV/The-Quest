@@ -1,7 +1,7 @@
 import pygame
 
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FONTS, FPS, LOGO, COLOR
-from .manager import statue_img, bg_img, game_over_img, load_sound
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FONTS, FPS, LOGO, COLOR, SURGE_NUM, enemy_select
+from .manager import statue_img, bg_img, game_over_img, load_music, load_sound
 from .tools import Timer, Canvas, Icon
 from .environment import Foreground, Background, Farground
 from .obstacles import Meteor
@@ -16,6 +16,11 @@ class Scene():
         self.clock  = pygame.time.Clock() # Manage screen refresh rate
 
         self.highscore = 0
+
+    def scene_music(self, index, volume):
+        pygame.mixer.music.load(load_music(index))
+        pygame.mixer.music.set_volume(volume)
+        pygame.mixer.music.play(-1, 0.0, 1000)
 
     def sound(self, sfx, volume=0.5):
         fx = pygame.mixer.Sound(load_sound(sfx))
@@ -143,6 +148,7 @@ class Game(Scene):
         self.ui_bar          = pygame.sprite.Group()
         self.settings        = pygame.sprite.Group()
 
+        self.meteor_list_copy = []
         self.group_list = [self.bullet_group, self.missile_group, self.enemy_group, self.meteor_group, self.explosion_group]
 
         self.ui_bar.add(self.lives_view, self.health_view, self.ammo_load_view, self.level_view, self.timer_view, self.highscore_view, self.score_view)
@@ -175,6 +181,14 @@ class Game(Scene):
         self.meteor_group.empty()
         self.meteor_list = self.meteor_list_copy
 
+    def enemy_create(self, level):
+        self.enemy_list = []
+        temp_list = []
+        for i in range(level):
+            temp_list.append(Enemy(self.screen, enemy_select, i+2, self.player, self.empty_ammo_fx, self.bullet_fx, self.group_list))
+        self.enemy_list.append(temp_list)
+        self.enemy_group.add(self.enemy_list[0])
+
     def meteor_surge(self, level, surge_num):
         self.meteor_list = []
         for number in range(surge_num):
@@ -187,22 +201,22 @@ class Game(Scene):
 
     def process_data(self, select, level, score):
         # Create sprites
-        self.meteor_surge(level, 1)
+        self.meteor_surge(level, SURGE_NUM)
         self.meteor_list_copy = self.meteor_list.copy()
         self.player = Player(self.screen, select, score, 2, level*100, level, self.group_list)
-        self.enemy  = Enemy(self.screen, 2, center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//5))
-        self.enemy_group.add(self.enemy)
-
+        self.enemy_create(level)
         # Create game timer
         self.game_timer = Timer(FPS)
 
     def main_loop(self, select, level, score):
+        if level > 1: self.reset_level()
         self.process_data(select, level, score)
         vol = self.volume()
         pause = False
         restart = False
 
         surge_start = False
+        surge_end = False
         surge_index = 0
 
         shoot = False
@@ -311,13 +325,17 @@ class Game(Scene):
                 if not surge_start and self.game_timer.delay(level * 60 // 4 * (surge_index + 1), True):
                     surge_start = True
 
-                elif surge_start:
+                elif surge_start and not surge_end:
                     # Add the next surge when the previous surge ends
-                    if surge_index < len(self.meteor_list):
-                        if len(self.meteor_group) == 0:
+                    if len(self.meteor_group) == 0:
+                        if surge_index < len(self.meteor_list):
                             self.meteor_group.add(self.meteor_list[surge_index])
                             surge_index += 1
                             surge_start = False
+                            self.scene_music(3, 0.5)
+                        else:
+                            surge_end = True
+                            self.scene_music(4, 0.5)
 
                 if self.player.spawn and self.game_timer.counter(2, True):
                     self.player.spawn = False

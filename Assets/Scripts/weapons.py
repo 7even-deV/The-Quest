@@ -46,7 +46,7 @@ class Bullet(Sprite_sheet):
                 if self.player.alive:
                     self.collide = True
                     self.player.collide = True
-                    self.player.health -= 1
+                    self.player.health -= 10
                     if self.player.health <= 0:
                         self.player.animation_cooldown = self.player.animation_cooldown // 4
                         self.player.update_action('destroy')
@@ -57,7 +57,7 @@ class Bullet(Sprite_sheet):
                     if enemy.alive:
                         self.collide = True
                         enemy.collide = True
-                        enemy.health -= 5
+                        enemy.health -= 25
                         if enemy.health <= 0:
                             enemy.animation_cooldown = enemy.animation_cooldown // 4
                             enemy.update_action('destroy')
@@ -76,12 +76,7 @@ class Bullet(Sprite_sheet):
 
     def move(self):
         # Move bullet
-        if self.select == 0:
-            self.rect.y -= self.speed
-        if self.select == 1:
-            self.rect.y -= self.speed
-        if self.select == 2:
-            self.rect.y -= self.speed
+        self.rect.y += self.speed * self.direction
 
 
 class Missile(Sprite_sheet):

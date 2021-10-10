@@ -7,9 +7,17 @@ from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FONTS, COLOR
 class Timer():
 
     def __init__(self, FPS):
+        self.count = 0
         self.start_time = pygame.time.get_ticks()
         self.frame_num = 0
         self.frame_rate = FPS
+
+    # Time for seconds
+    def time(self, timer, *events):
+        self.count += 1
+        if self.count > timer * 100:
+            self.count = 0
+            return events
 
     # Counter for seconds
     def counter(self, timer, *events):
@@ -63,8 +71,10 @@ class Sprite_sheet(pygame.sprite.Sprite):
         self.update_time = pygame.time.get_ticks()
         self.animation_cooldown = 100
 
+        self.scale = 1
         self.flip_x = False
         self.flip_y = False
+        self.rotate = 0
 
     def get_image(self, width, height, frame_x, frame_y, scale):
         image = pygame.Surface((width, height)).convert_alpha()
@@ -127,8 +137,9 @@ class Sprite_sheet(pygame.sprite.Sprite):
             self.update_time = pygame.time.get_ticks()
 
     def draw(self):
-        image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height))
+        image = pygame.transform.scale(self.image, (self.rect.width * self.scale, self.rect.height * self.scale))
         image = pygame.transform.flip(image, self.flip_x, self.flip_y)
+        image = pygame.transform.rotate(image, self.rotate)
         image.set_colorkey(False)
         self.screen.blit(image, self.rect)
 

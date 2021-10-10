@@ -21,8 +21,8 @@ class Meteor(Sprite_sheet):
         self.rect = self.image.get_rect(center=(random.randint(0, self.screen_width), -random.randint(0, 5000)))
 
         self.scale = random.randint(1.0, 4.0)
-        self.rect.width = self.rect.width // 4 * self.scale
-        self.rect.height = self.rect.height // 4 * self.scale
+        self.rect.width = self.rect.width // 4
+        self.rect.height = self.rect.height // 4
 
         self.flip_x = random.randint(False, True)
         self.flip_y = random.randint(False, True)

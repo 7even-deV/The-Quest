@@ -16,3 +16,4 @@ Commit processing:
 12. Create import: music, sounds and texts
 13. Create Canvas: lives, health, level, timer, highscore, score
 14. Create script: weapons (class Bullet and Missile)
+15. Create function: ai types (class Enemy)

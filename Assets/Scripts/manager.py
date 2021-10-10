@@ -82,7 +82,7 @@ game_over_img = 'Assets/Images/game_over.png'
 
 
 # Load music and sounds
-scene_music_list = ['music_menu', 'music_game', 'music_record']
+scene_music_list = ['music_menu', 'music_game', 'music_record', 'music_combat', 'music_danger']
 def load_music(scene_music):
     return f'Assets/Audio/music/{scene_music_list[scene_music]}.ogg'
 

@@ -2,38 +2,70 @@ logo_icon = 'Assets/Images/logo_7z.ico'
 
 statue_img = 'Assets/Images/statue.png'
 
-icon_type_list = ['symbol', 'spaceship']
-
 
 def icon_type_function(i_type):
     icon_img = f'Assets/Images/{i_type}.png'
 
     if i_type == 'symbol':
         icon_type_dict = {
-            'dps' : (1, 1, 1, 1),  # Circle
-            'tank': (1, 1, 1, 2),  # Square
-            'heal': (1, 1, 1, 3),  # Triangle
+            'dps_1'  : (1, 1, 1, 1), # Circle
+            'tank_1' : (1, 1, 1, 2), # Square
+            'heal_1' : (1, 1, 1, 3), # Triangle
         }
-    if i_type == 'spaceship':
+    if i_type == 'spaceships':
         icon_type_dict = {
-            'dps' : (2, 1, 1, 1),  # Circle
-            'tank': (2, 1, 2, 1),  # Square
-            'heal': (2, 1, 3, 1),  # Triangle
+            'dps_1'  : (2, 1, 1, 1), # Dps
+            'dps_2'  : (2, 1, 2, 1), # Dps
+            'dps_3'  : (2, 1, 3, 1), # Dps
+            'dps_4'  : (2, 1, 4, 1), # Dps
+            'dps_5'  : (2, 1, 5, 1), # Dps
+            'dps_6'  : (2, 1, 6, 1), # Dps
+
+            'tank_1' : (2, 1, 1, 3), # Tank
+            'tank_2' : (2, 1, 2, 3), # Tank
+            'tank_3' : (2, 1, 3, 3), # Tank
+            'tank_4' : (2, 1, 4, 3), # Tank
+            'tank_5' : (2, 1, 5, 3), # Tank
+            'tank_6' : (2, 1, 6, 3), # Tank
+
+            'heal_1' : (2, 1, 1, 5), # Heal
+            'heal_2' : (2, 1, 2, 5), # Heal
+            'heal_3' : (2, 1, 3, 5), # Heal
+            'heal_4' : (2, 1, 4, 5), # Heal
+            'heal_5' : (2, 1, 5, 5), # Heal
+            'heal_6' : (2, 1, 6, 5), # Heal
         }
 
     return icon_img, icon_type_dict
 
 
-def player_select_function(p_select):
-    player_img = 'Assets/Images/spaceship.png'
+def player_select_function(p_select, p_model):
+    player_img = 'Assets/Images/spaceships.png'
+
+    if p_select == 1:
+        p_select = 2
+    elif p_select == 2:
+        p_select = 4
 
     player_action_dict = {
-        'idle' : (2, 1, p_select+1, 1),
-        'left' : (1, 1, p_select+1, 1),
-        'right': (1, 1, p_select+1, 2),
+        'idle' : (2, 1, p_model+1, p_select+1),
+        'left' : (1, 1, p_model+1, p_select+1),
+        'right': (1, 1, p_model+1, p_select+2),
     }
 
     return player_img, player_action_dict
+
+
+def enemy_select_function(e_select):
+    enemy_img = 'Assets/Images/enemies.png'
+
+    enemy_action_dict = {
+        'idle' : (2, 1, e_select+1, 1),
+        'left' : (1, 1, e_select+1, 1),
+        'right': (1, 1, e_select+1, 2),
+    }
+
+    return enemy_img, enemy_action_dict
 
 
 def weapon_select_function(w_select):
@@ -56,14 +88,8 @@ missile_exp_img = f'Assets/Images/missile_exp_2.png'
 missile_exp_dict = {'destroy': (5, 6)}
 
 
-enemy_img = 'Assets/Images/enemy.png'
-enemy_action_dict = {
-    'idle' : (2, 1, 1, 1),
-    'left' : (1, 1, 1, 1),
-    'right': (1, 1, 1, 2),
-}
-
 bg_img = 'Assets/Images/background.jpg'
+
 
 meteor_img = 'Assets/Images/meteor.png'
 meteor_action_dict = {

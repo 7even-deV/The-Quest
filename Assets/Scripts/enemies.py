@@ -1,6 +1,6 @@
 import pygame, random
 
-from .manager import enemy_img, enemy_action_dict, explosion_2_img, explosion_dict
+from .manager import enemy_select_function, explosion_2_img, explosion_dict
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, enemy_dict
 from .tools import Sprite_sheet, Timer
 from .weapons import Bullet, Missile
@@ -9,6 +9,7 @@ from .weapons import Bullet, Missile
 class Enemy(Sprite_sheet):
 
     def __init__(self, screen, select, speed, player, empty_ammo_fx, bullet_fx, *args, **kwargs):
+        enemy_img, enemy_action_dict = enemy_select_function(select)
         super().__init__(enemy_img)
         self.screen = screen
         self.select = select
@@ -71,10 +72,10 @@ class Enemy(Sprite_sheet):
 
     def update(self):
         # Update enemy events
-        self.update_animation(self.animation_cooldown)
         self.check_alive()
         self.ai()
         self.move()
+        self.update_animation(self.animation_cooldown)
         # Update cooldown
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
@@ -120,11 +121,11 @@ class Enemy(Sprite_sheet):
                 other.collide = True
                 other.rect.x += (self.delta_x - other.delta_x) * 2
                 other.rect.y += (self.delta_y - other.delta_y) * 2
-                other.health -= 10
                 other.score += 10
+                other.health -= 10
+                self.health -= 100
                 self.delta_x = self.delta_y = 0
                 self.animation_cooldown = self.animation_cooldown // 4
-                self.update_action('destroy')
                 sfx.play()
 
     def shoot(self, *args):

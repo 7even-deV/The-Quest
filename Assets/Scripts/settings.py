@@ -18,9 +18,9 @@ FPS = 60
 LEVEL = 1
 SURGE_NUM = 1
 
-enemy_select = 0
+enemy_select = 1
 enemy_dict = {
-    'scale' : [2, 1],
+    'scale' : [2, 2],
     'ammo'  : [100, 1],
     'load'  : [0, 0],
     'exp'   : [20, 10],

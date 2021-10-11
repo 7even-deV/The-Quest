@@ -35,8 +35,8 @@ class Menu(Scene):
 
     def __init__(self, screen):
         super().__init__(screen)
-        self.symbol    = Icon(self.screen, 'symbol', center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//1.47))
-        self.spaceship = Icon(self.screen, 'spaceship', center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2.5))
+        self.symbol    = Icon(self.screen, 'symbol', 1.5, center=(SCREEN_WIDTH//1.8, SCREEN_HEIGHT//1.39))
+        self.spaceship = Icon(self.screen, 'spaceships', 4, center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2.5))
         self.statue = pygame.image.load(statue_img).convert_alpha()
 
         # Sounds fx
@@ -49,7 +49,11 @@ class Menu(Scene):
         # Create menu timer
         self.menu_timer = Timer(FPS)
 
-    def main_loop(self, select, level, score):
+    def main_loop(self, select, model, level, score):
+        vol = self.volume()
+        confirm = False
+        model = 0
+
         run = True
         while run:
             # Limit frames per second
@@ -63,40 +67,80 @@ class Menu(Scene):
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT: # Back select
-                        self.portal_loop_fx.play()
+                        if not confirm:
+                            self.symbol.trigger_effect(True)
+                            self.portal_loop_fx.play()
+                        else:
+                            self.spaceship.trigger_effect(True)
+                            self.select_loop_fx.play()
 
-                        # self.select_fx.play()
                     if event.key == pygame.K_RIGHT: # Next select
+                        if not confirm:
+                            self.symbol.trigger_effect(True)
+                            self.portal_loop_fx.play()
+                        else:
+                            self.spaceship.trigger_effect(True)
+                            self.select_loop_fx.play()
 
-                        self.portal_loop_fx.play()
-                        # self.select_fx.play()
+                    if event.key == pygame.K_SPACE: # Turnback select
+                        if not confirm:
+                            pass
+                        else:
+                            confirm = False
+                            model = 0
+                            self.select_fx.play()
+                    if event.key == pygame.K_RETURN: # Play game
+                        if not confirm:
+                            confirm = True
+                            self.start_fx.play()
+                        else:
+                            run = False
+                            self.start_fx.play()
 
-                    if event.key == pygame.K_SPACE: # Play game
-                        run = False
-                        self.start_fx.play()
-                    if event.key == pygame.K_RETURN: # Show record
-                        pass
+                    if event.key == pygame.K_UP:
+                        if self.volume() < 1.0: # Turn up the volume
+                            vol = self.volume(+ 0.1)
+                            pygame.mixer.music.set_volume(vol)
+                            self.select_fx.play()
+
+                    if event.key == pygame.K_DOWN:
+                        if self.volume() > 0.0: # Turn down the volume
+                            vol = self.volume(- 0.1)
+                            pygame.mixer.music.set_volume(vol)
+                            self.select_fx.play()
+
                     if event.key == pygame.K_ESCAPE: # Quit game
                         exit()
 
                 # keyboard release
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT: # Back select
-                        if select > 0:
-                            select -= 1
-                        else: select = 2
-                        self.select_fx.play()
+                        if not confirm:
+                            if select > 0:
+                                select -= 1
+                            else: select = 2
+                            self.symbol.trigger_effect(False)
+                            self.select_fx.play()
+                        else:
+                            if model > 0:
+                                model -= 1
+                            else: model = 5
+                            self.spaceship.trigger_effect(False)
+                            self.confirm_fx.play()
 
                     if event.key == pygame.K_RIGHT: # Next select
-                        if select < 2:
-                            select += 1
-                        else: select = 0
-                        self.select_fx.play()
-
-                    if event.key == pygame.K_UP: # Moving up
-                        self.player.moving_up = False
-                    if event.key == pygame.K_DOWN: # Moving down
-                        self.player.moving_down = False
+                        if not confirm:
+                            if select < 2:
+                                select += 1
+                            else: select = 0
+                            self.symbol.trigger_effect(False)
+                            self.select_fx.play()
+                        else:
+                            if model < 5:
+                                model += 1
+                            else: model = 0
+                            self.spaceship.trigger_effect(False)
+                            self.confirm_fx.play()
 
             # Clear screen and set background color
             self.screen.fill(COLOR('ARCADE'))
@@ -105,11 +149,12 @@ class Menu(Scene):
 
             self.screen.blit(self.statue, (0, SCREEN_HEIGHT//4))
 
-            self.symbol.update(select)
-            self.spaceship.update(select)
-
             self.symbol.draw()
-            self.spaceship.draw()
+            if not confirm:
+                self.symbol.update(select, model)
+            else:
+                self.spaceship.update(select, model)
+                self.spaceship.draw()
 
             # Limit delay without event activity
             if self.menu_timer.countdown(1, True):
@@ -118,7 +163,7 @@ class Menu(Scene):
             # Update screen
             pygame.display.update()
 
-        return select, level, score
+        return select, model, level, score
 
 
 class Game(Scene):
@@ -199,18 +244,18 @@ class Game(Scene):
 
             self.meteor_list.append(temp_list)
 
-    def process_data(self, select, level, score):
+    def process_data(self, select, model, level, score):
         # Create sprites
         self.meteor_surge(level, SURGE_NUM)
         self.meteor_list_copy = self.meteor_list.copy()
-        self.player = Player(self.screen, select, score, 2, level*100, level, self.group_list)
+        self.player = Player(self.screen, select, model, score, 2, level*100, level, self.group_list)
         self.enemy_create(level)
         # Create game timer
         self.game_timer = Timer(FPS)
 
-    def main_loop(self, select, level, score):
+    def main_loop(self, select, model, level, score):
         if level > 1: self.reset_level()
-        self.process_data(select, level, score)
+        self.process_data(select, model, level, score)
         vol = self.volume()
         pause = False
         restart = False
@@ -416,7 +461,7 @@ class Game(Scene):
             # Update screen
             pygame.display.update()
 
-        return select, level, self.player.score
+        return select, model, level, self.player.score
 
 
 class Record(Scene):
@@ -430,7 +475,7 @@ class Record(Scene):
         # Create record timer
         self.record_timer = Timer(FPS)
 
-    def main_loop(self, select, level, score):
+    def main_loop(self, select, model, level, score):
         run = True
         while run:
             # Limit frames per second
@@ -468,4 +513,4 @@ class Record(Scene):
 
         self.logo_y = SCREEN_HEIGHT
 
-        return select, level, score
+        return select, model, level, score

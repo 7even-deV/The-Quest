@@ -8,8 +8,8 @@ from .weapons import Bullet, Missile
 
 class Player(Sprite_sheet):
 
-    def __init__(self, screen, select, score, speed, ammo, load, *args, **kwargs):
-        player_img, player_action_dict = player_select_function(select)
+    def __init__(self, screen, select, model, score, speed, ammo, load, *args, **kwargs):
+        player_img, player_action_dict = player_select_function(select, model)
         super().__init__(player_img)
         self.screen = screen
         self.select = select

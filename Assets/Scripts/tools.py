@@ -193,7 +193,7 @@ class Canvas(pygame.sprite.Sprite):
 
 class Icon(Sprite_sheet):
 
-    def __init__(self, screen, icon_type, **kwargs):
+    def __init__(self, screen, icon_type, scale=4, **kwargs):
         icon_img, icon_type_dict = icon_type_function(icon_type)
         super().__init__(icon_img)
         self.screen = screen
@@ -203,17 +203,32 @@ class Icon(Sprite_sheet):
         self.image = self.animation_dict[self.action][self.frame_index]
         # Get icon rect
         self.rect = self.image.get_rect(**kwargs)
+        self.rect.width  = self.rect.width  // 4 * scale
+        self.rect.height = self.rect.height // 4 * scale
 
-    def update(self, select):
+    def update(self, select, model):
         # Update player events
+        self.icon_select(select, model)
         self.update_animation()
-        self.icon_select(select)
 
-    def icon_select(self, select):
+    def icon_select(self, select, model):
         # Select icon type
         if select == 0:
-            self.update_action('dps')
+            self.update_action(f'dps_{model+1}')
         if select == 1:
-            self.update_action('tank')
+            self.update_action(f'tank_{model+1}')
         if select == 2:
-            self.update_action('heal')
+            self.update_action(f'heal_{model+1}')
+
+    def trigger_effect(self, active):
+        # Make activation effect
+        if active:
+            self.rect.x -= 2
+            self.rect.y -= 2
+            self.rect.width += 4
+            self.rect.height += 4
+        else:
+            self.rect.x += 2
+            self.rect.y += 2
+            self.rect.width -= 4
+            self.rect.height -= 4

@@ -1,5 +1,8 @@
 import pygame, random
 
+from .manager import planet_img, planet_dict
+from .tools import Sprite_sheet
+
 
 class Foreground():
 
@@ -93,3 +96,24 @@ class Farground():
             if pos[1] > self.screen_height:
                 pos[0] = random.randint(0, self.screen_width)
                 pos[1] = 0
+
+
+class Planet(Sprite_sheet):
+
+    def __init__(self, screen, **kwargs):
+        super().__init__(planet_img)
+        self.screen = screen
+
+        self.create_animation(700, 400, planet_dict)
+        self.image = self.animation_dict[self.action][self.frame_index]
+        self.rect  = self.image.get_rect(**kwargs)
+
+        self.flip_y = True
+
+    def update(self):
+        self.update_action('planet_1')
+        self.update_animation()
+        self.draw()
+
+        if self.rect.top < 0:
+            self.rect.y += 0.0001

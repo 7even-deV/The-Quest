@@ -240,7 +240,7 @@ class Enemy(Sprite_sheet):
 
             elif self.direction_x == -1:
                 self.ai_moving_left = not self.ai_moving_right
-                self.rotate = -90
+                self.rotate = 90
                 if self.limit_left:
                     self.ai_moving_left = False
                     self.direction_x = 0

@@ -97,6 +97,13 @@ meteor_action_dict = {
     'turn_r': (8, 4, 5, 1),
 }
 
+
+planet_img = 'Assets/Images/planet.jpg'
+planet_dict = {
+    'planet_1': (1, 1, 1, 1),
+}
+
+
 explosion_0_img = 'Assets/Images/explosion_0.png'
 explosion_1_img = 'Assets/Images/explosion_1.png'
 explosion_2_img = 'Assets/Images/explosion_2.png'

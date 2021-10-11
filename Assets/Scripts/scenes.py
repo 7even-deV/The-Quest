@@ -3,7 +3,7 @@ import pygame
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FONTS, FPS, LOGO, COLOR, SURGE_NUM, enemy_select
 from .manager import statue_img, bg_img, game_over_img, load_music, load_sound
 from .tools import Timer, Canvas, Icon
-from .environment import Foreground, Background, Farground
+from .environment import Foreground, Background, Farground, Planet
 from .obstacles import Meteor
 from .players import Player
 from .enemies import Enemy
@@ -172,6 +172,7 @@ class Game(Scene):
         super().__init__(screen)
         self.bg = Background(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, bg_img)
         self.fg  = Farground(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, 50)
+        self.planet = Planet(self.screen, midbottom=(SCREEN_WIDTH//2, 0))
 
         self.lives_view     = Canvas(size=20, color=COLOR('YELLOW'), letter_f=FONTS[3])
         self.health_view    = Canvas(size=15, y=35, letter_f=FONTS[3])
@@ -282,10 +283,12 @@ class Game(Scene):
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
+                        if not self.player.win:
                             self.player.moving_left = True # Moving left
                             self.move_fx.play()
 
                     if event.key == pygame.K_RIGHT:
+                        if not self.player.win:
                             self.player.moving_right = True # Moving right
                             self.move_fx.play()
 
@@ -294,7 +297,7 @@ class Game(Scene):
                             vol = self.volume(+ 0.1)
                             pygame.mixer.music.set_volume(vol)
                             self.select_fx.play()
-                        else:
+                        elif not self.player.win:
                             self.player.moving_up = True # Moving up
                             self.move_fx.play()
 
@@ -303,19 +306,19 @@ class Game(Scene):
                             vol = self.volume(- 0.1)
                             pygame.mixer.music.set_volume(vol)
                             self.select_fx.play()
-                        else:
+                        elif not self.player.win:
                             self.player.moving_down = True # Moving down
                             self.move_fx.play()
 
                     if event.key == pygame.K_SPACE: # Turbo
-                        if self.player.alive:
+                        if self.player.alive and not self.player.win:
                             self.player.turbo = True
                             self.turbo_fx.play()
                         else: restart = True
                     if event.key == pygame.K_r: # Shoot bullets
-                        shoot = True
+                        if not self.player.win: shoot = True
                     if event.key == pygame.K_e: # Throw missiles
-                        throw = True
+                        if not self.player.win: throw = True
 
                     if event.key == pygame.K_RETURN: # Pause and Settings
                         if pause:
@@ -410,17 +413,20 @@ class Game(Scene):
                 self.bg.draw()
                 self.fg.draw()
 
-                self.player.check_collision()
+                if self.player.win: self.planet.update()
+                else: self.planet.rect.y = 0
+
+                if not self.player.win: self.player.check_collision()
                 self.player.update()
                 self.player.draw()
 
                 for meteor in self.meteor_group:
-                    meteor.check_collision(self.player, self.explosion_fx)
+                    if not self.player.win: meteor.check_collision(self.player, self.explosion_fx)
                     meteor.update(self.player.turbo)
                     meteor.draw()
 
                 for enemy in self.enemy_group:
-                    enemy.check_collision(self.player, self.explosion_fx)
+                    if not self.player.win: enemy.check_collision(self.player, self.explosion_fx)
                     enemy.update()
                     enemy.draw()
 
@@ -436,17 +442,21 @@ class Game(Scene):
                 pygame.draw.rect(self.screen, COLOR('ARCADE'), (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT//10))
                 pygame.draw.line(self.screen, COLOR('SILVER'), (0, SCREEN_HEIGHT//10), (SCREEN_WIDTH, SCREEN_HEIGHT//10), 4)
 
-                # Level countdown
-                if self.game_timer.countdown(level, self.player.turbo, True):
-                    run = False
-                    level += 1
-                    self.win_fx.play()
-
-                elif self.player.health <= 0:
+                if self.player.health <= 0:
                     run = False
                     self.player.lives -= 1
                     self.player.score = 0
                     self.game_over_fx.play()
+
+                # Level countdown
+                elif not self.player.win and self.game_timer.countdown(level, self.player.turbo, True):
+                    self.game_timer.text_time = 0
+                    self.player.win = True
+                    self.win_fx.play()
+
+                elif self.player.win and self.player.auto_movement():
+                    level += 1
+                    run = False
 
                 self.lives_view.text     = f"Lives: {self.player.lives}"
                 self.health_view.text    = f"Health: {self.player.health}"

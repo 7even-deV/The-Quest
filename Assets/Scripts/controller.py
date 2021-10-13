@@ -26,15 +26,19 @@ class Controller():
         model = 0
         level = LEVEL
         score = 0
+
         # Main loop
         while True:
             # Manage each scene
             self.scene_caption(i)
             self.scene_list[i].scene_music(i, 0.5)
-            select, model, level, score = self.scene_list[i].main_loop(select, model, level, score)
+            select, model, level, score, turnback = self.scene_list[i].main_loop(select, model, level, score)
 
             # Cycle through each scene until reset to 0
-            i = (i + 1) % len(self.scene_list)
+            if turnback:
+                i = (i - 1) % len(self.scene_list)
+            else:
+                i = (i + 1) % len(self.scene_list)
 
     def scene_caption(self, index):
         pygame.display.set_caption(CAPTION[0] + CAPTION[1][index])

@@ -7,6 +7,7 @@ from .environment import Foreground, Background, Farground, Planet
 from .obstacles import Meteor
 from .players import Player
 from .enemies import Enemy
+from .database import Database
 
 
 class Scene():
@@ -15,7 +16,27 @@ class Scene():
         self.screen = screen # Parameterize the screen for all scenes
         self.clock  = pygame.time.Clock() # Manage screen refresh rate
 
-        self.highscore = 0
+        self.db = Database()
+        self.username = 'Seven'
+        self.score = 0
+        self.highscore = self.load_data()
+
+    def load_data(self):
+        try:
+            highscore = self.db.read_data(self.username)[0][2]
+        except: highscore = 0
+
+        if self.score > highscore:
+            highscore = self.score
+            self.new_highscore = True
+        else:
+            self.new_highscore = False
+
+        self.db.update_data(self.username, self.score, highscore)
+
+        top_ranking = self.db.read_data('highscore', 3)
+
+        return highscore, top_ranking
 
     def scene_music(self, index, volume):
         pygame.mixer.music.load(load_music(index))
@@ -53,6 +74,7 @@ class Menu(Scene):
         vol = self.volume()
         confirm = False
         model = 0
+        turnback = False
 
         run = True
         while run:
@@ -84,7 +106,8 @@ class Menu(Scene):
 
                     if event.key == pygame.K_SPACE: # Turnback select
                         if not confirm:
-                            pass
+                            turnback = True
+                            run = False
                         else:
                             confirm = False
                             model = 0
@@ -163,7 +186,7 @@ class Menu(Scene):
             # Update screen
             pygame.display.update()
 
-        return select, model, level, score
+        return select, model, level, score, turnback
 
 
 class Game(Scene):
@@ -179,7 +202,7 @@ class Game(Scene):
         self.ammo_load_view = Canvas(size=15, y=50, letter_f=FONTS[3])
         self.level_view     = Canvas(size=20, center=True, color=COLOR('GREEN'), letter_f=FONTS[3])
         self.timer_view     = Canvas(size=22, center=True, y=SCREEN_HEIGHT*0.06, letter_f=FONTS[1])
-        self.highscore_view = Canvas(size=15, right_text=True, color=COLOR('RED'), letter_f=FONTS[3])
+        self.highscore_view = Canvas(size=18, right_text=True, color=COLOR('RED'), letter_f=FONTS[3])
         self.score_view     = Canvas(size=22, y=40, right=True, letter_f=FONTS[3])
 
         self.paused         = Canvas(size=80, center=True, y=SCREEN_HEIGHT//3, color=COLOR('RED'))
@@ -241,16 +264,16 @@ class Game(Scene):
             temp_list = []
             # Increase the number of meteors per surge
             for _ in range((number + level) * 100 // 4):
-                temp_list.append(Meteor(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT))
+                temp_list.append(Meteor(self.screen, self.player, SCREEN_WIDTH, SCREEN_HEIGHT))
 
             self.meteor_list.append(temp_list)
 
     def process_data(self, select, model, level, score):
         # Create sprites
-        self.meteor_surge(level, SURGE_NUM)
-        self.meteor_list_copy = self.meteor_list.copy()
         self.player = Player(self.screen, select, model, score, 2, level*100, level, self.group_list)
         self.enemy_create(level)
+        self.meteor_surge(level, SURGE_NUM)
+        self.meteor_list_copy = self.meteor_list.copy()
         # Create game timer
         self.game_timer = Timer(FPS)
 
@@ -269,6 +292,9 @@ class Game(Scene):
         shoot_bullets = False
         throw = False
         throw_missiles = False
+
+        highscore = self.load_data()
+        turnback = False
 
         run = True
         while run:
@@ -326,6 +352,7 @@ class Game(Scene):
                         else: pause = True
                         self.pause_fx.play()
                     if event.key == pygame.K_ESCAPE: # Exit game
+                        turnback = True
                         run = False
                         self.game_over_fx.play()
 
@@ -413,21 +440,23 @@ class Game(Scene):
                 self.bg.draw()
                 self.fg.draw()
 
-                if self.player.win: self.planet.update()
-                else: self.planet.rect.y = 0
+                if self.player.win:
+                    self.planet.update()
+                    if self.planet.rect.top < 0:
+                        self.planet.rect.y += 0.0001
 
-                if not self.player.win: self.player.check_collision()
+                # self.player.check_collision()
                 self.player.update()
                 self.player.draw()
 
                 for meteor in self.meteor_group:
-                    if not self.player.win: meteor.check_collision(self.player, self.explosion_fx)
+                    meteor.check_collision(self.explosion_fx)
                     meteor.update(self.player.turbo)
                     meteor.draw()
 
                 for enemy in self.enemy_group:
-                    if not self.player.win: enemy.check_collision(self.player, self.explosion_fx)
                     enemy.update()
+                    enemy.check_collision(self.explosion_fx)
                     enemy.draw()
 
                 self.bullet_group.update()
@@ -463,15 +492,18 @@ class Game(Scene):
                 self.ammo_load_view.text = f"ammo: {self.player.ammo} | load: {self.player.load}"
                 self.level_view.text     = f"Level - {level} - "
                 self.timer_view.text     = f"Time: {self.game_timer.text_time}"
-                self.highscore_view.text = f"Highscore: {self.highscore}"
                 self.score_view.text     = f"Score: {self.player.score}"
+                if self.player.score > highscore[0]:
+                    self.highscore_view.x = SCREEN_WIDTH-200
+                    self.highscore_view.text = "New  Highscore"
+                else: self.highscore_view.text = f"Highscore: {highscore[0]}"
                 self.ui_bar.update()
                 self.ui_bar.draw(self.screen)
 
             # Update screen
             pygame.display.update()
 
-        return select, model, level, self.player.score
+        return select, model, level, self.player.score, turnback
 
 
 class Record(Scene):
@@ -482,10 +514,29 @@ class Record(Scene):
         self.logo_x = (SCREEN_WIDTH - LOGO) // 2
         self.logo_y = SCREEN_HEIGHT
 
+        self.text_score = Canvas(size=24, center=True, y=SCREEN_HEIGHT//3, letter_f=FONTS[1])
+        self.view_ranking_0 = Canvas(size=22, left=True, y=SCREEN_HEIGHT//2.6, letter_f=FONTS[1], color=COLOR('BLACK'))
+        self.view_ranking_1 = Canvas(size=22, left=True, y=SCREEN_HEIGHT//2.4, letter_f=FONTS[1], color=COLOR('BLACK'))
+        self.view_ranking_2 = Canvas(size=22, left=True, y=SCREEN_HEIGHT//2.2, letter_f=FONTS[1], color=COLOR('BLACK'))
+        self.text_continue = Canvas(size=44, center=True, y=SCREEN_HEIGHT//1.7, color=COLOR('GREEN'))
+        self.text_replay = Canvas(size=40, center=True, y=SCREEN_HEIGHT//1.5, color=COLOR('YELLOW'))
+        self.text_exit = Canvas(size=34, center=True, y=SCREEN_HEIGHT//1.22, color=COLOR('RED'))
+
+        self.text_continue.text = "Press <SPC> to Continue"
+        self.text_replay.text = "Press <ENTER> to Menu"
+        self.text_exit.text = "Press <ESC> to Exit"
+
+        self.text_group = pygame.sprite.Group()
+        self.text_group.add(self.text_score, self.view_ranking_0, self.view_ranking_1, self.view_ranking_2,self.text_replay, self.text_continue, self.text_exit)
+
         # Create record timer
         self.record_timer = Timer(FPS)
 
     def main_loop(self, select, model, level, score):
+        highscore, top_highscore = self.load_data()
+        color = 0
+        turnback = False
+
         run = True
         while run:
             # Limit frames per second
@@ -499,7 +550,8 @@ class Record(Scene):
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE: # Restart game
-                        pass
+                        turnback = True
+                        run = False
                     if event.key == pygame.K_RETURN: # Show menu
                         run = False
                     if event.key == pygame.K_ESCAPE: # Quit game
@@ -510,9 +562,26 @@ class Record(Scene):
 
             ''' --- AREA TO UPDATE AND DRAW --- '''
 
+            if self.new_highscore:
+                self.text_score.text = "NEW HIGH SCORE"
+            else: self.text_score.text = "TOP HIGH SCORE"
+
+            self.view_ranking_0.text = f"Ranking 1: {top_highscore[0][0]} -> {top_highscore[0][2]}"
+            self.view_ranking_1.text = f"Ranking 2: {top_highscore[1][0]} -> {top_highscore[1][2]}"
+            self.view_ranking_2.text = f"Ranking 3: {top_highscore[2][0]} -> {top_highscore[2][2]}"
+
             if self.logo_y > self.logo_x:
                 self.logo_y -= 2
+            elif color < 255: color += 1
+
+            self.view_ranking_0.color = ([color]*3)
+            self.view_ranking_1.color = ([color]*3)
+            self.view_ranking_2.color = ([color]*3)
+
             self.screen.blit(self.game_over_logo, (self.logo_x, self.logo_y))
+
+            self.text_group.update()
+            self.text_group.draw(self.screen)
 
             # Limit delay without event activity
             if self.record_timer.countdown(1, True):
@@ -523,4 +592,4 @@ class Record(Scene):
 
         self.logo_y = SCREEN_HEIGHT
 
-        return select, model, level, score
+        return select, model, level, score, turnback

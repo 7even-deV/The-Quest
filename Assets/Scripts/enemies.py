@@ -72,9 +72,9 @@ class Enemy(Sprite_sheet):
 
     def update(self):
         # Update enemy events
-        self.check_alive()
         self.ai()
         self.move()
+        self.check_alive()
         self.update_animation(self.animation_cooldown)
         # Update cooldown
         if self.shoot_cooldown > 0:
@@ -111,18 +111,18 @@ class Enemy(Sprite_sheet):
         self.rect.y += self.delta_y
 
     # Check if the collision with the player
-    def check_collision(self, other, sfx):
-        if not self.collide:
-            margin_width = other.rect.width // 4
-            margin_height = other.rect.height // 4
-            if self.rect.right >= other.rect.left + margin_width and self.rect.left <= other.rect.right - margin_width and \
-                self.rect.bottom >= other.rect.top + margin_height and self.rect.top <= other.rect.bottom - margin_height:
+    def check_collision(self, sfx):
+        if not self.collide and self.player.win:
+            margin_width = self.player.rect.width // 4
+            margin_height = self.player.rect.height // 4
+            if self.rect.right >= self.player.rect.left + margin_width and self.rect.left <= self.player.rect.right - margin_width and \
+                self.rect.bottom >= self.player.rect.top + margin_height and self.rect.top <= self.player.rect.bottom - margin_height:
                 self.collide = True
-                other.collide = True
-                other.rect.x += (self.delta_x - other.delta_x) * 2
-                other.rect.y += (self.delta_y - other.delta_y) * 2
-                other.score += 10
-                other.health -= 10
+                self.player.collide = True
+                self.player.rect.x += (self.delta_x - self.player.delta_x) * 2
+                self.player.rect.y += (self.delta_y - self.player.delta_y) * 2
+                self.player.score += 10
+                self.player.health -= 10
                 self.health -= 100
                 self.delta_x = self.delta_y = 0
                 self.animation_cooldown = self.animation_cooldown // 4

@@ -114,6 +114,3 @@ class Planet(Sprite_sheet):
         self.update_action('planet_1')
         self.update_animation()
         self.draw()
-
-        if self.rect.top < 0:
-            self.rect.y += 0.0001

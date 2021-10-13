@@ -19,3 +19,4 @@ Commit processing:
 15. Create function: ai types (class Enemy)
 16. Create select: types and models of spaceships (class Menu)
 17. Create function: auto-movement (class Player)
+18. Create class: Database (import sqlite3)

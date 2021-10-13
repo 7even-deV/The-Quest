@@ -163,24 +163,29 @@ class Canvas(pygame.sprite.Sprite):
     def update(self):
         self.image = self.font.render(self._text, True, self.color)
         self.rect = self.image.get_rect(x=self.x, y=self.y)
-        self.is_right_text()
-        self.is_right()
+        self.is_left()
         self.is_center()
+        self.is_right()
+        self.is_right_text()
 
     def _keys(self, key):
         return key in self.kwargs.keys() and self.kwargs[key]
 
-    def is_right_text(self):
-        if self._keys('right_text'):
-            self.x = SCREEN_WIDTH - (20 + len(self.text) * 12)
-
-    def is_right(self):
-        if self._keys('right'):
-            self.x = SCREEN_WIDTH - (20 + len(self.text) * 15)
+    def is_left(self):
+        if self._keys('left'):
+            self.x = SCREEN_WIDTH // 4
 
     def is_center(self):
         if self._keys('center'):
             self.x = SCREEN_WIDTH // 2 - self.rect.w // 2
+
+    def is_right(self):
+        if self._keys('right'):
+            self.x = SCREEN_WIDTH - (20 + len(self.text) * 10)
+
+    def is_right_text(self):
+        if self._keys('right_text'):
+            self.x = SCREEN_WIDTH - (20 + len(self.text) * 9)
 
     @property
     def text(self):

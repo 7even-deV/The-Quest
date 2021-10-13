@@ -1,3 +1,17 @@
+DB_FILE = 'Assets/Data/BBDD.db'
+TBL_NAME = 'GAMMER'
+SQL = '''(
+    username TEXT PRIMARY KEY,
+    score INTEGER,
+    highscore INTEGER
+)'''
+MEMORY_LIST = [
+    ("Seven", 1000, 1986),
+    ("Luke", 500, 1980),
+    ("Han", 250, 1977)
+]
+
+
 logo_icon = 'Assets/Images/logo_7z.ico'
 
 statue_img = 'Assets/Images/statue.png'

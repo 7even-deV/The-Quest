@@ -43,7 +43,7 @@ class Bullet(Sprite_sheet):
         if not self.collide:
             # Check collision with player
             if pygame.sprite.spritecollide(self.player, self.bullet_group, False):
-                if self.player.alive:
+                if self.player.alive and not self.player.win:
                     self.collide = True
                     self.player.collide = True
                     self.player.health -= 10

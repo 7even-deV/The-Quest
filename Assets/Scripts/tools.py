@@ -1,7 +1,7 @@
 import pygame
 
-from .manager import icon_type_function
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FONTS, COLOR
+from .manager import icon_type_function, font_function, keyboard_tuple
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, COLOR
 
 
 class Timer():
@@ -152,11 +152,11 @@ class Canvas(pygame.sprite.Sprite):
 
         self.x = self._keys('x') or self.is_right() or 20
         self.y = self._keys('y') or 10
-        self.letter_f = self._keys('letter_f') or FONTS[0]
+        self.letter_f = self._keys('letter_f') or 0
         self.size = self._keys('size') or 28
         self.color = self._keys('color') or COLOR('WHITE')
 
-        self.font = pygame.font.Font(f"Assets/Fonts/{self.letter_f}.ttf", self.size)
+        self.font = pygame.font.Font(font_function(self.letter_f), self.size)
         self.image = self.font.render(self._text, True, self.color)
         self.rect = self.image.get_rect(x=self.x, y=self.y)
 
@@ -194,6 +194,43 @@ class Canvas(pygame.sprite.Sprite):
     @text.setter
     def text(self, value):
         self._text = str(value)
+
+    def draw(self, screen):
+        screen.blit(self.image, (self.x*0.5, self.y*0.5))
+
+
+class Keyboard(pygame.sprite.Sprite):
+
+    def __init__(self, screen, letter_font=1, size=50, color=COLOR('WHITE')):
+        super().__init__()
+        self.screen = screen
+        self.letter_font = letter_font
+        self.color = color
+        self.size = size
+
+        self.font = pygame.font.Font(font_function(self.letter_font), self.size)
+        self.keyboard_tuple = keyboard_tuple
+
+        self.x = SCREEN_WIDTH
+        self.y = SCREEN_HEIGHT
+
+    def update(self, index):
+        self.text = self.font.render(self.keyboard_tuple[index], True, self.color)
+        return self.keyboard_tuple[index]
+
+    def trigger_effect(self, active):
+        # Make activation effect
+        if active:
+            self.x += 2
+            self.y += 2
+            self.size -= 4
+        else:
+            self.x -= 2
+            self.y -= 2
+            self.size += 4
+
+    def draw(self):
+        self.screen.blit(self.text, (self.x*0.5, self.y*0.5))
 
 
 class Icon(Sprite_sheet):
@@ -237,3 +274,22 @@ class Icon(Sprite_sheet):
             self.rect.y += 2
             self.rect.width -= 4
             self.rect.height -= 4
+
+
+class HealthBar():
+    def __init__(self, screen, health, max_health):
+        self.screen = screen
+        self.health = health
+        self.max_health = max_health
+
+        self.x = SCREEN_WIDTH
+        self.y = SCREEN_HEIGHT
+
+    def draw(self, health):
+        # Update with new health
+        self.health = health
+        # Calculate health ratio
+        ratio = self.health / self.max_health
+        pygame.draw.rect(self.screen, COLOR('BLACK'), (self.x*0.04 - 2, self.y*0.04 - 2, self.x*0.25, self.y*0.02))
+        pygame.draw.rect(self.screen, COLOR('RED'),   (self.x*0.04, self.y*0.04, self.x*0.2, self.y*0.02))
+        pygame.draw.rect(self.screen, COLOR('GREEN'), (self.x*0.04, self.y*0.04, self.x*0.2 * ratio, self.y*0.02))

@@ -3,7 +3,7 @@ import pygame
 from . import __author__
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, CAPTION, LEVEL
 from .manager import logo_icon
-from .scenes import Menu, Game, Record
+from .scenes import Main, Menu, Game, Record
 
 
 class Controller():
@@ -18,10 +18,11 @@ class Controller():
         pygame.display.set_icon(pygame.image.load(logo_icon))
 
         # List of all scenes
-        self.scene_list = [Menu(self.screen), Game(self.screen), Record(self.screen)]
+        self.scene_list = [Main(self.screen), Menu(self.screen), Game(self.screen), Record(self.screen)]
 
     def launch_manager(self):
         i = 0
+        username = ''
         select = 0
         model = 0
         level = LEVEL
@@ -32,7 +33,7 @@ class Controller():
             # Manage each scene
             self.scene_caption(i)
             self.scene_list[i].scene_music(i, 0.5)
-            select, model, level, score, turnback = self.scene_list[i].main_loop(select, model, level, score)
+            username, select, model, level, score, turnback = self.scene_list[i].main_loop(username, select, model, level, score)
 
             # Cycle through each scene until reset to 0
             if turnback:

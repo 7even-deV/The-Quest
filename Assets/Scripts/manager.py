@@ -6,15 +6,33 @@ SQL = '''(
     highscore INTEGER
 )'''
 MEMORY_LIST = [
-    ("Seven", 1000, 1986),
-    ("Luke", 500, 1980),
-    ("Han", 250, 1977)
+    ("Seven-z01", 171, 1986),
+    ("Default", 0, 0),
+    ("", 0, 0),
 ]
+
+
+# Define fonts
+font_tuple = ("CabinSketch", "Fixedsys500c", "LibreFranklin", "PoetsenOne")
+
+def font_function(i_font):
+    return f'Assets/Fonts/{font_tuple[i_font]}.ttf'
+
+keyboard_tuple = (
+    'a', 'b', 'c', 'd', 'e', 'f',
+    'g', 'h', 'i', 'j', 'k', 'l',
+    'm', 'n', 'o', 'p', 'q', 'r',
+    's', 't', 'u', 'v', 'w', 'x',
+    'y', 'z', '1', '2', '3', '4',
+    '5', '6', '7', '8', '9', '0'
+)
 
 
 logo_icon = 'Assets/Images/logo_7z.ico'
 
 statue_img = 'Assets/Images/statue.png'
+
+lives_img = 'Assets/Images/lives.png'
 
 
 def icon_type_function(i_type):

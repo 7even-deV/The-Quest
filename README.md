@@ -20,3 +20,4 @@ Commit processing:
 16. Create select: types and models of spaceships (class Menu)
 17. Create function: auto-movement (class Player)
 18. Create class: Database (import sqlite3)
+19. Create class: Main & Keyboard (class Scene)

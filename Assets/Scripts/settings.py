@@ -1,9 +1,6 @@
 # Define caption
 CAPTION = ('T h e   Q u e s t   -   ',
-('M e n u', 'G a m e', 'R e c o r d'))
-
-# Define fonts
-FONTS = ("CabinSketch", "Fixedsys500c", "LibreFranklin", "PoetsenOne")
+('M a i n', 'M e n u', 'G a m e', 'R e c o r d'))
 
 # Screen size
 SCREEN_WIDTH = 600

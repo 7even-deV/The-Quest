@@ -3,7 +3,7 @@ import pygame
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, LOGO, COLOR, SURGE_NUM, enemy_select
 from .manager import statue_img, bg_img, lives_img, game_over_img, load_music, load_sound
 from .tools import Timer, Keyboard, Canvas, Icon, HealthBar
-from .environment import Foreground, Background, Farground, Planet
+from .environment import Foreground, Background, Farground, Planet, Portal
 from .obstacles import Meteor
 from .players import Player
 from .enemies import Enemy
@@ -27,9 +27,9 @@ class Scene():
 
         return username_list
 
-    def load_data(self, username, score):
+    def load_data(self, username, select, model, level, score, highscore):
         try:
-            highscore = self.db.read_data(username)[0][2]
+            highscore = self.db.read_data(username)[0][-1]
         except: highscore = 0
 
         if score > highscore:
@@ -37,7 +37,7 @@ class Scene():
             new_highscore = True
         else: new_highscore = False
 
-        self.db.update_data(username, score, highscore)
+        self.db.update_data(username, highscore)
 
         return new_highscore
 
@@ -74,8 +74,11 @@ class Main(Scene):
 
     def main_loop(self, username, select, model, level, score):
         vol = self.volume()
+        create = False
         confirm = False
         user = 0
+        error = False
+        msg = ''
         turnback = False
 
         username_list = self.load_username()
@@ -121,12 +124,26 @@ class Main(Scene):
                         self.select_fx.play()
 
                     if event.key == pygame.K_SPACE: # Turnback select
-                        username += char
+                        if create:
+                            username += char
+                        else :
+                            turnback = True
+                            run = False
 
                     if event.key == pygame.K_RETURN: # Confirm
                         if not confirm and username_list[user] == 'New User':
-                            confirm = True
-                        else: run = False
+                            if create:
+                                if username in username_list[1:]:
+                                    msg = 'username already exist'
+                                else:
+                                    if len(username_list) > 1:
+                                        self.db.delete_data(username_list[1])
+                                    self.db.create_data(username)
+                                    run = False
+                            create = True
+                        else:
+                            username = username_list[user]
+                            run = False
                         self.confirm_fx.play()
 
                     if event.key == pygame.K_ESCAPE: # Quit game
@@ -151,7 +168,7 @@ class Main(Scene):
 
             ''' --- AREA TO UPDATE AND DRAW --- '''
 
-            if not confirm:
+            if not create and not confirm:
                 self.user.text = username_list[user]
                 self.user.update()
                 self.user.draw(self.screen)
@@ -159,8 +176,9 @@ class Main(Scene):
             else:
                 char = self.keyboard.update(select)
                 self.keyboard.draw()
-
-                self.keyboard_view.text = username
+                if error:
+                    self.keyboard_view.text = msg
+                else: self.keyboard_view.text = username
                 self.keyboard_view.update()
                 self.keyboard_view.draw(self.screen)
 
@@ -172,8 +190,6 @@ class Main(Scene):
             # Update screen
             pygame.display.update()
 
-        self.db.create_data(username)
-
         return username, select, model, level, score, turnback
 
 
@@ -183,6 +199,7 @@ class Menu(Scene):
         super().__init__(screen)
         self.symbol    = Icon(self.screen, 'symbol', 1.5, center=(SCREEN_WIDTH//1.8, SCREEN_HEIGHT//1.39))
         self.spaceship = Icon(self.screen, 'spaceships', 4, center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2.5))
+        self.portal = Portal(self.screen, center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2.5))
         self.statue = pygame.image.load(statue_img).convert_alpha()
 
         # Sounds fx
@@ -297,6 +314,8 @@ class Menu(Scene):
 
             ''' --- AREA TO UPDATE AND DRAW --- '''
 
+            self.portal.update()
+            self.portal.draw()
             self.screen.blit(self.statue, (0, SCREEN_HEIGHT//4))
 
             self.symbol.draw()
@@ -326,8 +345,9 @@ class Game(Scene):
         self.planet = Planet(self.screen, midbottom=(SCREEN_WIDTH//2, 0))
 
         self.ammo_load_view = Canvas(size=15, y=50, letter_f=3)
-        self.level_view     = Canvas(size=20, center=True, color=COLOR('GREEN'), letter_f=3)
-        self.timer_view     = Canvas(size=22, center=True, y=SCREEN_HEIGHT*0.06, letter_f=1)
+        self.username_view  = Canvas(size=18, center=True, y=-1, color=COLOR('GREEN'), letter_f=3)
+        self.level_view     = Canvas(size=18, center=True, y=SCREEN_HEIGHT*0.03, color=COLOR('GREEN'), letter_f=3)
+        self.timer_view     = Canvas(size=20, center=True, y=SCREEN_HEIGHT*0.06, letter_f=1)
         self.highscore_view = Canvas(size=18, right_text=True, color=COLOR('RED'), letter_f=3)
         self.score_view     = Canvas(size=22, y=40, right=True, letter_f=3)
 
@@ -346,7 +366,7 @@ class Game(Scene):
         self.meteor_list_copy = []
         self.group_list = [self.bullet_group, self.missile_group, self.enemy_group, self.meteor_group, self.explosion_group]
 
-        self.ui_bar.add(self.ammo_load_view, self.level_view, self.timer_view, self.highscore_view, self.score_view)
+        self.ui_bar.add(self.ammo_load_view, self.username_view, self.level_view, self.timer_view, self.highscore_view, self.score_view)
         self.settings.add(self.paused, self.vol_browse)
 
         # Sounds fx
@@ -406,7 +426,9 @@ class Game(Scene):
         self.game_timer = Timer(FPS)
 
     def main_loop(self, username, select, model, level, score):
-        if level > 1: self.reset_level()
+        self.reset_level()
+        username_data = self.db.read_data(username)
+        highscore = username_data[0][-1]
         self.process_data(select, model, level, score)
         vol = self.volume()
         pause = False
@@ -421,7 +443,6 @@ class Game(Scene):
         throw = False
         throw_missiles = False
 
-        highscore = self.db.read_data(username)[0][2]
         turnback = False
 
         run = True
@@ -622,7 +643,8 @@ class Game(Scene):
                 self.health_bar.draw(self.player.health)
 
                 self.ammo_load_view.text = f"ammo: {self.player.ammo} | load: {self.player.load}"
-                self.level_view.text     = f"Level - {level} - "
+                self.username_view.text  = f"- {username} -"
+                self.level_view.text     = f"Level - {level} -"
                 self.timer_view.text     = f"Time: {self.game_timer.text_time}"
                 self.score_view.text     = f"Score: {self.player.score}"
                 if self.player.score > highscore:
@@ -647,28 +669,36 @@ class Record(Scene):
         self.logo_x = (SCREEN_WIDTH - LOGO) // 2
         self.logo_y = SCREEN_HEIGHT
 
-        self.text_score = Canvas(size=24, center=True, y=SCREEN_HEIGHT//3, letter_f=1)
-        self.view_ranking_0 = Canvas(size=22, left=True, y=SCREEN_HEIGHT//2.6, letter_f=1, color=COLOR('BLACK'))
-        self.view_ranking_1 = Canvas(size=22, left=True, y=SCREEN_HEIGHT//2.4, letter_f=1, color=COLOR('BLACK'))
-        self.view_ranking_2 = Canvas(size=22, left=True, y=SCREEN_HEIGHT//2.2, letter_f=1, color=COLOR('BLACK'))
-        self.text_continue = Canvas(size=44, center=True, y=SCREEN_HEIGHT//1.7, color=COLOR('GREEN'))
-        self.text_replay = Canvas(size=40, center=True, y=SCREEN_HEIGHT//1.5, color=COLOR('YELLOW'))
-        self.text_exit = Canvas(size=34, center=True, y=SCREEN_HEIGHT//1.22, color=COLOR('RED'))
+        self.text_score = Canvas(size=24, center=True, y=SCREEN_HEIGHT//3, letter_f=3)
+        self.text_continue = Canvas(size=44, center=True, y=SCREEN_HEIGHT//1.7, letter_f=2, color=COLOR('GREEN'))
+        self.text_replay = Canvas(size=40, center=True, y=SCREEN_HEIGHT//1.5, letter_f=2, color=COLOR('YELLOW'))
+        self.text_exit = Canvas(size=34, center=True, y=SCREEN_HEIGHT//1.22, letter_f=2, color=COLOR('RED'))
 
         self.text_continue.text = "Press <SPC> to Continue"
         self.text_replay.text = "Press <ENTER> to Menu"
         self.text_exit.text = "Press <ESC> to Exit"
 
         self.text_group = pygame.sprite.Group()
-        self.text_group.add(self.text_score, self.view_ranking_0, self.view_ranking_1, self.view_ranking_2,self.text_replay, self.text_continue, self.text_exit)
+        self.text_group.add(self.text_score, self.text_replay, self.text_continue, self.text_exit)
 
         # Create record timer
         self.record_timer = Timer(FPS)
 
+    def reset_ranking(self):
+        top_ranking = self.db.read_data()
+        self.ranking_list = []
+        pos_y = 0.0
+        for user in range(len(top_ranking)):
+            temp_var = Canvas(size=20, x=SCREEN_WIDTH//2, y=SCREEN_HEIGHT*(0.1+pos_y), letter_f=1, color=COLOR('BLACK'))
+            temp_var.text = f"Ranking {user+1}: {top_ranking[user][0]} -> {top_ranking[user][-1]}"
+            pos_y += 0.1
+            self.ranking_list.append(temp_var)
+
     def main_loop(self, username, select, model, level, score):
-        new_highscore = self.load_data(username, score)
-        top_ranking = self.db.read_data('highscore', 3)
-        color = 0
+        new_highscore = self.load_data(username, select, model, level, score, score)
+        self.reset_ranking()
+        color_up = 0
+        color_down = 255
         turnback = False
 
         run = True
@@ -697,20 +727,24 @@ class Record(Scene):
             ''' --- AREA TO UPDATE AND DRAW --- '''
 
             if new_highscore:
-                self.text_score.text = "NEW HIGH SCORE"
-            else: self.text_score.text = "TOP HIGH SCORE"
+                self.text_score.text = "NEW  HIGH  SCORE"
+            else: self.text_score.text = "TOP  HIGH  SCORE"
 
-            self.view_ranking_0.text = f"Ranking 1: {top_ranking[0][0]} -> {top_ranking[0][2]}"
-            self.view_ranking_1.text = f"Ranking 2: {top_ranking[1][0]} -> {top_ranking[1][2]}"
-            self.view_ranking_2.text = f"Ranking 3: {top_ranking[2][0]} -> {top_ranking[2][2]}"
-
-            if self.logo_y > self.logo_x:
+            if self.logo_y > 0:
                 self.logo_y -= 2
-            elif color < 255: color += 1
+            else:
+                for ranking in self.ranking_list:
+                    if self.ranking_list[0].y < SCREEN_HEIGHT * 0.8:
+                        ranking.y += 0.5
+                    if ranking.y > SCREEN_HEIGHT * 0.25 and ranking.y < SCREEN_HEIGHT * 1.05:
+                        if color_up < 255: color_up += 1
+                        ranking.color = ([color_up]*3)
+                    else:
+                        if color_down > 0: color_down -= 1
+                        ranking.color = ([color_down]*3)
 
-            self.view_ranking_0.color = ([color]*3)
-            self.view_ranking_1.color = ([color]*3)
-            self.view_ranking_2.color = ([color]*3)
+                    ranking.update()
+                    ranking.draw(self.screen)
 
             self.screen.blit(self.game_over_logo, (self.logo_x, self.logo_y))
 

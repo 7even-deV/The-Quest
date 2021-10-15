@@ -1,15 +1,17 @@
 DB_FILE = 'Assets/Data/BBDD.db'
 TBL_NAME = 'GAMMER'
 SQL = '''(
-    username TEXT PRIMARY KEY,
-    score INTEGER,
-    highscore INTEGER
+    USERNAME text PRIMARY KEY,
+    STYLE integer,
+    MODEL integer,
+    LEVEL integer,
+    SCORE integer,
+    HIGHSCORE integer
 )'''
-MEMORY_LIST = [
-    ("Seven-z01", 171, 1986),
-    ("Default", 0, 0),
-    ("", 0, 0),
-]
+
+MEMORY_LIST = []
+for num in range(10):
+    MEMORY_LIST.append((f"Empty-{num}", 0, 0, 0, 0, 0))
 
 
 # Define fonts

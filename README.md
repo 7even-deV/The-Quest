@@ -21,3 +21,4 @@ Commit processing:
 17. Create function: auto-movement (class Player)
 18. Create class: Database (import sqlite3)
 19. Create class: Main & Keyboard (class Scene)
+20. Create function: reset-ranking (class Record)

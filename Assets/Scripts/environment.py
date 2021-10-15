@@ -114,3 +114,19 @@ class Planet(Sprite_sheet):
         self.update_action('planet_1')
         self.update_animation()
         self.draw()
+
+
+class Portal(Sprite_sheet):
+
+    def __init__(self, screen, **kwargs):
+        super().__init__('Assets/Images/portal.png')
+        self.screen = screen
+
+        self.create_animation(200, 200, {'loop': (5, 3, 1, 1)})
+        self.image = self.animation_dict[self.action][self.frame_index]
+        self.rect  = self.image.get_rect(**kwargs)
+
+    def update(self):
+        self.update_action('loop')
+        self.update_animation(50)
+        self.draw()

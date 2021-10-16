@@ -14,6 +14,42 @@ for num in range(10):
     MEMORY_LIST.append((f"Empty-{num}", 0, 0, 0, 0, 0))
 
 
+msg_dict = {
+    0 : "",
+    1 : "User exists",
+}
+
+
+button_img = 'Assets/Images/button.png'
+button_dict = {
+    'off' : (1, 1, 1, 1),
+    'on'  : (1, 1, 2, 1),
+}
+btn_text_list = [
+    [
+    "A c c o u n t",
+    "C o n f i g s",
+    "C r e d i t s",
+    "E x i t",
+    ],[
+    "N e w  U s e r",
+    "E d i t",
+    "D e l e t e",
+    "B a c k",
+    ],[
+    "N e w  U s e r",
+    "E d i t",
+    "D e l e t e",
+    "B a c k",
+    ],[
+    "N e w  U s e r",
+    "E d i t",
+    "D e l e t e",
+    "B a c k",
+    ]
+]
+
+
 # Define fonts
 font_tuple = ("CabinSketch", "Fixedsys500c", "LibreFranklin", "PoetsenOne")
 

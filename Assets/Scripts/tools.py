@@ -1,6 +1,6 @@
 import pygame
 
-from .manager import icon_type_function, font_function, keyboard_tuple
+from .manager import icon_type_function, button_img, button_dict, font_function, keyboard_tuple
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, COLOR
 
 
@@ -142,6 +142,70 @@ class Sprite_sheet(pygame.sprite.Sprite):
         image = pygame.transform.rotate(image, self.rotate)
         image.set_colorkey(False)
         self.screen.blit(image, self.rect)
+
+
+class Button(Sprite_sheet):
+    def __init__(self, text, letter=2, size=24, color=COLOR('BLACK'), **kwargs):
+        super().__init__(button_img)
+        self.create_animation(250, 75, button_dict)
+        self.image = self.animation_dict[self.action][self.frame_index]
+        self.rect  = self.image.get_rect(**kwargs)
+
+        self.text   = text
+        self.letter = letter
+        self.size   = size
+        self.color  = color
+
+        self.font = pygame.font.Font(font_function(self.letter), self.size)
+        self.font_render = self.font.render(self.text, True, self.color)
+        self.text_rect   = self.font_render.get_rect(**kwargs)
+        self.pos_x = self.text_rect.centerx - self.text_rect.width  // 2
+        self.pos_y = self.text_rect.centery - self.text_rect.height // 2
+
+        self.trigger = False
+
+    def update(self):
+        self.update_animation()
+        self.font = pygame.font.Font(font_function(self.letter), self.size)
+        self.font_render = self.font.render(self.text, True, self.color)
+
+    def select_effect(self, select):
+        # Make selection effect
+        if select:
+            self.update_action('on')
+            self.color = COLOR('WHITE')
+        else:
+            self.update_action('off')
+            self.color = COLOR('BLACK')
+
+    def active_effect(self, active):
+        # Make activation effect
+        if active:
+            self.rect.x += 2
+            self.rect.y += 2
+            self.rect.w -= 4
+            self.rect.h -= 4
+
+            self.color = COLOR('YELLOW')
+            self.pos_x += 3
+            self.pos_y += 1
+            self.size -= 1
+        else:
+            self.rect.x -= 2
+            self.rect.y -= 2
+            self.rect.w += 4
+            self.rect.h += 4
+
+            self.color = COLOR('WHITE')
+            self.pos_x -= 3
+            self.pos_y -= 1
+            self.size += 1
+
+    def draw(self, screen):
+        image = pygame.transform.scale(self.image, (self.rect.w * self.scale, self.rect.h * self.scale))
+        image.set_colorkey(False)
+        screen.blit(image, self.rect)
+        screen.blit(self.font_render, (self.pos_x, self.pos_y))
 
 
 class Canvas(pygame.sprite.Sprite):

@@ -1,8 +1,8 @@
 import pygame
 
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, LOGO, COLOR, SURGE_NUM, enemy_select
-from .manager import statue_img, bg_img, lives_img, game_over_img, load_music, load_sound
-from .tools import Timer, Keyboard, Canvas, Icon, HealthBar
+from .manager import msg_dict, btn_text_list, statue_img, bg_img, lives_img, game_over_img, load_music, load_sound
+from .tools import Timer, Button, Keyboard, Canvas, Icon, HealthBar
 from .environment import Foreground, Background, Farground, Planet, Portal
 from .obstacles import Meteor
 from .players import Player
@@ -20,10 +20,11 @@ class Scene():
 
     def load_username(self):
         read_data_list = self.db.read_data()
-        username_list = ['New User']
 
+        username_list  = []
         for user in read_data_list:
             username_list.append(user[0])
+        username_list.append("New User")
 
         return username_list
 
@@ -59,8 +60,9 @@ class Main(Scene):
 
     def __init__(self, screen):
         super().__init__(screen)
-        self.user = Canvas(size=50, center=True, y=SCREEN_HEIGHT//2, letter_f=1, color=COLOR('YELLOW'))
-        self.keyboard_view = Canvas(size=50, center=True, y=SCREEN_HEIGHT//2, letter_f=1, color=COLOR('YELLOW'))
+        self.command_buttons()
+        self.command_list[0].select_effect(True)
+
         self.keyboard = Keyboard(self.screen, color=COLOR('YELLOW'))
 
         # Sounds fx
@@ -72,16 +74,25 @@ class Main(Scene):
         # Create menu timer
         self.menu_timer = Timer(FPS)
 
+    def command_buttons(self):
+        self.command_list = []
+        pos_y = 0.0
+        for btn in range(len(btn_text_list)):
+            self.command_list.append(Button(btn_text_list[0][btn], center=(SCREEN_WIDTH//2, SCREEN_HEIGHT*(0.5+pos_y))))
+            pos_y += 0.12
+
     def main_loop(self, username, select, model, level, score):
         vol = self.volume()
-        create = False
-        confirm = False
-        user = 0
-        error = False
-        msg = ''
+        cursor = user = key = select = 0
+        login = create = confirm = False
+
+        char = ''
+        msg = 0
         turnback = False
 
         username_list = self.load_username()
+        btn_text_list[1][0] = username_list[-1]
+        btn_text_list[2] = [char, username, msg_dict[msg], "Back"]
 
         run = True
         while run:
@@ -96,54 +107,61 @@ class Main(Scene):
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT: # Back select
-                        if user > 0:
-                            user -= 1
-                        else: user = len(username_list) - 1
-                        self.keyboard.trigger_effect(True)
+                        if login: # Account select
+                            if user > 0:
+                                user -= 1
+                            else: user = len(username_list) - 1
+                            self.keyboard.trigger_effect(True)
+
                         self.select_fx.play()
 
                     if event.key == pygame.K_RIGHT: # Next select
-                        if user < len(username_list) - 1:
-                            user += 1
-                        else: user = 0
-                        self.keyboard.trigger_effect(True)
+                        if login: # Account select
+                            if user < len(username_list) - 1:
+                                user += 1
+                            else: user = 0
+                            self.keyboard.trigger_effect(True)
+
                         self.select_fx.play()
 
                     if event.key == pygame.K_UP: # Up select
-                        if select < len(self.keyboard.keyboard_tuple) - 1:
-                            select += 1
-                        else: select = 0
-                        self.keyboard.trigger_effect(True)
+                        if not create: # Command select
+                            if cursor > 0:
+                                cursor -= 1
+                            else: cursor = len(self.command_list) - 1
+                            self.command_list[cursor].select_effect(True)
+                        else:
+                            if key < len(self.keyboard.keyboard_tuple) - 1:
+                                key += 1
+                            else: key = 0
+                            self.keyboard.trigger_effect(True)
+
                         self.select_fx.play()
 
                     if event.key == pygame.K_DOWN: # Down select
-                        if select > 0:
-                            select -= 1
-                        else: select = len(self.keyboard.keyboard_tuple) - 1
-                        self.keyboard.trigger_effect(True)
+                        if not create: # Command select
+                            if cursor < len(self.command_list) - 1:
+                                cursor += 1
+                            else: cursor = 0
+                            self.command_list[cursor].select_effect(True)
+                        else:
+                            if key > 0:
+                                key -= 1
+                            else: key = len(self.keyboard.keyboard_tuple) - 1
+                            self.keyboard.trigger_effect(True)
+
                         self.select_fx.play()
 
                     if event.key == pygame.K_SPACE: # Turnback select
                         if create:
                             username += char
-                        else :
+                        else:
                             turnback = True
                             run = False
 
                     if event.key == pygame.K_RETURN: # Confirm
-                        if not confirm and username_list[user] == 'New User':
-                            if create:
-                                if username in username_list[1:]:
-                                    msg = 'username already exist'
-                                else:
-                                    if len(username_list) > 1:
-                                        self.db.delete_data(username_list[1])
-                                    self.db.create_data(username)
-                                    run = False
-                            create = True
-                        else:
-                            username = username_list[user]
-                            run = False
+                        self.command_list[cursor].trigger = True
+                        self.command_list[cursor].active_effect(True)
                         self.confirm_fx.play()
 
                     if event.key == pygame.K_ESCAPE: # Quit game
@@ -163,24 +181,49 @@ class Main(Scene):
                     if event.key == pygame.K_DOWN: # Down select
                         self.keyboard.trigger_effect(False)
 
+                    if event.key == pygame.K_RETURN: # Confirm
+                        if self.command_list[0].trigger:
+                            if not confirm:
+                                if login:
+                                    if username_list[user] == username_list[-1]:
+                                        if create:
+                                            if username == '' or username in username_list[:-1]:
+                                                msg = 1
+                                        elif self.command_list[3].trigger: login = False
+                                        else:
+                                            self.db.create_data(username)
+                                            confirm = True
+                                        create = True
+                                    else: confirm = True
+                                else: login = True
+                            else:
+                                username = username_list[user]
+                                run = False
+
+                        elif self.command_list[3].trigger: login = False
+
+                        self.command_list[cursor].active_effect(False)
+
             # Clear screen and set background color
             self.screen.fill(COLOR('ARCADE'))
 
             ''' --- AREA TO UPDATE AND DRAW --- '''
 
-            if not create and not confirm:
-                self.user.text = username_list[user]
-                self.user.update()
-                self.user.draw(self.screen)
+            char = self.keyboard.update(key)
 
-            else:
-                char = self.keyboard.update(select)
-                self.keyboard.draw()
-                if error:
-                    self.keyboard_view.text = msg
-                else: self.keyboard_view.text = username
-                self.keyboard_view.update()
-                self.keyboard_view.draw(self.screen)
+            if  confirm: select = 3
+            elif create: select = 2
+            elif  login: select = 1
+            else:        select = 0
+
+            for self.command, index in zip(self.command_list, range(len(self.command_list))):
+                if self.command != self.command_list[cursor]:
+                    self.command.select_effect(False)
+                    self.command.trigger = False
+
+                self.command_list[index].text = btn_text_list[select][index]
+                self.command.update()
+                self.command.draw(self.screen)
 
             # Limit delay without event activity
             if self.menu_timer.countdown(1, True):
@@ -669,14 +712,14 @@ class Record(Scene):
         self.logo_x = (SCREEN_WIDTH - LOGO) // 2
         self.logo_y = SCREEN_HEIGHT
 
-        self.text_score = Canvas(size=24, center=True, y=SCREEN_HEIGHT//3, letter_f=3)
+        self.text_score    = Canvas(size=24, center=True, y=SCREEN_HEIGHT//3, letter_f=3)
         self.text_continue = Canvas(size=44, center=True, y=SCREEN_HEIGHT//1.7, letter_f=2, color=COLOR('GREEN'))
-        self.text_replay = Canvas(size=40, center=True, y=SCREEN_HEIGHT//1.5, letter_f=2, color=COLOR('YELLOW'))
-        self.text_exit = Canvas(size=34, center=True, y=SCREEN_HEIGHT//1.22, letter_f=2, color=COLOR('RED'))
+        self.text_replay   = Canvas(size=40, center=True, y=SCREEN_HEIGHT//1.5, letter_f=2, color=COLOR('YELLOW'))
+        self.text_exit     = Canvas(size=34, center=True, y=SCREEN_HEIGHT//1.22, letter_f=2, color=COLOR('RED'))
 
         self.text_continue.text = "Press <SPC> to Continue"
-        self.text_replay.text = "Press <ENTER> to Menu"
-        self.text_exit.text = "Press <ESC> to Exit"
+        self.text_replay.text   = "Press <ENTER> to Menu"
+        self.text_exit.text     = "Press <ESC> to Exit"
 
         self.text_group = pygame.sprite.Group()
         self.text_group.add(self.text_score, self.text_replay, self.text_continue, self.text_exit)
@@ -727,7 +770,7 @@ class Record(Scene):
             ''' --- AREA TO UPDATE AND DRAW --- '''
 
             if new_highscore:
-                self.text_score.text = "NEW  HIGH  SCORE"
+                self.text_score.text   = "NEW  HIGH  SCORE"
             else: self.text_score.text = "TOP  HIGH  SCORE"
 
             if self.logo_y > 0:

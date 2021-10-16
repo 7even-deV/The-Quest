@@ -11,7 +11,7 @@ class Database():
 
     def init_table(self):
         self.crud_query(f'''CREATE TABLE {self.table} {self.sql}''')
-        self.create_data('', 0, 0, 0, 0, 0, self.memory_list)
+        # self.create_data('', 0, 0, 0, 0, 0, self.memory_list)
 
     def crud_query(self, query, *args):
         cnn = sqlite3.connect(self.db_file) # Create the database or connect to it
@@ -19,8 +19,9 @@ class Database():
         try:
             if args != (): cur.executemany(query, *args) # Make the query list
             else: cur.execute(query) # Make the query
-        except sqlite3.OperationalError:
+        except sqlite3.OperationalError as error:
             self.init_table()
+            print(error)
         finally:
             self.data = cur.fetchall() # Search the data
             cnn.commit() # Commit changes

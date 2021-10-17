@@ -15,8 +15,10 @@ for num in range(10):
 
 
 msg_dict = {
-    0 : "",
+    0 : "T h e  Q u e s t",
     1 : "User exists",
+    2 : "Maximum characters",
+    3 : "User created successfully",
 }
 
 
@@ -27,26 +29,39 @@ button_dict = {
 }
 btn_text_list = [
     [
-    "A c c o u n t",
-    "C o n f i g s",
-    "C r e d i t s",
-    "E x i t",
+    "Account",
+    "Configs",
+    "Credits",
+    "Exit",
     ],[
-    "N e w  U s e r",
-    "E d i t",
-    "D e l e t e",
-    "B a c k",
+    "New User",
+    "Edit",
+    "Delete",
+    "Back",
     ],[
-    "N e w  U s e r",
-    "E d i t",
-    "D e l e t e",
-    "B a c k",
+    "New User",
+    "Edit",
+    "Delete",
+    "Back",
     ],[
-    "N e w  U s e r",
-    "E d i t",
-    "D e l e t e",
-    "B a c k",
+    "Play",
+    "Edit",
+    "Delete",
+    "Back",
     ]
+]
+
+
+key_img = 'Assets/Images/key.png'
+key_dict = {
+    'off' : (1, 1, 1, 1),
+    'on'  : (1, 1, 2, 1),
+}
+keyboard_list = [
+    ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+    ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'],
+    ['k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'],
+    ['u', 'v', 'w', 'x', 'y', 'z', '-', '_', '$', '#'],
 ]
 
 
@@ -55,15 +70,6 @@ font_tuple = ("CabinSketch", "Fixedsys500c", "LibreFranklin", "PoetsenOne")
 
 def font_function(i_font):
     return f'Assets/Fonts/{font_tuple[i_font]}.ttf'
-
-keyboard_tuple = (
-    'a', 'b', 'c', 'd', 'e', 'f',
-    'g', 'h', 'i', 'j', 'k', 'l',
-    'm', 'n', 'o', 'p', 'q', 'r',
-    's', 't', 'u', 'v', 'w', 'x',
-    'y', 'z', '1', '2', '3', '4',
-    '5', '6', '7', '8', '9', '0'
-)
 
 
 logo_icon = 'Assets/Images/logo_7z.ico'
@@ -185,7 +191,7 @@ game_over_img = 'Assets/Images/game_over.png'
 
 
 # Load music and sounds
-scene_music_list = ['music_menu', 'music_game', 'music_record', 'music_combat', 'music_danger']
+scene_music_list = ['music_main', 'music_menu', 'music_game', 'music_record', 'music_danger']
 def load_music(scene_music):
     return f'Assets/Audio/music/{scene_music_list[scene_music]}.ogg'
 

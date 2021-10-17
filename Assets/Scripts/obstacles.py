@@ -31,7 +31,7 @@ class Meteor(Sprite_sheet):
 
         self.moving_x = False
         self.delta_x = 0
-        self.delta_y = random.randint(1.0, 2.0)
+        self.delta_y = random.randint(1.0, 4.0)
         self.collide = False
 
         self.health = 100

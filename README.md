@@ -23,3 +23,4 @@ Commit processing:
 19. Create class: Main & Keyboard (class Scene)
 20. Create function: reset-ranking (class Record)
 21. Create class: Button (class Main)
+22. Create function: command & keyboard - buttons (class Main)

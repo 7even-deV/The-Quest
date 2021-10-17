@@ -1,7 +1,7 @@
 import pygame
 
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, LOGO, COLOR, SURGE_NUM, enemy_select
-from .manager import msg_dict, btn_text_list, statue_img, bg_img, lives_img, game_over_img, load_music, load_sound
+from .manager import msg_dict, btn_text_list, keyboard_list, statue_img, bg_img, lives_img, game_over_img, load_music, load_sound
 from .tools import Timer, Button, Keyboard, Canvas, Icon, HealthBar
 from .environment import Foreground, Background, Farground, Planet, Portal
 from .obstacles import Meteor
@@ -21,10 +21,9 @@ class Scene():
     def load_username(self):
         read_data_list = self.db.read_data()
 
-        username_list  = []
+        username_list  = ["New User"]
         for user in read_data_list:
             username_list.append(user[0])
-        username_list.append("New User")
 
         return username_list
 
@@ -60,10 +59,7 @@ class Main(Scene):
 
     def __init__(self, screen):
         super().__init__(screen)
-        self.command_buttons()
-        self.command_list[0].select_effect(True)
-
-        self.keyboard = Keyboard(self.screen, color=COLOR('YELLOW'))
+        self.message = Canvas(size=20, center=True, color=COLOR('YELLOW'), letter_f=3)
 
         # Sounds fx
         self.select_loop_fx = self.sound('select_loop')
@@ -81,18 +77,34 @@ class Main(Scene):
             self.command_list.append(Button(btn_text_list[0][btn], center=(SCREEN_WIDTH//2, SCREEN_HEIGHT*(0.5+pos_y))))
             pos_y += 0.12
 
+    def keyboard_buttons(self):
+        self.keyboard_list = []
+        margin_x = SCREEN_WIDTH//10.75
+        margin_y = SCREEN_HEIGHT//7.75
+
+        for row in range(len(keyboard_list)):
+            temp_list = []
+            for column in range(len(keyboard_list[row])):
+                temp_list.append(Keyboard(keyboard_list[row][column], center=(column * SCREEN_WIDTH//11 + margin_x, row * SCREEN_HEIGHT//15 + margin_y)))
+            self.keyboard_list.append(temp_list)
+
     def main_loop(self, username, select, model, level, score):
+        self.command_buttons()
+        self.command_list[0].select_effect(True)
+
+        self.keyboard_buttons()
+        self.keyboard_list[0][0].select_effect(True)
+
         vol = self.volume()
-        cursor = user = key = select = 0
+        cursor = column_key = row_key = select = 0
         login = create = confirm = False
 
-        char = ''
+        user = -1
         msg = 0
         turnback = False
 
         username_list = self.load_username()
-        btn_text_list[1][0] = username_list[-1]
-        btn_text_list[2] = [char, username, msg_dict[msg], "Back"]
+        btn_text_list[1][0] = username_list
 
         run = True
         while run:
@@ -107,100 +119,127 @@ class Main(Scene):
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT: # Back select
-                        if login: # Account select
-                            if user > 0:
-                                user -= 1
-                            else: user = len(username_list) - 1
-                            self.keyboard.trigger_effect(True)
+                        if not create:
+                            if login: # Account select
+                                if user > 0:
+                                    user -= 1
+                                else: user = len(username_list) - 1
+                        else:
+                            if column_key > 0:
+                                column_key -= 1
+                            else: column_key = len(self.keyboard_list[row_key]) - 1
+                            self.keyboard_list[row_key][column_key].select_effect(True)
 
                         self.select_fx.play()
 
                     if event.key == pygame.K_RIGHT: # Next select
-                        if login: # Account select
-                            if user < len(username_list) - 1:
-                                user += 1
-                            else: user = 0
-                            self.keyboard.trigger_effect(True)
+                        if not create:
+                            if login: # Account select
+                                if user < len(username_list) - 1:
+                                    user += 1
+                                else: user = 0
+                        else:
+                            if column_key < len(self.keyboard_list[row_key]) - 1:
+                                column_key += 1
+                            else: column_key = 0
+                            self.keyboard_list[row_key][column_key].select_effect(True)
 
                         self.select_fx.play()
 
                     if event.key == pygame.K_UP: # Up select
-                        if not create: # Command select
+                        if not create:
                             if cursor > 0:
                                 cursor -= 1
                             else: cursor = len(self.command_list) - 1
                             self.command_list[cursor].select_effect(True)
                         else:
-                            if key < len(self.keyboard.keyboard_tuple) - 1:
-                                key += 1
-                            else: key = 0
-                            self.keyboard.trigger_effect(True)
+                            if row_key > 0:
+                                row_key -= 1
+                            else: row_key = len(self.keyboard_list) - 1
+                            self.keyboard_list[row_key][column_key].select_effect(True)
 
                         self.select_fx.play()
 
                     if event.key == pygame.K_DOWN: # Down select
-                        if not create: # Command select
+                        if not create:
                             if cursor < len(self.command_list) - 1:
                                 cursor += 1
                             else: cursor = 0
                             self.command_list[cursor].select_effect(True)
                         else:
-                            if key > 0:
-                                key -= 1
-                            else: key = len(self.keyboard.keyboard_tuple) - 1
-                            self.keyboard.trigger_effect(True)
+                            if row_key < len(self.keyboard_list) - 1:
+                                row_key += 1
+                            else: row_key = 0
+                            self.keyboard_list[row_key][column_key].select_effect(True)
 
                         self.select_fx.play()
 
                     if event.key == pygame.K_SPACE: # Turnback select
                         if create:
-                            username += char
+                            if username == '':
+                                self.command_list[0].pos_x = self.command_list[0].init_pos
+                            if len(username) < 10:
+                                username += self.keyboard_list[row_key][column_key].text
+                                btn_text_list[2][0] = username
+                            else: msg = 2
+
+                            self.keyboard_list[row_key][column_key].trigger = True
+                            self.keyboard_list[row_key][column_key].active_effect(True)
                         else:
                             turnback = True
                             run = False
 
+                        self.confirm_fx.play()
+
                     if event.key == pygame.K_RETURN: # Confirm
                         self.command_list[cursor].trigger = True
                         self.command_list[cursor].active_effect(True)
+
                         self.confirm_fx.play()
+
+                    if event.key == pygame.K_BACKSPACE: # Delete
+                        if create:
+                            if len(username) > 0:
+                                username = username[:-1]
 
                     if event.key == pygame.K_ESCAPE: # Quit game
                         exit()
 
                 # keyboard release
                 if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_LEFT: # Back select
-                        self.keyboard.trigger_effect(False)
-
-                    if event.key == pygame.K_RIGHT: # Next select
-                        self.keyboard.trigger_effect(False)
-
-                    if event.key == pygame.K_UP: # Up select
-                        self.keyboard.trigger_effect(False)
-
-                    if event.key == pygame.K_DOWN: # Down select
-                        self.keyboard.trigger_effect(False)
+                    if event.key == pygame.K_SPACE: # Turnback select
+                        if create: self.keyboard_list[row_key][column_key].active_effect(False)
 
                     if event.key == pygame.K_RETURN: # Confirm
                         if self.command_list[0].trigger:
                             if not confirm:
                                 if login:
-                                    if username_list[user] == username_list[-1]:
+                                    if username_list[user] == username_list[0]:
                                         if create:
-                                            if username == '' or username in username_list[:-1]:
+                                            if username == '' or username in username_list[1:]:
                                                 msg = 1
-                                        elif self.command_list[3].trigger: login = False
+                                            else:
+                                                self.db.create_data(username)
+                                                username_list.append(username)
+                                                user = -1
+                                                create = False
+                                                msg = 3
                                         else:
-                                            self.db.create_data(username)
-                                            confirm = True
-                                        create = True
+                                            username = ''
+                                            create = True
                                     else: confirm = True
                                 else: login = True
                             else:
                                 username = username_list[user]
                                 run = False
 
-                        elif self.command_list[3].trigger: login = False
+                        elif self.command_list[3].trigger:
+                            if  confirm: confirm = False
+                            elif create:  create = False
+                            elif  login:   login = False
+                            else:
+                                turnback = True
+                                run = False
 
                         self.command_list[cursor].active_effect(False)
 
@@ -209,7 +248,9 @@ class Main(Scene):
 
             ''' --- AREA TO UPDATE AND DRAW --- '''
 
-            char = self.keyboard.update(key)
+            self.message.text = msg_dict[msg]
+            self.message.update()
+            self.message.draw(self.screen)
 
             if  confirm: select = 3
             elif create: select = 2
@@ -217,13 +258,31 @@ class Main(Scene):
             else:        select = 0
 
             for self.command, index in zip(self.command_list, range(len(self.command_list))):
+                if index % 2 == 0: self.command_list[index].flip_x = True
+
                 if self.command != self.command_list[cursor]:
                     self.command.select_effect(False)
                     self.command.trigger = False
 
-                self.command_list[index].text = btn_text_list[select][index]
+                if not self.command_list[index] == self.command_list[0]:
+                    self.command_list[index].text = btn_text_list[select][index]
+                else:
+                    if  confirm: self.command_list[0].text = "Play"
+                    elif create: self.command_list[0].text = username
+                    elif  login: self.command_list[0].text = btn_text_list[select][index][user]
+
                 self.command.update()
                 self.command.draw(self.screen)
+
+            if create:
+                for row in range(len(self.keyboard_list)):
+                    for self.keyboard, index in zip(self.keyboard_list[row], range(len(self.keyboard_list[row]))):
+                        if self.keyboard != self.keyboard_list[row_key][column_key]:
+                            self.keyboard.select_effect(False)
+                            self.keyboard.trigger = False
+
+                        self.keyboard.update()
+                        self.keyboard.draw(self.screen)
 
             # Limit delay without event activity
             if self.menu_timer.countdown(1, True):
@@ -599,10 +658,10 @@ class Game(Scene):
                             self.meteor_group.add(self.meteor_list[surge_index])
                             surge_index += 1
                             surge_start = False
-                            self.scene_music(3, 0.5)
+                            self.scene_music(4, 0.5)
                         else:
                             surge_end = True
-                            self.scene_music(4, 0.5)
+                            self.scene_music(2, 0.5)
 
                 if self.player.spawn and self.game_timer.counter(2, True):
                     self.player.spawn = False

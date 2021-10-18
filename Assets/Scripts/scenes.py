@@ -1,8 +1,8 @@
 import pygame
 
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, LOGO, COLOR, SURGE_NUM, enemy_select
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, LOGO, COLOR, LIVES, SURGE_NUM, enemy_select
 from .manager import msg_dict, btn_text_list, keyboard_list, statue_img, bg_img, lives_img, game_over_img, load_music, load_sound
-from .tools import Timer, Button, Keyboard, Canvas, Icon, HealthBar
+from .tools import Timer, Button, Keyboard, Canvas, Icon, HealthBar, Screen_fade
 from .environment import Foreground, Background, Farground, Planet, Portal
 from .obstacles import Meteor
 from .players import Player
@@ -446,6 +446,10 @@ class Game(Scene):
         self.fg  = Farground(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, 50)
         self.planet = Planet(self.screen, midbottom=(SCREEN_WIDTH//2, 0))
 
+        # Create screen fades
+        self.intro_fade = Screen_fade(self.screen, 'intro', COLOR('BLACK'), 4)
+        self.death_fade = Screen_fade(self.screen, 'death', COLOR('BLACK'), 4)
+
         self.ammo_load_view = Canvas(size=15, y=50, letter_f=3)
         self.username_view  = Canvas(size=18, center=True, y=-1, color=COLOR('GREEN'), letter_f=3)
         self.level_view     = Canvas(size=18, center=True, y=SCREEN_HEIGHT*0.03, color=COLOR('GREEN'), letter_f=3)
@@ -516,14 +520,15 @@ class Game(Scene):
 
             self.meteor_list.append(temp_list)
 
-    def process_data(self, select, model, level, score):
+    def process_data(self, lives, select, model, level, score):
         # Create sprites
-        self.player = Player(self.screen, select, model, score, 2, level*100, level, self.group_list)
+        self.player = Player(self.screen, lives, select, model, score, 2, level*100, level, self.group_list)
         self.lives_view = pygame.image.load(lives_img).convert_alpha()
         self.health_bar = HealthBar(self.screen, self.player.health, self.player.max_health)
         self.enemy_create(level)
         self.meteor_surge(level, SURGE_NUM)
         self.meteor_list_copy = self.meteor_list.copy()
+
         # Create game timer
         self.game_timer = Timer(FPS)
 
@@ -531,10 +536,13 @@ class Game(Scene):
         self.reset_level()
         username_data = self.db.read_data(username)
         highscore = username_data[0][-1]
-        self.process_data(select, model, level, score)
+        lives = LIVES
+        self.process_data(lives, select, model, level, score)
+
         vol = self.volume()
         pause = False
         restart = False
+        death = False
 
         surge_start = False
         surge_end = False
@@ -588,7 +596,7 @@ class Game(Scene):
                             self.move_fx.play()
 
                     if event.key == pygame.K_SPACE: # Turbo
-                        if self.player.alive and not self.player.win:
+                        if not self.player.spawn and self.player.alive and not self.player.win:
                             self.player.turbo = True
                             self.turbo_fx.play()
                         else: restart = True
@@ -602,6 +610,7 @@ class Game(Scene):
                             pause = False
                         else: pause = True
                         self.pause_fx.play()
+
                     if event.key == pygame.K_ESCAPE: # Exit game
                         turnback = True
                         run = False
@@ -663,29 +672,6 @@ class Game(Scene):
                             surge_end = True
                             self.scene_music(2, 0.5)
 
-                if self.player.spawn and self.game_timer.counter(2, True):
-                    self.player.spawn = False
-
-                if self.player.alive:
-                    if self.player.collide and self.game_timer.counter(1, True):
-                        self.player.collide = False
-
-                    # Shoot bullets
-                    if shoot and not shoot_bullets:
-                        self.player.shoot(self.empty_ammo_fx, self.bullet_fx)
-                        shoot_bullets = True
-
-                    # Throw missiles
-                    elif throw and not throw_missiles:
-                        self.player.throw(self.empty_load_fx, self.missile_fx, self.missile_cd_fx, self.missile_exp_fx)
-                        throw_missiles = True
-
-                else: # Restart the level if the player has lost
-                    if restart:
-                        self.reset_level()
-                        self.process_data(select, level, score)
-                        restart = False
-
                 self.bg.update(self.player.delta_x, self.player.turbo)
                 self.fg.update(self.player.delta_x, self.player.turbo)
                 self.bg.draw()
@@ -718,25 +704,57 @@ class Game(Scene):
                 self.missile_group.draw(self.screen)
                 self.explosion_group.draw(self.screen)
 
+                if self.player.alive:
+                    if self.player.spawn and self.intro_fade.fade():
+                        self.intro_fade.fade_counter = 0
+                        self.player.spawn = False
+
+                    if self.player.collide and self.game_timer.counter(1, True):
+                        self.player.collide = False
+
+                    # Shoot bullets
+                    if shoot and not shoot_bullets:
+                        self.player.shoot(self.empty_ammo_fx, self.bullet_fx)
+                        shoot_bullets = True
+
+                    # Throw missiles
+                    elif throw and not throw_missiles:
+                        self.player.throw(self.empty_load_fx, self.missile_fx, self.missile_cd_fx, self.missile_exp_fx)
+                        throw_missiles = True
+
+                    # Level countdown
+                    if not self.player.win and self.game_timer.countdown(level, self.player.turbo, True):
+                        self.game_timer.text_time = 0
+                        self.player.win = True
+                        self.win_fx.play()
+
+                    # Check if player has completed the level
+                    elif self.player.win and self.player.auto_movement():
+                        level += 1
+                        self.reset_level()
+                        self.process_data(lives, select, model, level, score)
+                else:
+                    if not death:
+                        death = True
+                        self.game_over_fx.play()
+
+                    # Restart the level if the player has lost
+                    elif death and self.death_fade.fade():
+                        if restart:
+                            self.death_fade.fade_counter = 0
+                            self.player.score = 0
+                            if lives > 0:
+                                lives -= 1
+                                self.reset_level()
+                                self.process_data(lives, select, model, level, score)
+                                self.player.alive = True
+                                death = False
+                                restart = False
+                            else: run = False
+
                 # Zone for user interface bar
                 pygame.draw.rect(self.screen, COLOR('ARCADE'), (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT//10))
                 pygame.draw.line(self.screen, COLOR('SILVER'), (0, SCREEN_HEIGHT//10), (SCREEN_WIDTH, SCREEN_HEIGHT//10), 4)
-
-                if self.player.health <= 0:
-                    run = False
-                    self.player.lives -= 1
-                    self.player.score = 0
-                    self.game_over_fx.play()
-
-                # Level countdown
-                elif not self.player.win and self.game_timer.countdown(level, self.player.turbo, True):
-                    self.game_timer.text_time = 0
-                    self.player.win = True
-                    self.win_fx.play()
-
-                elif self.player.win and self.player.auto_movement():
-                    level += 1
-                    run = False
 
                 # Show player lives
                 for x in range(self.player.lives):

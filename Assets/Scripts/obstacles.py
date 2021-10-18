@@ -64,8 +64,8 @@ class Meteor(Sprite_sheet):
                 self.player.collide = True
                 self.player.rect.x += (self.delta_x - self.player.delta_x) * 2
                 self.player.rect.y += (self.delta_y - self.player.delta_y) * 2
-                self.player.health -= 10
-                self.player.score += 10
+                self.player.health -= self.scale * 10
+                self.player.score += self.scale * 10
                 self.delta_x = self.delta_y = 0
                 self.animation_cooldown = self.animation_cooldown // 4
                 self.update_action('destroy')

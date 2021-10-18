@@ -12,6 +12,7 @@ LOGO = 500
 FPS = 60
 
 # Define game variables
+LIVES = 3
 LEVEL = 1
 SURGE_NUM = 1
 

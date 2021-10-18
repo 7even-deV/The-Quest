@@ -24,3 +24,4 @@ Commit processing:
 20. Create function: reset-ranking (class Record)
 21. Create class: Button (class Main)
 22. Create function: command & keyboard - buttons (class Main)
+23. Create class: Screen_fade (script tools)

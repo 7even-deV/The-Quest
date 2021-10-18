@@ -1,6 +1,6 @@
 import pygame
 
-from .manager import player_select_function, explosion_2_img, explosion_dict
+from .manager import player_select_function, explosion_3_img, explosion_dict
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
 from .tools import Sprite_sheet, Timer
 from .weapons import Bullet, Missile
@@ -8,7 +8,7 @@ from .weapons import Bullet, Missile
 
 class Player(Sprite_sheet):
 
-    def __init__(self, screen, select, model, score, speed, ammo, load, *args, **kwargs):
+    def __init__(self, screen, lives, select, model, score, speed, ammo, load, *args, **kwargs):
         player_img, player_action_dict = player_select_function(select, model)
         super().__init__(player_img)
         self.screen = screen
@@ -30,7 +30,7 @@ class Player(Sprite_sheet):
 
         # Load player image
         self.create_animation(100, 100, player_action_dict)
-        self.sheet = pygame.image.load(explosion_2_img).convert_alpha()
+        self.sheet = pygame.image.load(explosion_3_img).convert_alpha()
         self.create_animation(100, 100, explosion_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
         # Get player rect
@@ -44,7 +44,7 @@ class Player(Sprite_sheet):
         self.auto_init = False
 
         self.alive = True
-        self.lives = 3
+        self.lives = lives
         self.health = 100
         self.max_health = self.health
         self.win = False
@@ -209,7 +209,7 @@ class Player(Sprite_sheet):
             self.health = 0
             self.speed = 0
             self.alive = False
-            self.update_action('destroy')
+            self.update_action('death')
         else: self.update_action('idle')
 
     def limit_left(self, value=0):

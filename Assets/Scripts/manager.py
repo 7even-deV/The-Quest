@@ -184,7 +184,10 @@ explosion_0_img = 'Assets/Images/explosion_0.png'
 explosion_1_img = 'Assets/Images/explosion_1.png'
 explosion_2_img = 'Assets/Images/explosion_2.png'
 explosion_3_img = 'Assets/Images/explosion_3.png'
-explosion_dict = {'destroy': (8, 8)}
+explosion_dict = {
+    'death'   : (8, 8, 1, 1),
+    'destroy' : (8, 8, 1, 1),
+}
 
 
 game_over_img = 'Assets/Images/game_over.png'

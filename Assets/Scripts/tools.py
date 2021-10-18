@@ -11,6 +11,7 @@ class Timer():
         self.start_time = pygame.time.get_ticks()
         self.frame_num = 0
         self.frame_rate = FPS
+        self.text_time = f"{0:02}:{1:02}"
 
     # Time for seconds
     def time(self, timer, *events):
@@ -123,10 +124,14 @@ class Sprite_sheet(pygame.sprite.Sprite):
             self.frame_index += 1
         # If the animation has move out the reset back to the start
         if self.frame_index >= len(self.animation_dict[self.action]) - repeated_frame:
-            if self.action == 'destroy':
-                self.kill() # Kill the animation
-            else:
-                self.frame_index = 0
+            # Stop animation
+            if self.action == 'death':
+                self.frame_index = len(self.animation_dict[self.action]) - 1
+            # Delete animation
+            elif self.action == 'destroy':
+                self.kill()
+            # Loop animation
+            else: self.frame_index = 0
 
     def update_action(self, new_action):
         # Check if the new action is different to the previous one
@@ -392,3 +397,29 @@ class HealthBar():
         pygame.draw.rect(self.screen, COLOR('BLACK'), (self.x*0.04 - 2, self.y*0.04 - 2, self.x*0.25, self.y*0.02))
         pygame.draw.rect(self.screen, COLOR('RED'),   (self.x*0.04, self.y*0.04, self.x*0.2, self.y*0.02))
         pygame.draw.rect(self.screen, COLOR('GREEN'), (self.x*0.04, self.y*0.04, self.x*0.2 * ratio, self.y*0.02))
+
+
+class Screen_fade():
+
+    def __init__(self, screen, direction, colour, speed):
+        self.screen = screen
+        self.direction = direction
+        self.colour = colour
+        self.speed = speed
+        self.fade_counter = 0
+
+    def fade(self):
+        fade_complete = False
+        self.fade_counter += self.speed
+        if self.direction == 'intro': # Whole screen fade
+            pygame.draw.rect(self.screen, self.colour, (0 - self.fade_counter, 0, SCREEN_WIDTH // 2, SCREEN_HEIGHT)) # Opening left
+            pygame.draw.rect(self.screen, self.colour, (SCREEN_WIDTH // 2 + self.fade_counter, 0, SCREEN_WIDTH, SCREEN_HEIGHT)) # Opening right
+            pygame.draw.rect(self.screen, self.colour, (0, 0 - self.fade_counter, SCREEN_WIDTH, SCREEN_HEIGHT)) # Opening up
+            # pygame.draw.rect(self.screen, self.colour, (0, SCREEN_HEIGHT // 2 + self.fade_counter, SCREEN_WIDTH, SCREEN_HEIGHT)) # Opening down
+        if self.direction == 'death': # Vertical screen fade down
+            pygame.draw.rect(self.screen, self.colour, (0, 0, SCREEN_WIDTH, 0 + self.fade_counter))
+
+        if self.fade_counter >= SCREEN_HEIGHT:
+            fade_complete = True
+
+        return fade_complete

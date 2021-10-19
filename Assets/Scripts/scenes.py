@@ -442,10 +442,6 @@ class Game(Scene):
 
     def __init__(self, screen):
         super().__init__(screen)
-        self.bg = Background(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, bg_img)
-        self.fg  = Farground(self.screen, SCREEN_WIDTH, SCREEN_HEIGHT, 50)
-        self.planet = Planet(self.screen, midbottom=(SCREEN_WIDTH//2, 0))
-
         # Create screen fades
         self.intro_fade = Screen_fade(self.screen, 'intro', COLOR('BLACK'), 4)
         self.death_fade = Screen_fade(self.screen, 'death', COLOR('BLACK'), 4)
@@ -502,6 +498,14 @@ class Game(Scene):
         self.meteor_group.empty()
         self.meteor_list = self.meteor_list_copy
 
+    def environment_create(self, init_planet):
+        bg = Background(SCREEN_WIDTH, SCREEN_HEIGHT, bg_img)
+        fg  = Farground(SCREEN_WIDTH, SCREEN_HEIGHT, 50)
+        origin_planet  = Planet('origin' , init_planet, SCREEN_WIDTH, SCREEN_HEIGHT, midbottom=(SCREEN_WIDTH//2, SCREEN_HEIGHT))
+        destiny_planet = Planet('destiny', init_planet, SCREEN_WIDTH, SCREEN_HEIGHT, midbottom=(SCREEN_WIDTH//2, 0))
+
+        self.environment_list = [bg, fg, origin_planet, destiny_planet]
+
     def enemy_create(self, level):
         self.enemy_list = []
         temp_list = []
@@ -520,9 +524,10 @@ class Game(Scene):
 
             self.meteor_list.append(temp_list)
 
-    def process_data(self, lives, select, model, level, score):
+    def process_data(self, lives, select, model, level, score, init_planet):
         # Create sprites
         self.player = Player(self.screen, lives, select, model, score, 2, level*100, level, self.group_list)
+        self.environment_create(init_planet)
         self.lives_view = pygame.image.load(lives_img).convert_alpha()
         self.health_bar = HealthBar(self.screen, self.player.health, self.player.max_health)
         self.enemy_create(level)
@@ -536,8 +541,10 @@ class Game(Scene):
         self.reset_level()
         username_data = self.db.read_data(username)
         highscore = username_data[0][-1]
+
         lives = LIVES
-        self.process_data(lives, select, model, level, score)
+        init_planet = 1
+        self.process_data(lives, select, model, level, score, init_planet)
 
         vol = self.volume()
         pause = False
@@ -672,15 +679,9 @@ class Game(Scene):
                             surge_end = True
                             self.scene_music(2, 0.5)
 
-                self.bg.update(self.player.delta_x, self.player.turbo)
-                self.fg.update(self.player.delta_x, self.player.turbo)
-                self.bg.draw()
-                self.fg.draw()
-
-                if self.player.win:
-                    self.planet.update()
-                    if self.planet.rect.top < 0:
-                        self.planet.rect.y += 0.0001
+                for self.environment in self.environment_list:
+                    self.environment.update(self.player.delta_x, self.player.turbo, self.player.win)
+                    self.environment.draw(self.screen)
 
                 # self.player.check_collision()
                 self.player.update()
@@ -732,7 +733,8 @@ class Game(Scene):
                     elif self.player.win and self.player.auto_movement():
                         level += 1
                         self.reset_level()
-                        self.process_data(lives, select, model, level, score)
+                        init_planet = self.environment.destiny_planet
+                        self.process_data(lives, select, model, level, score, init_planet)
                 else:
                     if not death:
                         death = True
@@ -746,7 +748,8 @@ class Game(Scene):
                             if lives > 0:
                                 lives -= 1
                                 self.reset_level()
-                                self.process_data(lives, select, model, level, score)
+                                init_planet = self.environment.origin_planet
+                                self.process_data(lives, select, model, level, score, init_planet)
                                 self.player.alive = True
                                 death = False
                                 restart = False

@@ -1,7 +1,7 @@
 import pygame
 
 from . import __author__
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, CAPTION, LEVEL
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, CAPTION, SCENE, LEVEL
 from .manager import logo_icon
 from .scenes import Main, Menu, Game, Record
 
@@ -21,7 +21,7 @@ class Controller():
         self.scene_list = [Main(self.screen), Menu(self.screen), Game(self.screen), Record(self.screen)]
 
     def launch_manager(self):
-        i = 0
+        i = SCENE
         username = ''
         select = 0
         model = 0

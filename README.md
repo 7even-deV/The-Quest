@@ -25,3 +25,4 @@ Commit processing:
 21. Create class: Button (class Main)
 22. Create function: command & keyboard - buttons (class Main)
 23. Create class: Screen_fade (script tools)
+24. Create class: Planet (script environment)

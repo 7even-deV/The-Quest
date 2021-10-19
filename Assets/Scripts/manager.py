@@ -174,9 +174,17 @@ meteor_action_dict = {
 }
 
 
-planet_img = 'Assets/Images/planet.jpg'
+planet_img = 'Assets/Images/planets.png'
 planet_dict = {
-    'planet_1': (1, 1, 1, 1),
+    'planet_1' : (1, 1, 1, 1),
+    'planet_2' : (1, 1, 1, 2),
+    'planet_3' : (1, 1, 1, 3),
+    'planet_4' : (1, 1, 2, 1),
+    'planet_5' : (1, 1, 2, 2),
+    'planet_6' : (1, 1, 2, 3),
+    'planet_7' : (1, 1, 3, 1),
+    'planet_8' : (1, 1, 3, 2),
+    'planet_9' : (1, 1, 3, 3),
 }
 
 

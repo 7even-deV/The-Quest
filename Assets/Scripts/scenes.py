@@ -1,6 +1,6 @@
-import pygame
+import pygame, random
 
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, LOGO, COLOR, LIVES, SURGE_NUM, enemy_select
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, VOL_MUSIC, VOL_SOUND, LOGO, COLOR, LIVES, SURGE_NUM, enemy_select, enemy_position
 from .manager import msg_dict, btn_text_list, keyboard_list, statue_img, bg_img, lives_img, game_over_img, load_music, load_sound
 from .tools import Timer, Button, Keyboard, Canvas, Icon, HealthBar, Screen_fade
 from .environment import Foreground, Background, Farground, Planet, Portal
@@ -41,12 +41,12 @@ class Scene():
 
         return new_highscore
 
-    def scene_music(self, index, volume):
+    def scene_music(self, index, volume=VOL_MUSIC):
         pygame.mixer.music.load(load_music(index))
         pygame.mixer.music.set_volume(volume)
         pygame.mixer.music.play(-1, 0.0, 1000)
 
-    def sound(self, sfx, volume=0.5):
+    def sound(self, sfx, volume=VOL_SOUND):
         fx = pygame.mixer.Sound(load_sound(sfx))
         fx.set_volume(volume)
         return fx
@@ -179,12 +179,23 @@ class Main(Scene):
                             if username == '':
                                 self.command_list[0].pos_x = self.command_list[0].init_pos
                             if len(username) < 10:
-                                username += self.keyboard_list[row_key][column_key].text
-                                btn_text_list[2][0] = username
+                                if self.keyboard_list[row_key][column_key] != self.keyboard_list[-1][-1]\
+                                and self.keyboard_list[row_key][column_key] != self.keyboard_list[-1][-2]:
+                                    username += self.keyboard_list[row_key][column_key].text
+                                    btn_text_list[2][0] = username
                             else: msg = 2
+                            if self.keyboard_list[row_key][column_key] == self.keyboard_list[-1][-2]:
+                                if len(username) > 0: username = username[:-1]
 
-                            self.keyboard_list[row_key][column_key].trigger = True
-                            self.keyboard_list[row_key][column_key].active_effect(True)
+                            if self.keyboard_list[row_key][column_key] == self.keyboard_list[-1][-1]:
+                                if not self.keyboard_list[-1][-1].trigger:
+                                    self.keyboard_list[-1][-1].trigger = True
+                                else:
+                                    self.keyboard_list[-1][-1].trigger = False
+                                self.keyboard_list[-1][-1].active_effect(True)
+                            else:
+                                self.keyboard_list[row_key][column_key].trigger = True
+                                self.keyboard_list[row_key][column_key].active_effect(True)
                         else:
                             turnback = True
                             run = False
@@ -208,7 +219,8 @@ class Main(Scene):
                 # keyboard release
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_SPACE: # Turnback select
-                        if create: self.keyboard_list[row_key][column_key].active_effect(False)
+                        if create:
+                            self.keyboard_list[row_key][column_key].active_effect(False)
 
                     if event.key == pygame.K_RETURN: # Confirm
                         if self.command_list[0].trigger:
@@ -279,7 +291,14 @@ class Main(Scene):
                     for self.keyboard, index in zip(self.keyboard_list[row], range(len(self.keyboard_list[row]))):
                         if self.keyboard != self.keyboard_list[row_key][column_key]:
                             self.keyboard.select_effect(False)
-                            self.keyboard.trigger = False
+                            if self.keyboard != self.keyboard_list[-1][-1]:
+                                self.keyboard.trigger = False
+
+                        if self.keyboard_list[-1][-1].trigger:
+                            self.keyboard.text = self.keyboard.text.upper()
+                            self.keyboard_list[-1][-1].select_effect(True)
+                        else:
+                            self.keyboard.text = self.keyboard.text.lower()
 
                         self.keyboard.update()
                         self.keyboard.draw(self.screen)
@@ -489,6 +508,8 @@ class Game(Scene):
         self.win_fx         = self.sound('win')
         self.game_over_fx   = self.sound('game_over')
 
+        self.sfx_list = [self.empty_ammo_fx, self.bullet_fx, self.empty_load_fx, self.missile_fx, self.missile_cd_fx, self.missile_exp_fx]
+
     # Function to reset level
     def reset_level(self):
         self.bullet_group.empty()
@@ -507,10 +528,11 @@ class Game(Scene):
         self.environment_list = [bg, fg, origin_planet, destiny_planet]
 
     def enemy_create(self, level):
+        enemy_select = random.randint(0, 2)
         self.enemy_list = []
         temp_list = []
         for i in range(level):
-            temp_list.append(Enemy(self.screen, enemy_select, i+2, self.player, self.empty_ammo_fx, self.bullet_fx, self.group_list))
+            temp_list.append(Enemy(self.screen, enemy_select, level+1, self.player, [self.group_list, self.sfx_list], center=(enemy_position(enemy_select, i))))
         self.enemy_list.append(temp_list)
         self.enemy_group.add(self.enemy_list[0])
 
@@ -674,9 +696,11 @@ class Game(Scene):
                             self.meteor_group.add(self.meteor_list[surge_index])
                             surge_index += 1
                             surge_start = False
+                            self.enemy.retired = True
                             self.scene_music(4, 0.5)
                         else:
                             surge_end = True
+                            self.enemy.retired = False
                             self.scene_music(2, 0.5)
 
                 for self.environment in self.environment_list:
@@ -692,10 +716,10 @@ class Game(Scene):
                     meteor.update(self.player.turbo)
                     meteor.draw()
 
-                for enemy in self.enemy_group:
-                    enemy.update()
-                    enemy.check_collision(self.explosion_fx)
-                    enemy.draw()
+                for self.enemy in self.enemy_group:
+                    self.enemy.update()
+                    self.enemy.check_collision(self.explosion_fx)
+                    self.enemy.draw()
 
                 self.bullet_group.update()
                 self.missile_group.update()

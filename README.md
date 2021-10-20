@@ -26,3 +26,4 @@ Commit processing:
 22. Create function: command & keyboard - buttons (class Main)
 23. Create class: Screen_fade (script tools)
 24. Create class: Planet (script environment)
+25. Create function: patrol, faster, kamikaze - ai (class Enemy)

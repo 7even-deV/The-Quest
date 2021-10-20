@@ -1,3 +1,6 @@
+import random
+
+
 # Define caption
 CAPTION = ('T h e   Q u e s t   -   ',
 ('M a i n', 'M e n u', 'G a m e', 'R e c o r d'))
@@ -6,6 +9,9 @@ CAPTION = ('T h e   Q u e s t   -   ',
 SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 800
 
+
+VOL_MUSIC = 1
+VOL_SOUND = 1
 LOGO = 500
 
 # Set framerate
@@ -17,15 +23,21 @@ LIVES = 3
 LEVEL = 1
 SURGE_NUM = 1
 
-enemy_select = 1
+# enemy_select = random.randint(0, 2)
+enemy_select = 0
 enemy_dict = {
-    'scale' : [2, 2],
-    'ammo'  : [100, 1],
-    'load'  : [0, 0],
-    'exp'   : [20, 10],
-    'pos_x' : [SCREEN_WIDTH//2, -100],
-    'pos_y' : [-100, SCREEN_HEIGHT//4],
+    'ammo'  : [100, 10, 0],
+    'load'  : [0, 0, 1],
+    'exp'   : [20, 10, 30],
 }
+def enemy_position(select, for_enemy):
+    if select == 0:
+        return (random.randint(100, SCREEN_WIDTH-100), -100)
+    if select == 1:
+        return (-100*for_enemy, SCREEN_HEIGHT//5)
+    if select == 2:
+        return (random.randint(100, SCREEN_WIDTH-100), -100)
+
 
 # Define colours (R, G, B)
 def COLOR(color_key):

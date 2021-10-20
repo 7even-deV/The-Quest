@@ -32,7 +32,7 @@ class Controller():
         while True:
             # Manage each scene
             self.scene_caption(i)
-            self.scene_list[i].scene_music(i, 0.5)
+            self.scene_list[i].scene_music(i)
             username, select, model, level, score, turnback = self.scene_list[i].main_loop(username, select, model, level, score)
 
             # Cycle through each scene until reset to 0

@@ -1,6 +1,6 @@
 import pygame
 
-from .manager import player_select_function, explosion_3_img, explosion_dict
+from .manager import player_select_function, explosion_2_img, explosion_dict
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
 from .tools import Sprite_sheet, Timer
 from .weapons import Bullet, Missile
@@ -30,11 +30,13 @@ class Player(Sprite_sheet):
 
         # Load player image
         self.create_animation(100, 100, player_action_dict)
-        self.sheet = pygame.image.load(explosion_3_img).convert_alpha()
+        self.sheet = pygame.image.load(explosion_2_img).convert_alpha()
         self.create_animation(100, 100, explosion_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
         # Get player rect
         self.rect = self.image.get_rect(midtop=(SCREEN_WIDTH//2, SCREEN_HEIGHT))
+
+        self.animation_cooldown = 100
 
         self.direction_x = 1
         self.direction_y = -1
@@ -62,9 +64,9 @@ class Player(Sprite_sheet):
 
     def update(self):
         # Update player events
-        self.check_alive()
         self.move()
-        self.update_animation()
+        self.check_alive()
+        self.update_animation(self.animation_cooldown)
         # Update cooldown
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
@@ -180,10 +182,11 @@ class Player(Sprite_sheet):
 
     def shoot(self, *args):
         if self.shoot_cooldown == 0 and self.ammo > 0:
-            self.shoot_cooldown = 8
+            self.shoot_cooldown = 10
             # create bullet ammo
-            bullet = Bullet(self, self.screen, self.select, self.rect.centerx, self.rect.top//1.1, self.direction_y,\
-                            self.flip_x, self.flip_y, self.bullet_group, self.enemy_group, self.meteor_group)
+            bullet = Bullet('player', self.screen, self.select, self.rect.centerx, self.rect.top//1.1, self.direction_y,\
+                            self.flip_x, self.flip_y, self, self.bullet_group, self.enemy_group, self.meteor_group)
+            bullet.player_shoot()
             self.bullet_group.add(bullet)
             # Reduce ammo
             self.ammo -= 1
@@ -209,6 +212,7 @@ class Player(Sprite_sheet):
             self.health = 0
             self.speed = 0
             self.alive = False
+            self.animation_cooldown = self.animation_cooldown // 2
             self.update_action('death')
         else: self.update_action('idle')
 

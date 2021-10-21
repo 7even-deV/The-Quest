@@ -10,73 +10,76 @@ class Bullet(Sprite_sheet):
     def __init__(self, origin, screen, select, x, y, direction, flip_x, flip_y, *args, **kwargs):
         bullet_img, weapon_dict = weapon_select_function(select)
         super().__init__(bullet_img)
-        self.player = origin
+        self.origin = origin
         self.screen = screen
         self.select = select
-        self.speed = 15
+        self.speed  = 15
 
         # Load bullet image
         self.create_animation(50, 50, weapon_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
-        self.rect = self.image.get_rect(**kwargs)
+        self.rect  = self.image.get_rect(**kwargs)
         self.rect.center = (x, y)
-        self.direction = direction
-        self.flip_x = flip_x
-        self.flip_y = flip_y
+        self.direction   = direction
+        self.flip_x  = flip_x
+        self.flip_y  = flip_y
         self.collide = False
 
-        self.bullet_group = args[0]
-        self.enemy_group = args[1]
-        self.obstacle_group = args[2]
+        self.player         = args[0]
+        self.bullet_group   = args[1]
+        self.enemy_group    = args[2]
+        self.obstacle_group = args[3]
 
         self.update_action('bullet')
 
     def update(self):
         # Update bullet events
         self.update_animation(10)
-        self.move()
+
+        if self.origin == 'player':
+            self.player_shoot()
+        elif self.origin == 'enemy':
+            self.enemy_shoot()
 
         # Check if bullet has gone off screen
         if self.rect.bottom < 0 or self.rect.top > SCREEN_HEIGHT:
             self.kill() # Kill the animation
 
-        if not self.collide:
-            # Check collision with player
-            if pygame.sprite.spritecollide(self.player, self.bullet_group, False):
-                if self.player.alive and not self.player.win:
-                    self.collide = True
-                    self.player.collide = True
-                    self.player.health -= 10
-                    if self.player.health <= 0:
-                        self.player.animation_cooldown = self.player.animation_cooldown // 4
-                        self.player.update_action('destroy')
+        # Move bullet
+        self.rect.y += self.speed * self.direction
 
+    def player_shoot(self):
+        if not self.collide:
             # Check for collision with enemies
             for enemy in self.enemy_group:
                 if pygame.sprite.spritecollide(enemy, self.bullet_group, False):
                     if enemy.alive:
                         self.collide = True
-                        enemy.collide = True
                         enemy.health -= 25
-                        if enemy.health <= 0:
-                            enemy.animation_cooldown = enemy.animation_cooldown // 4
-                            enemy.update_action('destroy')
+                        self.player.score += enemy.exp
 
             # Check for collision with meteors
             for obstacle in self.obstacle_group:
                 if pygame.sprite.spritecollide(obstacle, self.bullet_group, False):
                     self.collide = True
-                    obstacle.collide = True
-                    obstacle.animation_cooldown = obstacle.animation_cooldown // 4
-                    obstacle.update_action('destroy')
+                    obstacle.health -= 10
+                    self.player.score += obstacle.exp
 
         else: # If the bullet collide it stop and destroy
-            self.speed = 0
             self.update_action('destroy')
+            self.speed = 0
 
-    def move(self):
-        # Move bullet
-        self.rect.y += self.speed * self.direction
+    def enemy_shoot(self):
+        if not self.collide:
+            # Check collision with player
+            if pygame.sprite.spritecollide(self.player, self.bullet_group, False):
+                if self.player.alive and not self.player.win:
+                    self.collide = True
+                    self.player.health -= 10
+
+        else: # If the bullet collide it stop and destroy
+            self.update_action('destroy')
+            self.speed = 0
 
 
 class Missile(Sprite_sheet):
@@ -101,7 +104,6 @@ class Missile(Sprite_sheet):
         self.enemy_group     = args[1]
         self.obstacle_group  = args[2]
         self.explosion_group = args[3]
-
         self.missile_fx      = args[4]
         self.missile_cd_fx   = args[5]
         self.explosion_fx    = args[6]

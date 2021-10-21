@@ -19,6 +19,9 @@ msg_dict = {
     1 : "User exists",
     2 : "Maximum characters",
     3 : "User created successfully",
+    4 : "User removed successfully",
+    5 : "The user list is empty",
+    -1 : "",
 }
 
 

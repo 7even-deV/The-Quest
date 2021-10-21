@@ -1,6 +1,6 @@
 import pygame, random
 
-from .manager import enemy_select_function, explosion_2_img, explosion_dict
+from .manager import enemy_select_function, explosion_3_img, explosion_dict
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, enemy_dict
 from .tools import Sprite_sheet, Timer
 from .weapons import Bullet, Missile
@@ -44,12 +44,11 @@ class Enemy(Sprite_sheet):
 
         # Load enemy image
         self.create_animation(100, 100, enemy_action_dict)
-        self.sheet = pygame.image.load(explosion_2_img).convert_alpha()
+        self.sheet = pygame.image.load(explosion_3_img).convert_alpha()
         self.create_animation(100, 100, explosion_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
 
         # Get enemy rect
-        # self.rect = self.image.get_rect(center=(enemy_dict['pos_x'][self.select], enemy_dict['pos_y'][self.select]))
         self.rect = self.image.get_rect(**kwargs)
 
         self.delta_x  = 0
@@ -121,6 +120,9 @@ class Enemy(Sprite_sheet):
             self.rotate = 0
             self.flip_y = True
             self.ai_moving_down = True
+            # Check if fallen off the map
+            if self.rect.top > SCREEN_HEIGHT:
+                self.kill()
 
         elif not self.ai_spawn:
             # Check if going off the edges of the screen
@@ -144,33 +146,13 @@ class Enemy(Sprite_sheet):
         self.rect.x += self.delta_x
         self.rect.y += self.delta_y
 
-    # Check if the collision with the player
-    def check_collision(self, sfx):
-        if not self.collide and not self.player.win:
-            # margin_width = self.player.rect.width // 10
-            # margin_height = self.player.rect.height // 10
-            margin_width = 0
-            margin_height = 0
-            if self.rect.right >= self.player.rect.left + margin_width and self.rect.left <= self.player.rect.right - margin_width and \
-                self.rect.bottom >= self.player.rect.top + margin_height and self.rect.top <= self.player.rect.bottom - margin_height:
-                self.collide = True
-                self.player.collide = True
-                self.player.rect.x += (self.delta_x - self.player.delta_x) * 2
-                self.player.rect.y += (self.delta_y - self.player.delta_y) * 2
-                self.player.score += 10
-                self.player.health -= 50
-                self.health -= 100
-                self.delta_x = self.delta_y = 0
-                self.animation_cooldown = self.animation_cooldown // 2
-                sfx.play()
-
     def shoot(self, *args):
         if self.shoot_cooldown == 0 and self.ammo > 0:
-            self.shoot_cooldown = 8
+            self.shoot_cooldown = 50
             # create bullet ammo
-            bullet = Bullet(self, self.screen, self.select, self.rect.centerx, self.rect.bottom*1.2, self.direction_y,\
-                            self.flip_x, self.flip_y, self.bullet_group, self.enemy_group, self.meteor_group)
-            self.bullet_group.add(bullet)
+            self.bullet = Bullet('enemy', self.screen, self.select, self.rect.centerx, self.rect.bottom*1.1, self.direction_y,\
+                            self.flip_x, self.flip_y, self.player, self.bullet_group, self.enemy_group, self.meteor_group)
+            self.bullet_group.add(self.bullet)
             # Reduce ammo
             self.ammo -= 1
             args[1].play()
@@ -182,7 +164,7 @@ class Enemy(Sprite_sheet):
             self.throw_cooldown = 400
             # Create missile load
             missile = Missile(self.screen, self.rect.centerx, self.rect.bottom, self.direction_y, self.flip_x, self.flip_y,\
-                                self, self.enemy_group, self.meteor_group, self.explosion_group, args[1], args[2], args[3])
+                                self.player, self.enemy_group, self.meteor_group, self.explosion_group, args[1], args[2], args[3])
             self.missile_group.add(missile)
             # Reduce load
             self.load -= 1
@@ -246,7 +228,7 @@ class Enemy(Sprite_sheet):
 
             # Update ai vision as the enemy moves
             self.vision.midtop = (self.rect.centerx, self.rect.centery)
-            # pygame.draw.rect(self.screen, (255, 0, 0), self.vision)
+            pygame.draw.rect(self.screen, (255, 0, 0), self.vision)
 
     def faster_ai(self):
         if self.ai_spawn:
@@ -318,7 +300,7 @@ class Enemy(Sprite_sheet):
 
             # Update ai vision as the enemy moves
             self.vision.midtop = (self.rect.centerx, self.rect.centery)
-            # pygame.draw.rect(self.screen, (255, 0, 0), self.vision)
+            pygame.draw.rect(self.screen, (255, 0, 0), self.vision)
 
     def kamikaze_ai(self):
         if self.ai_spawn:
@@ -372,14 +354,33 @@ class Enemy(Sprite_sheet):
 
             # Update ai vision as the enemy moves
             self.vision.midtop = (self.rect.centerx, self.rect.centery)
-            # pygame.draw.rect(self.screen, (255, 0, 0), self.vision)
+            pygame.draw.rect(self.screen, (255, 0, 0), self.vision)
+
+    # Check if the collision with the player
+    def check_collision(self, sfx):
+        if not self.collide and not self.player.win and self.player.alive:
+            # margin_width  = self.player.rect.width // 10
+            # margin_height = self.player.rect.height // 10
+            margin_width  = 0
+            margin_height = 0
+            if self.rect.right  >= self.player.rect.left + margin_width and self.rect.left <= self.player.rect.right - margin_width and \
+                self.rect.bottom >= self.player.rect.top + margin_height and self.rect.top <= self.player.rect.bottom - margin_height:
+                self.collide = True
+                self.player.collide = True
+                self.player.rect.x += (self.delta_x - self.player.delta_x) * 2
+                self.player.rect.y += (self.delta_y - self.player.delta_y) * 2
+                self.player.score  += 10
+                self.player.health -= 50
+                self.health -= 100
+                sfx.play()
 
     def check_alive(self):
         if self.health <= 0:
             self.health = 0
-            self.speed = 0
-            self.exp = 0
             self.alive = False
+            self.exp = 0
+            self.speed = 0
+            self.animation_cooldown = self.animation_cooldown // 4
             self.update_action('destroy')
         else: self.update_action('idle')
 

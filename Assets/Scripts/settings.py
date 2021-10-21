@@ -10,9 +10,10 @@ SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 800
 
 
-VOL_MUSIC = 1
-VOL_SOUND = 1
+VOL_MUSIC = 0.1
+VOL_SOUND = 0.1
 LOGO = 500
+STARS = 50
 
 # Set framerate
 FPS = 60
@@ -21,10 +22,11 @@ FPS = 60
 SCENE = 0
 LIVES = 3
 LEVEL = 1
+METEOR_SCALE = 4
 SURGE_NUM = 1
 
-# enemy_select = random.randint(0, 2)
-enemy_select = 0
+enemy_select = random.randint(0, 2)
+# enemy_select = 0
 enemy_dict = {
     'ammo'  : [100, 10, 0],
     'load'  : [0, 0, 1],

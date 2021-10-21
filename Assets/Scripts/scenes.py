@@ -1,6 +1,6 @@
 import pygame, random
 
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, VOL_MUSIC, VOL_SOUND, LOGO, COLOR, LIVES, SURGE_NUM, enemy_select, enemy_position
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, VOL_MUSIC, VOL_SOUND, LOGO, COLOR, STARS, LIVES, SURGE_NUM, enemy_select, enemy_position
 from .manager import msg_dict, btn_text_list, keyboard_list, statue_img, bg_img, lives_img, game_over_img, load_music, load_sound
 from .tools import Timer, Button, Keyboard, Canvas, Icon, HealthBar, Screen_fade
 from .environment import Foreground, Background, Farground, Planet, Portal
@@ -245,7 +245,17 @@ class Main(Scene):
                                 username = username_list[user]
                                 run = False
 
-                        elif self.command_list[3].trigger:
+                        if self.command_list[2].trigger:
+                            if login and username_list[user] != username_list[0]:
+                                # self.db.delete_data(username_list[user])
+                                # username_list.remove(username_list[user])
+                                self.db.delete_data(username_list.pop(user))
+                                user = -1
+                                msg = 4
+                            elif len(username_list) > 1: msg = -1
+                            else: msg = 5
+
+                        if self.command_list[3].trigger:
                             if  confirm: confirm = False
                             elif create:  create = False
                             elif  login:   login = False
@@ -520,15 +530,15 @@ class Game(Scene):
         self.meteor_list = self.meteor_list_copy
 
     def environment_create(self, init_planet):
-        bg = Background(SCREEN_WIDTH, SCREEN_HEIGHT, bg_img)
-        fg  = Farground(SCREEN_WIDTH, SCREEN_HEIGHT, 50)
-        origin_planet  = Planet('origin' , init_planet, SCREEN_WIDTH, SCREEN_HEIGHT, midbottom=(SCREEN_WIDTH//2, SCREEN_HEIGHT))
-        destiny_planet = Planet('destiny', init_planet, SCREEN_WIDTH, SCREEN_HEIGHT, midbottom=(SCREEN_WIDTH//2, 0))
+        bg = Background(bg_img)
+        fg  = Farground(STARS)
+        origin_planet  = Planet('origin' , init_planet, midbottom=(SCREEN_WIDTH//2, SCREEN_HEIGHT))
+        destiny_planet = Planet('destiny', init_planet, midbottom=(SCREEN_WIDTH//2, 0))
 
         self.environment_list = [bg, fg, origin_planet, destiny_planet]
 
     def enemy_create(self, level):
-        enemy_select = random.randint(0, 2)
+        # enemy_select = random.randint(0, 2)
         self.enemy_list = []
         temp_list = []
         for i in range(level):
@@ -537,12 +547,15 @@ class Game(Scene):
         self.enemy_group.add(self.enemy_list[0])
 
     def meteor_surge(self, level, surge_num):
+        self.surge_start = self.surge_end = False
+        self.surge_index = 0
+
         self.meteor_list = []
         for number in range(surge_num):
             temp_list = []
             # Increase the number of meteors per surge
             for _ in range((number + level) * 100 // 4):
-                temp_list.append(Meteor(self.screen, self.player, SCREEN_WIDTH, SCREEN_HEIGHT))
+                temp_list.append(Meteor(self.screen, self.player))
 
             self.meteor_list.append(temp_list)
 
@@ -572,10 +585,6 @@ class Game(Scene):
         pause = False
         restart = False
         death = False
-
-        surge_start = False
-        surge_end = False
-        surge_index = 0
 
         shoot = False
         shoot_bullets = False
@@ -686,20 +695,20 @@ class Game(Scene):
 
             else:
                 # Update the time of the next surge of meteors
-                if not surge_start and self.game_timer.delay(level * 60 // 4 * (surge_index + 1), True):
-                    surge_start = True
+                if not self.surge_start and self.game_timer.delay(level * 60 // 4 * (self.surge_index + 1), True):
+                    self.surge_start = True
 
-                elif surge_start and not surge_end:
+                elif self.surge_start and not self.surge_end:
                     # Add the next surge when the previous surge ends
                     if len(self.meteor_group) == 0:
-                        if surge_index < len(self.meteor_list):
-                            self.meteor_group.add(self.meteor_list[surge_index])
-                            surge_index += 1
-                            surge_start = False
+                        if self.surge_index < len(self.meteor_list):
+                            self.meteor_group.add(self.meteor_list[self.surge_index])
+                            self.surge_index += 1
+                            self.surge_start = False
                             self.enemy.retired = True
                             self.scene_music(4, 0.5)
                         else:
-                            surge_end = True
+                            self.surge_end = True
                             self.enemy.retired = False
                             self.scene_music(2, 0.5)
 
@@ -711,15 +720,16 @@ class Game(Scene):
                 self.player.update()
                 self.player.draw()
 
-                for meteor in self.meteor_group:
-                    meteor.check_collision(self.explosion_fx)
-                    meteor.update(self.player.turbo)
-                    meteor.draw()
+                for self.meteor in self.meteor_group:
+                    self.meteor.check_collision(self.explosion_fx)
+                    self.meteor.update(self.player.turbo)
+                    self.meteor.draw()
 
                 for self.enemy in self.enemy_group:
-                    self.enemy.update()
-                    self.enemy.check_collision(self.explosion_fx)
-                    self.enemy.draw()
+                    if not self.player.spawn:
+                        self.enemy.update()
+                        self.enemy.check_collision(self.explosion_fx)
+                        self.enemy.draw()
 
                 self.bullet_group.update()
                 self.missile_group.update()
@@ -732,7 +742,7 @@ class Game(Scene):
                 if self.player.alive:
                     if self.player.spawn and self.intro_fade.fade():
                         self.intro_fade.fade_counter = 0
-                        self.player.spawn = False
+                        self.player.spawn  = False
 
                     if self.player.collide and self.game_timer.counter(1, True):
                         self.player.collide = False

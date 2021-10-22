@@ -1,7 +1,17 @@
 DB_FILE = 'Assets/Data/BBDD.db'
 TBL_NAME = 'GAMMER'
+# SQL = '''(
+#     ID integer PRIMARY KEY AUTOINCREMENT,
+#     USERNAME text,
+#     STYLE integer,
+#     MODEL integer,
+#     LEVEL integer,
+#     SCORE integer,
+#     HIGHSCORE integer
+# )'''
+
 SQL = '''(
-    USERNAME text PRIMARY KEY,
+    USERNAME text,
     STYLE integer,
     MODEL integer,
     LEVEL integer,
@@ -11,7 +21,7 @@ SQL = '''(
 
 MEMORY_LIST = []
 for num in range(10):
-    MEMORY_LIST.append((f"Empty-{num}", 0, 0, 0, 0, 0))
+    MEMORY_LIST.append((num, f"Empty-{num}", 0, 0, 0, 0, 0))
 
 
 msg_dict = {
@@ -30,19 +40,19 @@ button_dict = {
     'off' : (1, 1, 1, 1),
     'on'  : (1, 1, 2, 1),
 }
-btn_text_list = [
+button_list = [
     [
     "Account",
     "Configs",
     "Credits",
     "Exit",
     ],[
-    "New User",
-    "Edit",
-    "Delete",
+    "Login",
+    "Readme",
+    "Help",
     "Back",
     ],[
-    "New User",
+    "Play",
     "Edit",
     "Delete",
     "Back",
@@ -62,14 +72,21 @@ key_dict = {
 }
 keyboard_list = [
     ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
-    ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'],
-    ['k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'],
-    ['u', 'v', 'w', 'x', 'y', 'z', '-', '_', '<', '±'],
+    ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ñ'],
+    ['z', 'x', 'c', 'v', 'b', 'n', 'm', '-', '<<', '±'],
 ]
 
 
+board_img = 'Assets/Images/board.png'
+board_dict = {
+    'off' : (1, 1, 1, 1),
+    'on'  : (1, 1, 2, 1),
+}
+
+
 # Define fonts
-font_tuple = ("CabinSketch", "Fixedsys500c", "LibreFranklin", "PoetsenOne")
+font_tuple = ("GameCube", "Fixedsys500c", "LibreFranklin", "PoetsenOne")
 
 def font_function(i_font):
     return f'Assets/Fonts/{font_tuple[i_font]}.ttf'

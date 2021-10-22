@@ -28,3 +28,4 @@ Commit processing:
 24. Create class: Planet (script environment)
 25. Create function: patrol, faster, kamikaze - ai (class Enemy)
 26. Create CRUD: username list (class Main)
+27. Create script: documents and class Board (script tools)

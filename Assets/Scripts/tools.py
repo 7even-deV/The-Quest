@@ -1,6 +1,6 @@
 import pygame
 
-from .manager import icon_type_function, button_img, button_dict, key_img, key_dict, font_function
+from .manager import icon_type_function, button_img, button_dict, key_img, key_dict, board_img, board_dict, font_function
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, COLOR
 
 
@@ -280,6 +280,67 @@ class Keyboard(Sprite_sheet):
         image.set_colorkey(False)
         screen.blit(image, self.rect)
         screen.blit(self.font_render, (self.pos_x, self.pos_y))
+
+
+class Board(Sprite_sheet):
+    def __init__(self, document='', letter=3, size=20, color=COLOR('BLACK'), **kwargs):
+        super().__init__(board_img)
+        self.create_animation(600, 300, board_dict)
+        self.image = self.animation_dict[self.action][self.frame_index]
+        self.rect  = self.image.get_rect(**kwargs)
+
+        self.letter = letter
+        self.size   = size
+        self.color  = color
+        self.create_textline(document, **kwargs)
+
+        self.show = False
+
+    def update(self):
+        self.move(15)
+        self.update_animation()
+
+    def move(self, speed_y):
+        if self.show:
+            if self.rect.top < 0:
+                self.rect.y += speed_y
+                for rect in self.rect_list:
+                    rect.y += speed_y
+        else:
+            if self.rect.bottom > 0:
+                self.rect.y -= speed_y
+                for rect in self.rect_list:
+                    rect.y -= speed_y
+
+    def create_textline(self, document, **kwargs):
+        self.text_list = []
+        temp_var = ''
+        for char in document:
+            temp_var += char
+
+            if char in '.:':
+                temp_var = temp_var[1:]
+                self.text_list.append(temp_var)
+                temp_var = ''
+            # elif len(temp_var) > 40:
+            #     self.text_list.append(temp_var)
+            #     temp_var = ''
+        self.text_list.append(temp_var[:-1])
+
+        self.font_list = []
+        self.rect_list = []
+        for line, index in zip(self.text_list, range(len(self.text_list))):
+            font = pygame.font.Font(font_function(self.letter), self.size)
+            self.font_list.append(font.render(line, True, self.color))
+            rect = self.font_list[index].get_rect(**kwargs)
+            self.rect_list.append(rect)
+
+    def draw(self, screen):
+        self.image.set_colorkey(False)
+        screen.blit(self.image, self.rect)
+
+        for font, rect, index in zip(self.font_list, self.rect_list, range(len(self.rect_list))):
+            screen.blit(font, (rect.x, rect.top + rect.height * index + self.rect.height//7.5))
 
 
 class Canvas(pygame.sprite.Sprite):

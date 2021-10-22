@@ -1,8 +1,9 @@
 import pygame, random
 
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, VOL_MUSIC, VOL_SOUND, LOGO, COLOR, STARS, LIVES, SURGE_NUM, enemy_select, enemy_position
-from .manager import msg_dict, btn_text_list, keyboard_list, statue_img, bg_img, lives_img, game_over_img, load_music, load_sound
-from .tools import Timer, Button, Keyboard, Canvas, Icon, HealthBar, Screen_fade
+from .manager import msg_dict, button_list, keyboard_list, statue_img, bg_img, lives_img, game_over_img, load_music, load_sound
+from .documents import CREDITS, README, HELP
+from .tools import Timer, Button, Keyboard, Board, Canvas, Icon, HealthBar, Screen_fade
 from .environment import Foreground, Background, Farground, Planet, Portal
 from .obstacles import Meteor
 from .players import Player
@@ -60,6 +61,7 @@ class Main(Scene):
     def __init__(self, screen):
         super().__init__(screen)
         self.message = Canvas(size=20, center=True, color=COLOR('YELLOW'), letter_f=3)
+        self.board = Board(midtop=(SCREEN_WIDTH//2, 0))
 
         # Sounds fx
         self.select_loop_fx = self.sound('select_loop')
@@ -72,10 +74,10 @@ class Main(Scene):
 
     def command_buttons(self):
         self.command_list = []
-        pos_y = 0.0
-        for btn in range(len(btn_text_list)):
-            self.command_list.append(Button(btn_text_list[0][btn], center=(SCREEN_WIDTH//2, SCREEN_HEIGHT*(0.5+pos_y))))
-            pos_y += 0.12
+        margin_y = SCREEN_HEIGHT//2
+
+        for btn in range(len(button_list[0])):
+            self.command_list.append(Button(button_list[0][btn], center=(SCREEN_WIDTH//2, btn * SCREEN_HEIGHT//8 + margin_y)))
 
     def keyboard_buttons(self):
         self.keyboard_list = []
@@ -104,7 +106,7 @@ class Main(Scene):
         turnback = False
 
         username_list = self.load_username()
-        btn_text_list[1][0] = username_list
+        button_list[1][0] = username_list
 
         run = True
         while run:
@@ -182,7 +184,7 @@ class Main(Scene):
                                 if self.keyboard_list[row_key][column_key] != self.keyboard_list[-1][-1]\
                                 and self.keyboard_list[row_key][column_key] != self.keyboard_list[-1][-2]:
                                     username += self.keyboard_list[row_key][column_key].text
-                                    btn_text_list[2][0] = username
+                                    button_list[2][0] = username
                             else: msg = 2
                             if self.keyboard_list[row_key][column_key] == self.keyboard_list[-1][-2]:
                                 if len(username) > 0: username = username[:-1]
@@ -245,10 +247,27 @@ class Main(Scene):
                                 username = username_list[user]
                                 run = False
 
+                        if self.command_list[1].trigger:
+                            if not create:
+                                if login:
+                                    if not self.board.show:
+                                        self.board.show = True
+                                        self.board.create_textline(README, center=(self.board.rect.centerx, self.board.rect.top))
+                                    else: self.board.show = False
+
                         if self.command_list[2].trigger:
+                            if not create:
+                                if not login:
+                                    if not self.board.show:
+                                        self.board.show = True
+                                        self.board.create_textline(CREDITS, center=(self.board.rect.centerx, self.board.rect.top))
+                                    else: self.board.show = False
+                                else:
+                                    if not self.board.show:
+                                        self.board.show = True
+                                        self.board.create_textline(HELP, center=(self.board.rect.centerx, self.board.rect.top))
+                                    else: self.board.show = False
                             if login and username_list[user] != username_list[0]:
-                                # self.db.delete_data(username_list[user])
-                                # username_list.remove(username_list[user])
                                 self.db.delete_data(username_list.pop(user))
                                 user = -1
                                 msg = 4
@@ -285,13 +304,14 @@ class Main(Scene):
                 if self.command != self.command_list[cursor]:
                     self.command.select_effect(False)
                     self.command.trigger = False
+                    # self.board.show = False
 
                 if not self.command_list[index] == self.command_list[0]:
-                    self.command_list[index].text = btn_text_list[select][index]
+                    self.command_list[index].text = button_list[select][index]
                 else:
                     if  confirm: self.command_list[0].text = "Play"
                     elif create: self.command_list[0].text = username
-                    elif  login: self.command_list[0].text = btn_text_list[select][index][user]
+                    elif  login: self.command_list[0].text = button_list[select][index][user]
 
                 self.command.update()
                 self.command.draw(self.screen)
@@ -306,12 +326,17 @@ class Main(Scene):
 
                         if self.keyboard_list[-1][-1].trigger:
                             self.keyboard.text = self.keyboard.text.upper()
+                            self.keyboard_list[-1][-3].text = "_"
                             self.keyboard_list[-1][-1].select_effect(True)
                         else:
                             self.keyboard.text = self.keyboard.text.lower()
+                            self.keyboard_list[-1][-3].text = "-"
 
                         self.keyboard.update()
                         self.keyboard.draw(self.screen)
+
+            self.board.update()
+            self.board.draw(self.screen)
 
             # Limit delay without event activity
             if self.menu_timer.countdown(1, True):

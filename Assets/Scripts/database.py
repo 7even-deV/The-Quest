@@ -21,7 +21,7 @@ class Database():
             else: cur.execute(query) # Make the query
         except sqlite3.OperationalError as error:
             self.init_table()
-            # print(error)
+            print(error)
         finally:
             self.data = cur.fetchall() # Search the data
             cnn.commit() # Commit changes

@@ -11,7 +11,7 @@ class Database():
 
     def init_table(self):
         self.crud_query(f'''CREATE TABLE {self.table} {self.sql}''')
-        # self.create_data('', 0, 0, 0, 0, 0, self.memory_list)
+        # self.create_data('', 0, 0, 1, 1, 0, 0, self.memory_list)
 
     def crud_query(self, query, *args):
         cnn = sqlite3.connect(self.db_file) # Create the database or connect to it
@@ -21,18 +21,18 @@ class Database():
             else: cur.execute(query) # Make the query
         except sqlite3.OperationalError as error:
             self.init_table()
-            print(error)
+            # print(error)
         finally:
             self.data = cur.fetchall() # Search the data
             cnn.commit() # Commit changes
             cnn.close() # Close connection
 
-    def create_data(self, username='', style=0, model=0, level=0, score=0, highscore=0, *args):
+    def create_data(self, username='', style=0, model=0, level=1, highlevel=1, score=0, highscore=0, *args):
         if args != ():
-            mul = '?,' * 6
+            mul = '?,' * 7
             self.crud_query(f'INSERT INTO {self.table} VALUES ({mul[:-1]})', *args)
         else:
-            self.crud_query(f'INSERT INTO {self.table} VALUES ("{username}", {style}, {model}, {level}, {score}, {highscore})')
+            self.crud_query(f'INSERT INTO {self.table} VALUES ("{username}", {style}, {model}, {level}, {highlevel}, {score}, {highscore})')
 
     def read_data(self, field=None, tidy=None):
         if tidy!= None:
@@ -44,8 +44,9 @@ class Database():
 
         return self.data
 
-    def update_data(self, username, highscore):
-        self.crud_query(f'UPDATE {self.table} SET HIGHSCORE={highscore} WHERE USERNAME like "{username}"')
+    def update_data(self, username, **kwargs):
+        query = list(kwargs.items())[0]
+        self.crud_query(f'UPDATE {self.table} SET {query[0].upper()}={query[1]} WHERE USERNAME like "{username}"')
 
     def delete_data(self, username):
         self.crud_query(f'DELETE FROM {self.table} WHERE USERNAME like "{username}"')

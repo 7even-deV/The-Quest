@@ -1,6 +1,4 @@
-# Final Project Bootcamp Zero KeepCoding - The Quest (Pygame)
-
-Commit processing:
+# Commit processing
 
 1. The Quest init
 2. Create all workspace
@@ -29,3 +27,4 @@ Commit processing:
 25. Create function: patrol, faster, kamikaze - ai (class Enemy)
 26. Create CRUD: username list (class Main)
 27. Create script: documents and class Board (script tools)
+28. Create function: config buttons (class Main) and class Bar (script tools)

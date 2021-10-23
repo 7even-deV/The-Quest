@@ -1,8 +1,8 @@
 import pygame, random
 
-from .manager import meteor_img, meteor_action_dict, explosion_1_img, explosion_dict
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, METEOR_SCALE
-from .tools import Sprite_sheet
+from .manager  import meteor_img, meteor_action_dict, explosion_1_img, explosion_dict
+from .tools    import Sprite_sheet
 
 
 class Meteor(Sprite_sheet):

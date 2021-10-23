@@ -1,18 +1,18 @@
 import pygame
 
-from .manager import player_select_function, explosion_2_img, explosion_dict
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
-from .tools import Sprite_sheet, Timer
-from .weapons import Bullet, Missile
+from .manager  import player_select_function, explosion_2_img, explosion_dict
+from .tools    import Sprite_sheet, Timer
+from .weapons  import Bullet, Missile
 
 
 class Player(Sprite_sheet):
 
-    def __init__(self, screen, lives, select, model, score, speed, ammo, load, *args, **kwargs):
-        player_img, player_action_dict = player_select_function(select, model)
+    def __init__(self, screen, lives, style, model, score, speed, ammo, load, *args, **kwargs):
+        player_img, player_action_dict = player_select_function(style, model)
         super().__init__(player_img)
         self.screen = screen
-        self.select = select
+        self.select = style
         self.score = score
         self.speed = speed
         self.ammo = ammo

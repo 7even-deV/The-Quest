@@ -1,9 +1,9 @@
 import pygame
 
-from . import __author__
+from .         import __author__
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, CAPTION, SCENE, LEVEL
-from .manager import logo_icon
-from .scenes import Main, Menu, Game, Record
+from .manager  import logo_icon
+from .scenes   import Main, Menu, Game, Record
 
 
 class Controller():
@@ -22,18 +22,15 @@ class Controller():
 
     def launch_manager(self):
         i = SCENE
-        username = ''
-        select = 0
-        model = 0
         level = LEVEL
-        score = 0
+        username = ''
 
         # Main loop
         while True:
             # Manage each scene
             self.scene_caption(i)
             self.scene_list[i].scene_music(i)
-            username, select, model, level, score, turnback = self.scene_list[i].main_loop(username, select, model, level, score)
+            username, turnback = self.scene_list[i].main_loop(username)
 
             # Cycle through each scene until reset to 0
             if turnback:

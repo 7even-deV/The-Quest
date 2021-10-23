@@ -1,8 +1,8 @@
 import pygame, random
 
-from .manager import planet_img, planet_dict
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT
-from .tools import Sprite_sheet
+from .manager  import planet_img, planet_dict
+from .tools    import Sprite_sheet
 
 
 class Foreground():

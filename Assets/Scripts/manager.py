@@ -6,6 +6,7 @@ TBL_NAME = 'GAMMER'
 #     STYLE integer,
 #     MODEL integer,
 #     LEVEL integer,
+#     HIGHLEVEL integer,
 #     SCORE integer,
 #     HIGHSCORE integer
 # )'''
@@ -15,6 +16,7 @@ SQL = '''(
     STYLE integer,
     MODEL integer,
     LEVEL integer,
+    HIGHLEVEL integer,
     SCORE integer,
     HIGHSCORE integer
 )'''
@@ -64,6 +66,15 @@ button_list = [
     ]
 ]
 
+bar_img = 'Assets/Images/bar.png'
+bar_dict = {
+    'turn' : (1, 1, 1, 1),
+}
+bar_list = [
+    "Music  vol.",
+    "Sound  vol.",
+]
+
 
 key_img = 'Assets/Images/key.png'
 key_dict = {
@@ -105,8 +116,25 @@ def icon_type_function(i_type):
     if i_type == 'symbol':
         icon_type_dict = {
             'dps_1'  : (1, 1, 1, 1), # Circle
+            'dps_2'  : (1, 1, 1, 1), # Circle
+            'dps_3'  : (1, 1, 1, 1), # Circle
+            'dps_4'  : (1, 1, 1, 1), # Circle
+            'dps_5'  : (1, 1, 1, 1), # Circle
+            'dps_6'  : (1, 1, 1, 1), # Circle
+
             'tank_1' : (1, 1, 1, 2), # Square
+            'tank_2' : (1, 1, 1, 2), # Square
+            'tank_3' : (1, 1, 1, 2), # Square
+            'tank_4' : (1, 1, 1, 2), # Square
+            'tank_5' : (1, 1, 1, 2), # Square
+            'tank_6' : (1, 1, 1, 2), # Square
+
             'heal_1' : (1, 1, 1, 3), # Triangle
+            'heal_2' : (1, 1, 1, 3), # Triangle
+            'heal_3' : (1, 1, 1, 3), # Triangle
+            'heal_4' : (1, 1, 1, 3), # Triangle
+            'heal_5' : (1, 1, 1, 3), # Triangle
+            'heal_6' : (1, 1, 1, 3), # Triangle
         }
     if i_type == 'spaceships':
         icon_type_dict = {
@@ -222,9 +250,9 @@ game_over_img = 'Assets/Images/game_over.png'
 
 
 # Load music and sounds
-scene_music_list = ['music_main', 'music_menu', 'music_game', 'music_record', 'music_danger']
+scene_music_list = ['main', 'menu', 'game', 'record', 'danger']
 def load_music(scene_music):
-    return f'Assets/Audio/music/{scene_music_list[scene_music]}.ogg'
+    return f'Assets/Audio/_music_{scene_music_list[scene_music]}.ogg'
 
 sound_list = [
     'select', 'select_loop', 'portal_loop', 'confirm', 'start', 'pause',
@@ -233,4 +261,4 @@ sound_list = [
 ]
 def load_sound(sfx):
     if sfx in sound_list:
-        return f'Assets/Audio/sound/{sfx}.ogg'
+        return f'Assets/Audio/{sfx}.ogg'

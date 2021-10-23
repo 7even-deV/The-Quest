@@ -1,18 +1,18 @@
 import pygame, random
 
-from .manager import enemy_select_function, explosion_3_img, explosion_dict
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, enemy_dict
-from .tools import Sprite_sheet, Timer
-from .weapons import Bullet, Missile
+from .manager  import enemy_select_function, explosion_3_img, explosion_dict
+from .tools    import Sprite_sheet, Timer
+from .weapons  import Bullet, Missile
 
 
 class Enemy(Sprite_sheet):
 
-    def __init__(self, screen, select, speed, player, *args, **kwargs):
-        enemy_img, enemy_action_dict = enemy_select_function(select)
+    def __init__(self, screen, style, speed, player, *args, **kwargs):
+        enemy_img, enemy_action_dict = enemy_select_function(style)
         super().__init__(enemy_img)
         self.screen = screen
-        self.select = select
+        self.select = style
         self.speed  = speed
         self.player = player
         self.win    = self.player.win
@@ -182,6 +182,8 @@ class Enemy(Sprite_sheet):
             if self.select == 2:
                 self.kamikaze_ai()
 
+            # pygame.draw.rect(self.screen, (255, 0, 0), self.vision)
+
     def patrol_ai(self):
         if self.ai_spawn:
             if self.limit_up():
@@ -228,7 +230,6 @@ class Enemy(Sprite_sheet):
 
             # Update ai vision as the enemy moves
             self.vision.midtop = (self.rect.centerx, self.rect.centery)
-            pygame.draw.rect(self.screen, (255, 0, 0), self.vision)
 
     def faster_ai(self):
         if self.ai_spawn:
@@ -300,7 +301,6 @@ class Enemy(Sprite_sheet):
 
             # Update ai vision as the enemy moves
             self.vision.midtop = (self.rect.centerx, self.rect.centery)
-            pygame.draw.rect(self.screen, (255, 0, 0), self.vision)
 
     def kamikaze_ai(self):
         if self.ai_spawn:
@@ -354,7 +354,6 @@ class Enemy(Sprite_sheet):
 
             # Update ai vision as the enemy moves
             self.vision.midtop = (self.rect.centerx, self.rect.centery)
-            pygame.draw.rect(self.screen, (255, 0, 0), self.vision)
 
     # Check if the collision with the player
     def check_collision(self, sfx):

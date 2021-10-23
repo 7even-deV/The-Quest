@@ -1,8 +1,8 @@
 import pygame
 
-from .manager import weapon_select_function, missile_img, missile_dict, missile_exp_img, missile_exp_dict
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
-from .tools import Sprite_sheet, Timer
+from .manager  import weapon_select_function, missile_img, missile_dict, missile_exp_img, missile_exp_dict
+from .tools    import Sprite_sheet, Timer
 
 
 class Bullet(Sprite_sheet):

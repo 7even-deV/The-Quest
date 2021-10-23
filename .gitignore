@@ -1,5 +1,14 @@
+# Test files folder
 .idea/
+
+# Virtual environment folder
 .venv/
+
+# IgnoreWords json folder
 .vscode/
+
+# Import cache folder
 *__pycache__/
+
+# Test script
 test.py

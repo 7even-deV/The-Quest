@@ -1,7 +1,7 @@
 import pygame
 
-from .manager import icon_type_function, button_img, button_dict, key_img, key_dict, board_img, board_dict, font_function
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, COLOR
+from .manager  import icon_type_function, button_img, button_dict, bar_img, bar_dict, key_img, key_dict, board_img, board_dict, font_function
 
 
 class Timer():
@@ -214,6 +214,45 @@ class Button(Sprite_sheet):
         image.set_colorkey(False)
         screen.blit(image, self.rect)
         screen.blit(self.font_render, (self.pos_x, self.pos_y))
+
+
+class Bar(Sprite_sheet):
+    def __init__(self, text, letter=3, size=20, color=COLOR('WHITE'), **kwargs):
+        super().__init__(bar_img)
+        self.create_animation(300, 50, bar_dict)
+        self.image = self.animation_dict[self.action][self.frame_index]
+        self.rect  = self.image.get_rect(**kwargs)
+
+        self.gage = Keyboard("_", center=(self.rect.centerx, self.rect.centery))
+
+        self.text   = text
+        self.letter = letter
+        self.size   = size
+        self.color  = color
+
+        self.font = pygame.font.Font(font_function(self.letter), self.size)
+        self.font_render = self.font.render(self.text, True, self.color)
+        self.text_rect   = self.font_render.get_rect(**kwargs)
+
+        self.pos_x = self.rect.left - (self.text_rect.width + self.rect.width//10)
+        self.pos_y = self.text_rect.y
+
+        self.trigger = False
+
+        self.update_action('turn')
+
+    def update(self):
+        self.update_animation()
+        self.font = pygame.font.Font(font_function(self.letter), self.size)
+        self.font_render = self.font.render(self.text, True, self.color)
+        self.gage.update()
+
+    def draw(self, screen):
+        image = pygame.transform.scale(self.image, (self.rect.w * self.scale, self.rect.h * self.scale))
+        image.set_colorkey(False)
+        screen.blit(image, self.rect)
+        screen.blit(self.font_render, (self.pos_x, self.pos_y))
+        self.gage.draw(screen)
 
 
 class Keyboard(Sprite_sheet):

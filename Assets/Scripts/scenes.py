@@ -1,7 +1,7 @@
 import pygame, random
 
-from .settings    import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, VOL_MUSIC, VOL_SOUND, LOGO, COLOR, STARS, LIVES, SPEED, SURGE_NUM, enemy_select, enemy_position
-from .documents   import CREDITS, README, HELP
+from .settings    import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, MUSIC_VOL, SOUND_VOL, LOGO, COLOR, STARS, LIVES, SPEED, SURGE_NUM, enemy_select, enemy_position
+from .documents   import CREDITS, HISTORY, GUIDE
 from .manager     import msg_dict, button_list, bar_list, keyboard_list, statue_img, bg_img, lives_img, game_over_img, load_music, load_sound
 from .tools       import Timer, Button, Bar, Keyboard, Board, Canvas, Icon, HealthBar, Screen_fade
 from .environment import Foreground, Background, Farground, Planet, Portal
@@ -53,32 +53,41 @@ class Scene():
 
         return new_highscore
 
-    def scene_music(self, index, volume=VOL_MUSIC):
+    def load_volume(self, username, music, sound):
+        self.db.update_data(username, MUSIC=music)
+        self.db.update_data(username, SOUND=sound)
+
+    def music(self, index, volume=MUSIC_VOL):
         pygame.mixer.music.load(load_music(index))
         pygame.mixer.music.set_volume(volume)
         pygame.mixer.music.play(-1, 0.0, 1000)
 
-    def sound(self, sfx, volume=VOL_SOUND):
+    def sound(self, sfx, volume=SOUND_VOL):
         fx = pygame.mixer.Sound(load_sound(sfx))
         fx.set_volume(volume)
         return fx
 
-    def volume(self, vol=0):
+    def music_vol(self, vol=0):
         return round(pygame.mixer.music.get_volume() + vol, 1)
+
+    def sound_vol(self, sfx, vol=0):
+        return round(sfx.get_volume() + vol, 1)
 
 
 class Main(Scene):
 
     def __init__(self, screen):
         super().__init__(screen)
-        self.message = Canvas(size=20, x=SCREEN_WIDTH//2, y=SCREEN_HEIGHT//10, color=COLOR('SILVER'), letter_f=3)
-        self.board = Board(midtop=(SCREEN_WIDTH//2, 0))
+        self.message = Canvas(letter_f=2, size=20, center=True, y=SCREEN_HEIGHT//2.5, color=COLOR('WHITE'))
+        self.board   = Board(midbottom=(SCREEN_WIDTH//2, 0))
 
         # Sounds fx
         self.select_loop_fx = self.sound('select_loop')
         self.select_fx      = self.sound('select')
         self.confirm_fx     = self.sound('confirm')
         self.start_fx       = self.sound('start')
+
+        self.sfx_list = [self.select_loop_fx, self.select_fx, self.confirm_fx, self.start_fx]
 
         # Create menu timer
         self.menu_timer = Timer(FPS)
@@ -92,10 +101,10 @@ class Main(Scene):
 
     def config_buttons(self):
         self.config_list = []
-        margin_y = SCREEN_HEIGHT//7.75
+        margin_y = SCREEN_HEIGHT//5
 
         for bar in range(len(bar_list)):
-            self.config_list.append(Bar(bar_list[bar], center=(SCREEN_WIDTH//1.6, bar * SCREEN_HEIGHT//10 + margin_y)))
+            self.config_list.append(Bar(bar_list[bar], center=(SCREEN_WIDTH//1.8, bar * SCREEN_HEIGHT//10 + margin_y)))
 
     def keyboard_buttons(self):
         self.keyboard_list = []
@@ -118,9 +127,10 @@ class Main(Scene):
         self.keyboard_buttons()
         self.keyboard_list[0][0].select_effect(True)
 
-        vol = self.volume()
         cursor = bar = column_key = row_key = select = 0
         login = create = confirm = False
+
+        vol_scan = [0.5] * 2
 
         user = -1
         msg = 0
@@ -149,11 +159,18 @@ class Main(Scene):
                                 else: user = len(username_list) - 1
 
                             elif self.command_list[1].trigger:
-                                if self.volume() > 0.0: # Turn down the volume
-                                    vol = self.volume(- 0.1)
-                                    pygame.mixer.music.set_volume(vol)
-                                    self.config_list[bar].gage.rect.x -= 22
-                                    self.config_list[bar].gage.text_rect.x -= 22
+                                if self.config_list[bar].gage == self.config_list[0].gage:
+                                    if self.music_vol() > 0.0: # Turn down the volume
+                                        vol_scan[0] = self.music_vol(- 0.1)
+                                        pygame.mixer.music.set_volume(vol_scan[0])
+                                        self.config_list[bar].gage.rect.x -= 22
+
+                                elif self.config_list[bar].gage == self.config_list[1].gage:
+                                    if self.sound_vol(self.sfx_list[0]) > 0.0: # Turn down the sound
+                                        for sfx in self.sfx_list:
+                                            vol_scan[1] = self.sound_vol(sfx, - 0.1)
+                                            sfx.set_volume(vol_scan[1])
+                                        self.config_list[bar].gage.rect.x -= 22
                         else:
                             if column_key > 0:
                                 column_key -= 1
@@ -170,11 +187,18 @@ class Main(Scene):
                                 else: user = 0
 
                             elif self.command_list[1].trigger:
-                                if self.volume() < 1.0: # Turn up the volume
-                                    vol = self.volume(+ 0.1)
-                                    pygame.mixer.music.set_volume(vol)
-                                    self.config_list[bar].gage.rect.x += 22
-                                    self.config_list[bar].gage.text_rect.x += 22
+                                if self.config_list[bar].gage == self.config_list[0].gage:
+                                    if self.music_vol() < 1.0: # Turn up the volume
+                                        vol_scan[0] = self.music_vol(+ 0.1)
+                                        pygame.mixer.music.set_volume(vol_scan[0])
+                                        self.config_list[bar].gage.rect.x += 22
+
+                                elif self.config_list[bar].gage == self.config_list[1].gage:
+                                    if self.sound_vol(self.sfx_list[0]) < 1.0: # Turn up the sound
+                                        for sfx in self.sfx_list:
+                                            vol_scan[1] = self.sound_vol(sfx, + 0.1)
+                                            sfx.set_volume(vol_scan[1])
+                                        self.config_list[bar].gage.rect.x += 22
                         else:
                             if column_key < len(self.keyboard_list[row_key]) - 1:
                                 column_key += 1
@@ -282,7 +306,7 @@ class Main(Scene):
                                             else:
                                                 self.db.create_data(username)
                                                 username_list.append(username)
-                                                user = -1
+                                                user = 0
                                                 create = False
                                                 msg = 3
                                         else:
@@ -296,13 +320,18 @@ class Main(Scene):
 
                         if self.command_list[1].trigger:
                             if not create and not confirm:
-                                if login:
+                                if not login:
+                                    if not self.config.show:
+                                        self.config.show = True
+                                    else:
+                                        self.load_volume(username_list[user], vol_scan[0], vol_scan[1])
+                                        self.config.show = False
+                                        self.command_list[1].trigger = False
+                                else:
                                     if not self.board.show:
                                         self.board.show = True
-                                        self.board.create_textline(README, center=(self.board.rect.centerx, self.board.rect.top))
+                                        self.board.create_textline(HISTORY, center=(self.board.rect.centerx, self.board.rect.top))
                                     else: self.board.show = False
-                                else:
-                                    self.config_list[bar].trigger = True
 
                         if self.command_list[2].trigger:
                             if not create and not confirm:
@@ -314,14 +343,14 @@ class Main(Scene):
                                 else:
                                     if not self.board.show:
                                         self.board.show = True
-                                        self.board.create_textline(HELP, center=(self.board.rect.centerx, self.board.rect.top))
+                                        self.board.create_textline(GUIDE, midleft=(self.board.rect.width//5.5, self.board.rect.top))
                                     else: self.board.show = False
                             elif username_list[user] != username_list[0]:
                                 self.db.delete_data(username_list.pop(user))
                                 user = -1
                                 msg = 4
                                 confirm = False
-                            elif len(username_list) > 1: msg = -1
+                            elif len(username_list) > 1: msg = 0
                             else: msg = 5
 
                         if self.command_list[3].trigger:
@@ -369,20 +398,24 @@ class Main(Scene):
             if not login and self.command_list[1].trigger:
                 for self.config in self.config_list:
                     if self.config == self.config_list[bar]:
-                        self.config.gage.trigger = True
                         self.config.gage.select_effect(True)
+                        self.config.color      = COLOR('YELLOW')
+                        self.config.gage.color = COLOR('YELLOW')
                         self.config_list[bar].gage.active_effect(True)
                     else:
-                        self.config.gage.trigger = False
                         self.config.gage.select_effect(False)
+                        self.config.color      = COLOR('WHITE')
+                        self.config.gage.color = COLOR('WHITE')
                         self.config_list[bar].gage.active_effect(False)
 
-                    if vol == 0.0 or vol == 1.0:
-                        self.config_list[bar].gage.text = "#"
+                    if vol_scan[bar] == 0.0:
+                        self.config_list[bar].gage.text = "min"
+                        self.config_list[bar].gage.color = COLOR('ORANGE')
+                    elif vol_scan[bar] == 1.0:
+                        self.config_list[bar].gage.text = "max"
                         self.config_list[bar].gage.color = COLOR('ORANGE')
                     else:
-                        self.config_list[bar].gage.text = str(vol)[-1]
-                        self.config_list[bar].gage.color = COLOR('YELLOW')
+                        self.config_list[bar].gage.text = str(vol_scan[bar])[-1]
 
                     self.config.update()
                     self.config.draw(self.screen)
@@ -436,19 +469,28 @@ class Menu(Scene):
         self.confirm_fx     = self.sound('confirm')
         self.start_fx       = self.sound('start')
 
+        self.sfx_list = [self.portal_loop_fx, self.select_loop_fx, self.select_fx, self.confirm_fx, self.start_fx]
+
         # Create menu timer
         self.menu_timer = Timer(FPS)
 
     def main_loop(self, username):
         username_data = self.db.read_data(username)[0]
-        style = username_data[1]
-        model = username_data[2]
-        level = username_data[3]
+        style     = username_data[1]
+        model     = username_data[2]
+        level     = username_data[3]
         highlevel = username_data[4]
-        confirm = False
-        turnback = False
 
-        vol = self.volume()
+        music     = username_data[7]
+        sound     = username_data[8]
+        pygame.mixer.music.set_volume(music)
+        for sfx in self.sfx_list:
+            sfx.set_volume(sound)
+
+        confirm   = False
+        turnback  = False
+
+        vol = self.music_vol()
 
         run = True
         while run:
@@ -495,14 +537,14 @@ class Menu(Scene):
                             self.start_fx.play()
 
                     if event.key == pygame.K_UP:
-                        if self.volume() < 1.0: # Turn up the volume
-                            vol = self.volume(+ 0.1)
+                        if self.music_vol() < 1.0: # Turn up the volume
+                            vol = self.music_vol(+ 0.1)
                             pygame.mixer.music.set_volume(vol)
                             self.select_fx.play()
 
                     if event.key == pygame.K_DOWN:
-                        if self.volume() > 0.0: # Turn down the volume
-                            vol = self.volume(- 0.1)
+                        if self.music_vol() > 0.0: # Turn down the volume
+                            vol = self.music_vol(- 0.1)
                             pygame.mixer.music.set_volume(vol)
                             self.select_fx.play()
 
@@ -584,7 +626,6 @@ class Game(Scene):
         self.score_view     = Canvas(size=22, y=40, right=True, letter_f=3)
 
         self.paused         = Canvas(size=60, center=True, y=SCREEN_HEIGHT//3, color=COLOR('RED'))
-        self.vol_browse     = Canvas(size=20, center=True, y=SCREEN_HEIGHT//2, color=COLOR('YELLOW'))
 
         self.bullet_group    = pygame.sprite.Group()
         self.missile_group   = pygame.sprite.Group()
@@ -599,7 +640,7 @@ class Game(Scene):
         self.group_list = [self.bullet_group, self.missile_group, self.enemy_group, self.meteor_group, self.explosion_group]
 
         self.ui_bar.add(self.ammo_load_view, self.username_view, self.level_view, self.timer_view, self.highscore_view, self.score_view)
-        self.settings.add(self.paused, self.vol_browse)
+        self.settings.add(self.paused)
 
         # Sounds fx
         self.move_fx        = self.sound('move')
@@ -619,7 +660,9 @@ class Game(Scene):
         self.win_fx         = self.sound('win')
         self.game_over_fx   = self.sound('game_over')
 
-        self.sfx_list = [self.empty_ammo_fx, self.bullet_fx, self.empty_load_fx, self.missile_fx, self.missile_cd_fx, self.missile_exp_fx]
+        self.enemy_sfx_list = [self.empty_ammo_fx, self.bullet_fx, self.empty_load_fx, self.missile_fx, self.missile_cd_fx, self.missile_exp_fx]
+        self.sfx_list       = [self.move_fx, self.backmove_fx, self.turbo_fx, self.explosion_fx, self.pause_fx, self.select_fx, self.win_fx, self.game_over_fx]
+        self.sfx_list.extend(self.enemy_sfx_list)
 
     # Function to reset level
     def reset_level(self):
@@ -639,11 +682,11 @@ class Game(Scene):
         self.environment_list = [bg, fg, origin_planet, destiny_planet]
 
     def enemy_create(self, level):
-        # enemy_select = random.randint(0, 2)
+        enemy_select = random.randint(0, 2)
         self.enemy_list = []
         temp_list = []
         for i in range(level):
-            temp_list.append(Enemy(self.screen, enemy_select, level+1, self.player, [self.group_list, self.sfx_list], center=(enemy_position(enemy_select, i))))
+            temp_list.append(Enemy(self.screen, enemy_select, level+1, self.player, [self.group_list, self.enemy_sfx_list], center=(enemy_position(enemy_select, i))))
         self.enemy_list.append(temp_list)
         self.enemy_group.add(self.enemy_list[0])
 
@@ -673,14 +716,32 @@ class Game(Scene):
         # Create game timer
         self.game_timer = Timer(FPS)
 
+    def config_buttons(self):
+        self.config_list = []
+        margin_y = SCREEN_HEIGHT//2
+
+        for bar in range(len(bar_list)):
+            self.config_list.append(Bar(bar_list[bar], center=(SCREEN_WIDTH//1.8, bar * SCREEN_HEIGHT//10 + margin_y)))
+
     def main_loop(self, username):
         self.reset_level()
 
         username_data = self.db.read_data(username)[0]
-        style = username_data[1]
-        model = username_data[2]
-        level = username_data[3]
-        highscore = username_data[-1]
+        style     = username_data[1]
+        model     = username_data[2]
+        level     = username_data[3]
+        highscore = username_data[6]
+
+        music     = username_data[7]
+        sound     = username_data[8]
+        pygame.mixer.music.set_volume(music)
+        for sfx in self.sfx_list:
+            sfx.set_volume(sound)
+
+        bar = 0
+        vol_scan = [music, sound]
+        self.config_buttons()
+        self.config_list[bar].gage.select_effect(True)
 
         score = 0
 
@@ -689,7 +750,6 @@ class Game(Scene):
 
         self.process_data(style, model, level, score, lives, init_planet)
 
-        vol = self.volume()
         pause = False
         restart = False
         death = False
@@ -714,28 +774,56 @@ class Game(Scene):
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
-                        if not self.player.win:
+                        if pause and self.config_list[bar].gage == self.config_list[0].gage:
+                            if self.music_vol() > 0.0: # Turn down the volume
+                                vol_scan[0] = self.music_vol(- 0.1)
+                                pygame.mixer.music.set_volume(vol_scan[0])
+                                self.config_list[bar].gage.rect.x -= 22
+
+                            elif self.config_list[bar].gage == self.config_list[1].gage:
+                                if self.sound_vol(self.sfx_list[0]) > 0.0: # Turn down the sound
+                                    for sfx in self.sfx_list:
+                                        vol_scan[1] = self.sound_vol(sfx, - 0.1)
+                                        sfx.set_volume(vol_scan[1])
+                                    self.config_list[bar].gage.rect.x -= 22
+
+                        elif not self.player.win:
                             self.player.moving_left = True # Moving left
                             self.move_fx.play()
 
                     if event.key == pygame.K_RIGHT:
-                        if not self.player.win:
+                        if pause and self.config_list[bar].gage == self.config_list[0].gage:
+                            if self.music_vol() < 1.0: # Turn up the volume
+                                vol_scan[0] = self.music_vol(+ 0.1)
+                                pygame.mixer.music.set_volume(vol_scan[0])
+                                self.config_list[bar].gage.rect.x += 22
+
+                            elif self.config_list[bar].gage == self.config_list[1].gage:
+                                if self.sound_vol(self.sfx_list[0]) < 1.0: # Turn up the sound
+                                    for sfx in self.sfx_list:
+                                        vol_scan[1] = self.sound_vol(sfx, + 0.1)
+                                        sfx.set_volume(vol_scan[1])
+                                    self.config_list[bar].gage.rect.x += 22
+
+                        elif not self.player.win:
                             self.player.moving_right = True # Moving right
                             self.move_fx.play()
 
                     if event.key == pygame.K_UP:
-                        if pause and self.volume() < 1.0: # Turn up the volume
-                            vol = self.volume(+ 0.1)
-                            pygame.mixer.music.set_volume(vol)
+                        if pause:
+                            if bar > 0:
+                                bar -= 1
+                            else: bar = len(self.config_list) - 1
                             self.select_fx.play()
                         elif not self.player.win:
                             self.player.moving_up = True # Moving up
                             self.move_fx.play()
 
                     if event.key == pygame.K_DOWN:
-                        if pause and self.volume() > 0.0: # Turn down the volume
-                            vol = self.volume(- 0.1)
-                            pygame.mixer.music.set_volume(vol)
+                        if pause:
+                            if bar < len(self.config_list) - 1:
+                                bar += 1
+                            else: bar = 0
                             self.select_fx.play()
                         elif not self.player.win:
                             self.player.moving_down = True # Moving down
@@ -752,9 +840,12 @@ class Game(Scene):
                         if not self.player.win: throw = True
 
                     if event.key == pygame.K_RETURN: # Pause and Settings
-                        if pause:
+                        if not pause:
+                            pause = True
+                        else:
+                            self.load_volume(username, vol_scan[0], vol_scan[1])
                             pause = False
-                        else: pause = True
+
                         self.pause_fx.play()
 
                     if event.key == pygame.K_ESCAPE: # Exit game
@@ -789,17 +880,35 @@ class Game(Scene):
 
             ''' --- AREA TO UPDATE AND DRAW --- '''
 
-            if pause:
-                # Pause and volume control
+            if pause: # Pause and volume control
                 self.paused.text = "P A U S E"
-
-                if vol == 0.0 or vol == 1.0:
-                    self.vol_browse.color = COLOR('ORANGE')
-                else: self.vol_browse.color = COLOR('YELLOW')
-                self.vol_browse.text = f"Press <UP or DOWN> to vol:  {vol}"
 
                 self.settings.update()
                 self.settings.draw(self.screen)
+
+                for self.config in self.config_list:
+                    if self.config == self.config_list[bar]:
+                        self.config.gage.select_effect(True)
+                        self.config.color      = COLOR('YELLOW')
+                        self.config.gage.color = COLOR('YELLOW')
+                        self.config_list[bar].gage.active_effect(True)
+                    else:
+                        self.config.gage.select_effect(False)
+                        self.config.color      = COLOR('WHITE')
+                        self.config.gage.color = COLOR('WHITE')
+                        self.config_list[bar].gage.active_effect(False)
+
+                    if vol_scan[bar] == 0.0:
+                        self.config_list[bar].gage.text = "min"
+                        self.config_list[bar].gage.color = COLOR('ORANGE')
+                    elif vol_scan[bar] == 1.0:
+                        self.config_list[bar].gage.text = "max"
+                        self.config_list[bar].gage.color = COLOR('ORANGE')
+                    else:
+                        self.config_list[bar].gage.text = str(vol_scan[bar])[-1]
+
+                    self.config.update()
+                    self.config.draw(self.screen)
 
             else:
                 # Update the time of the next surge of meteors
@@ -814,11 +923,11 @@ class Game(Scene):
                             self.surge_index += 1
                             self.surge_start = False
                             # self.enemy.retired = True
-                            self.scene_music(4, 0.5)
+                            self.music(4, 0.5)
                         else:
                             self.surge_end = True
                             # self.enemy.retired = False
-                            self.scene_music(2, 0.5)
+                            self.music(2, 0.5)
 
                 for self.environment in self.environment_list:
                     self.environment.update(self.player.delta_x, self.player.turbo, self.player.win)

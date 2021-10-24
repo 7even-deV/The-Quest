@@ -1,24 +1,15 @@
 DB_FILE = 'Assets/Data/BBDD.db'
 TBL_NAME = 'GAMMER'
-# SQL = '''(
-#     ID integer PRIMARY KEY AUTOINCREMENT,
-#     USERNAME text,
-#     STYLE integer,
-#     MODEL integer,
-#     LEVEL integer,
-#     HIGHLEVEL integer,
-#     SCORE integer,
-#     HIGHSCORE integer
-# )'''
-
 SQL = '''(
-    USERNAME text,
+    USERNAME text PRIMARY KEY,
     STYLE integer,
     MODEL integer,
     LEVEL integer,
     HIGHLEVEL integer,
     SCORE integer,
-    HIGHSCORE integer
+    HIGHSCORE integer,
+    MUSIC float,
+    SOUND float
 )'''
 
 MEMORY_LIST = []
@@ -27,13 +18,12 @@ for num in range(10):
 
 
 msg_dict = {
-    0 : "T h e  Q u e s t",
+    0 : "",
     1 : "User exists",
     2 : "Maximum characters",
     3 : "User created successfully",
     4 : "User removed successfully",
     5 : "The user list is empty",
-    -1 : "",
 }
 
 
@@ -50,8 +40,8 @@ button_list = [
     "Exit",
     ],[
     "Login",
-    "Readme",
-    "Help",
+    "History",
+    "Guide",
     "Back",
     ],[
     "Play",
@@ -255,10 +245,27 @@ def load_music(scene_music):
     return f'Assets/Audio/_music_{scene_music_list[scene_music]}.ogg'
 
 sound_list = [
-    'select', 'select_loop', 'portal_loop', 'confirm', 'start', 'pause',
-    'bullet', 'empty_ammo', 'missile', 'missile_countdown', 'missile_explosion', 'empty_load',
-    'move', 'backmove', 'turbo', 'explosion', 'win', 'death', 'game_over',
+    'select',
+    'select_loop',
+    'portal_loop',
+    'confirm',
+    'start',
+    'pause',
+    'bullet',
+    'empty_ammo',
+    'missile',
+    'missile_countdown',
+    'missile_explosion',
+    'empty_load',
+    'move',
+    'backmove',
+    'turbo',
+    'explosion',
+    'win',
+    'death',
+    'game_over',
 ]
 def load_sound(sfx):
     if sfx in sound_list:
         return f'Assets/Audio/{sfx}.ogg'
+    else: pass

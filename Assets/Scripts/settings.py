@@ -10,8 +10,8 @@ SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 800
 
 
-VOL_MUSIC = 0.5
-VOL_SOUND = 0.5
+MUSIC_VOL = 0.5
+SOUND_VOL = 0.5
 LOGO = 500
 STARS = 50
 
@@ -26,8 +26,8 @@ LEVEL = 1
 METEOR_SCALE = 4
 SURGE_NUM = 1
 
-enemy_select = random.randint(0, 2)
-# enemy_select = 0
+# enemy_select = random.randint(0, 2)
+enemy_select = 0
 enemy_dict = {
     'ammo'  : [100, 10, 0],
     'load'  : [0, 0, 1],

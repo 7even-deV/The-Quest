@@ -133,7 +133,7 @@ class Planet(Sprite_sheet):
 
     def draw(self, screen):
         image = pygame.transform.flip(self.image, self.flip_x, self.flip_y)
-        image.set_colorkey(False)
+        image.set_colorkey((255, 255, 255))
         screen.blit(image, (self.relative_x, self.rect.y))
 
 

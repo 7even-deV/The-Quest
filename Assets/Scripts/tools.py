@@ -223,8 +223,6 @@ class Bar(Sprite_sheet):
         self.image = self.animation_dict[self.action][self.frame_index]
         self.rect  = self.image.get_rect(**kwargs)
 
-        self.gage = Keyboard("_", center=(self.rect.centerx, self.rect.centery))
-
         self.text   = text
         self.letter = letter
         self.size   = size
@@ -237,7 +235,10 @@ class Bar(Sprite_sheet):
         self.pos_x = self.rect.left - (self.text_rect.width + self.rect.width//10)
         self.pos_y = self.text_rect.y
 
-        self.trigger = False
+        self.gage = Keyboard("", letter=0, size=size, center=(self.rect.centerx, self.rect.centery))
+        self.gage.text_rect.x = self.rect.right + self.rect.width//12
+
+        self.show = False
 
         self.update_action('turn')
 
@@ -322,7 +323,7 @@ class Keyboard(Sprite_sheet):
 
 
 class Board(Sprite_sheet):
-    def __init__(self, document='', letter=3, size=20, color=COLOR('BLACK'), **kwargs):
+    def __init__(self, document='', letter=3, size=16, color=COLOR('BLACK'), **kwargs):
         super().__init__(board_img)
         self.create_animation(600, 300, board_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
@@ -357,13 +358,11 @@ class Board(Sprite_sheet):
         for char in document:
             temp_var += char
 
-            if char in '.:':
-                temp_var = temp_var[1:]
+            if char in '/':
+                temp_var = temp_var[1:-1]
                 self.text_list.append(temp_var)
                 temp_var = ''
-            # elif len(temp_var) > 40:
-            #     self.text_list.append(temp_var)
-            #     temp_var = ''
+
         self.text_list.append(temp_var[:-1])
 
         self.font_list = []
@@ -388,8 +387,8 @@ class Canvas(pygame.sprite.Sprite):
         self._text = ""
         self.kwargs = kwargs
 
-        self.x = self._keys('x') or self.is_right() or 20
-        self.y = self._keys('y') or 10
+        self.x = self._keys('x') or self.is_right() or SCREEN_WIDTH//10
+        self.y = self._keys('y') or SCREEN_HEIGHT//10
         self.letter_f = self._keys('letter_f') or 0
         self.size = self._keys('size') or 28
         self.color = self._keys('color') or COLOR('WHITE')
@@ -415,7 +414,7 @@ class Canvas(pygame.sprite.Sprite):
 
     def is_center(self):
         if self._keys('center'):
-            self.x = SCREEN_WIDTH // 2 - self.rect.w // 2
+            self.x = SCREEN_WIDTH // 2 - self.rect.width // 2
 
     def is_right(self):
         if self._keys('right'):
@@ -434,7 +433,7 @@ class Canvas(pygame.sprite.Sprite):
         self._text = str(value)
 
     def draw(self, screen):
-        screen.blit(self.image, (self.x*0.5, self.y*0.5))
+        screen.blit(self.image, (self.x, self.y))
 
 
 class Icon(Sprite_sheet):

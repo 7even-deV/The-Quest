@@ -36,64 +36,58 @@ class Bullet(Sprite_sheet):
         # Update bullet events
         self.update_animation(10)
 
-        if self.origin == 'player':
-            self.player_shoot()
-        elif self.origin == 'enemy':
-            self.enemy_shoot()
+        if not self.collide:
+            if self.origin == 'player':
+                self.player_shoot()
+            elif self.origin == 'enemy':
+                self.enemy_shoot()
 
-        # Check if bullet has gone off screen
-        if self.rect.bottom < 0 or self.rect.top > SCREEN_HEIGHT:
-            self.kill() # Kill the animation
+            # Check if bullet has gone off screen
+            if self.rect.bottom < 0 or self.rect.top > SCREEN_HEIGHT:
+                self.kill() # Kill the animation
+
+        else: # If the bullet collide it stop and destroy
+            self.speed = 1
+            self.update_action('destroy')
 
         # Move bullet
         self.rect.y += self.speed * self.direction
 
     def player_shoot(self):
-        if not self.collide:
-            # Check for collision with enemies
-            for enemy in self.enemy_group:
-                if pygame.sprite.spritecollide(enemy, self.bullet_group, False):
-                    if enemy.alive:
-                        self.collide = True
-                        enemy.health -= 25
-                        self.player.score += enemy.exp
-
-            # Check for collision with meteors
-            for obstacle in self.obstacle_group:
-                if pygame.sprite.spritecollide(obstacle, self.bullet_group, False):
+        # Check for collision with enemies
+        for enemy in self.enemy_group:
+            if pygame.sprite.spritecollide(enemy, self.bullet_group, False):
+                if enemy.alive:
                     self.collide = True
-                    obstacle.health -= 10
-                    self.player.score += obstacle.exp
+                    enemy.health -= 25
 
-        else: # If the bullet collide it stop and destroy
-            self.update_action('destroy')
-            self.speed = 0
+        # Check for collision with meteors
+        for obstacle in self.obstacle_group:
+            if pygame.sprite.spritecollide(obstacle, self.bullet_group, False):
+                self.collide = True
+                obstacle.health -= 10
 
     def enemy_shoot(self):
-        if not self.collide:
-            # Check collision with player
-            if pygame.sprite.spritecollide(self.player, self.bullet_group, False):
-                if self.player.alive and not self.player.win:
-                    self.collide = True
-                    self.player.health -= 10
-
-        else: # If the bullet collide it stop and destroy
-            self.update_action('destroy')
-            self.speed = 0
+        # Check collision with player
+        if pygame.sprite.spritecollide(self.player, self.bullet_group, False):
+            if self.player.alive and not self.player.win:
+                self.collide = True
+                self.player.health -= 10
 
 
 class Missile(Sprite_sheet):
 
-    def __init__(self, screen, x, y, direction, flip_x, flip_y, *args):
+    def __init__(self, origin, screen, x, y, direction, flip_x, flip_y, *args):
         super().__init__(missile_img)
+        self.origin = origin
         self.screen = screen
 
         # Load missile image
         self.create_animation(50, 50, missile_dict)
         self.image  = self.animation_dict[self.action][self.frame_index]
+        self.rect   = self.image.get_rect()
         self.width  = self.image.get_width()
         self.height = self.image.get_height()
-        self.rect   = self.image.get_rect()
         self.rect.center = (x, y)
         self.direction   = direction
         self.flip_x = flip_x
@@ -123,33 +117,16 @@ class Missile(Sprite_sheet):
             self.speed = 0.1
             self.kill() # Kill the animation
             self.explosion_fx.play()
+
             # Create the explosion
             explosion = Explosion(self.screen, center=(self.rect.x, self.rect.y))
             self.explosion_group.add(explosion)
 
             # Do damage to anyone that is nearby
-            if abs(self.rect.centerx - self.player.rect.centerx) < self.width * 5 and\
-            abs(self.rect.centery - self.player.rect.centery) < self.height * 5:
-                self.player.collide = True
-                self.player.health -= 50
-                self.player.animation_cooldown = self.player.animation_cooldown // 4
-                self.player.update_action('destroy')
-
-            for enemy in self.enemy_group:
-                if abs(self.rect.centerx - enemy.rect.centerx) < self.width * 5 and\
-                abs(self.rect.centery - enemy.rect.centery) < self.height * 5:
-                    enemy.collide = True
-                    enemy.health -= 100
-                    enemy.animation_cooldown = enemy.animation_cooldown // 4
-                    enemy.update_action('destroy')
-
-            for obstacle in self.obstacle_group:
-                if abs(self.rect.centerx - obstacle.rect.centerx) < self.width * 5 and\
-                abs(self.rect.centery - obstacle.rect.centery) < self.height * 5:
-                    obstacle.collide = True
-                    obstacle.health -= 100
-                    obstacle.animation_cooldown = obstacle.animation_cooldown // 4
-                    obstacle.update_action('destroy')
+            if self.origin == 'player':
+                self.player_throw()
+            elif self.origin == 'enemy':
+                self.enemy_throw()
 
         else: self.update_action('missile')
 
@@ -166,6 +143,25 @@ class Missile(Sprite_sheet):
         # Update missile position
         self.rect.x += self.delta_x
         self.rect.y += self.delta_y
+
+    def player_throw(self):
+        for enemy in self.enemy_group:
+            if abs(self.rect.centerx - enemy.rect.centerx) < self.width  * 5 and\
+               abs(self.rect.centery - enemy.rect.centery) < self.height * 5:
+                enemy.collide = True
+                enemy.health = 0
+
+        for obstacle in self.obstacle_group:
+            if abs(self.rect.centerx - obstacle.rect.centerx) < self.width  * 5 and\
+               abs(self.rect.centery - obstacle.rect.centery) < self.height * 5:
+                obstacle.collide = True
+                obstacle.health = 0
+
+    def enemy_throw(self):
+        if abs(self.rect.centerx - self.player.rect.centerx) < self.width  * 5 and\
+           abs(self.rect.centery - self.player.rect.centery) < self.height * 5:
+            self.player.collide = True
+            self.player.health -= 50
 
 
 class Explosion(Sprite_sheet):

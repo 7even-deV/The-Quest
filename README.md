@@ -22,6 +22,8 @@ Realizado por:
 | [Sergio Fuentes (Seven)](https://www.linkedin.com/in/sergio-fuentes/)  | Seven-z01@outlook.com |
 
 
+En el transcurso de las 3 semanas para realizar el proyecto final del curso he completado The Quest v1.0.
+Utilicé varias herramientas objeto prediseñados para una funcionalidad mejorada y eficiente durante el desarrollo del juego. De los más útiles a destacar fue el objeto Sprite sheet que me facilitó la descarga de cualquier imagen y la creación de instancias heredando todas sus características como objeto base. Un objeto con 4 tipos diferentes de temporizadores múltiples. Un algoritmo muy reducido que me permitía moverme entre las escenas del juego en cualquier sentido. Un objeto que controla consultas CRUD con SQLite registrando los datos de cada jugador en todo momento. También creé botones, barras, tablero y teclado entre otros para facilitar y mejorar la interactividad del usuario. Y múltiples ideas que preferí mostrar y sorprender durante la experiencia del juego.
 
 Para abrir el juego, hay que lanzar `run.pyw`, teniendo previamente descargados todos los archivos del repositorio.
 

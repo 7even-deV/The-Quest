@@ -29,3 +29,4 @@
 27. Create script: documents and class Board (script tools)
 28. Create function: config buttons (class Main) and class Bar (script tools)
 29. Create md: README & commits and code fixes
+30. Finished work: The Quest v1.0

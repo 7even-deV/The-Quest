@@ -163,11 +163,7 @@ class Button(Sprite_sheet):
 
         self.font = pygame.font.Font(font_function(self.letter), self.size)
         self.font_render = self.font.render(self.text, True, self.color)
-        self.text_rect   = self.font_render.get_rect(**kwargs)
-
-        self.pos_x = self.text_rect.centerx - self.text_rect.width  // 2
-        self.pos_y = self.text_rect.centery - self.text_rect.height // 2
-        self.init_pos = self.rect.left + self.rect.width // 10
+        self.text_rect   = self.font_render.get_rect(center=(self.rect.centerx, self.rect.centery))
 
         self.trigger = False
 
@@ -175,6 +171,7 @@ class Button(Sprite_sheet):
         self.update_animation()
         self.font = pygame.font.Font(font_function(self.letter), self.size)
         self.font_render = self.font.render(self.text, True, self.color)
+        self.text_rect   = self.font_render.get_rect(center=(self.rect.centerx, self.rect.centery))
 
     def select_effect(self, select):
         # Make selection effect
@@ -194,8 +191,8 @@ class Button(Sprite_sheet):
             self.rect.h -= 4
 
             self.color = COLOR('YELLOW')
-            self.pos_x += 3
-            self.pos_y += 1
+            self.text_rect.x += 3
+            self.text_rect.y += 1
             self.size -= 1
         else:
             self.rect.x -= 2
@@ -204,8 +201,8 @@ class Button(Sprite_sheet):
             self.rect.h += 4
 
             self.color = COLOR('WHITE')
-            self.pos_x -= 3
-            self.pos_y -= 1
+            self.text_rect.x -= 3
+            self.text_rect.y -= 1
             self.size += 1
 
     def draw(self, screen):
@@ -213,7 +210,7 @@ class Button(Sprite_sheet):
         image = pygame.transform.flip(image, self.flip_x, self.flip_y)
         image.set_colorkey(False)
         screen.blit(image, self.rect)
-        screen.blit(self.font_render, (self.pos_x, self.pos_y))
+        screen.blit(self.font_render, self.text_rect)
 
 
 class Bar(Sprite_sheet):
@@ -230,29 +227,31 @@ class Bar(Sprite_sheet):
 
         self.font = pygame.font.Font(font_function(self.letter), self.size)
         self.font_render = self.font.render(self.text, True, self.color)
-        self.text_rect   = self.font_render.get_rect(**kwargs)
-
-        self.pos_x = self.rect.left - (self.text_rect.width + self.rect.width//10)
-        self.pos_y = self.text_rect.y
+        self.text_rect   = self.font_render.get_rect(midright=(self.rect.left - self.rect.width//12, self.rect.centery))
 
         self.gage = Keyboard("", letter=0, size=size, center=(self.rect.centerx, self.rect.centery))
-        self.gage.text_rect.x = self.rect.right + self.rect.width//12
 
         self.show = False
 
-        self.update_action('turn')
+        self.update_action('displace')
 
     def update(self):
         self.update_animation()
         self.font = pygame.font.Font(font_function(self.letter), self.size)
         self.font_render = self.font.render(self.text, True, self.color)
+
         self.gage.update()
+        self.gage.text_rect.x = self.rect.right + self.rect.width//12
+
+    def displace_effect(self, vol_scan):
+        # Make displace effect
+        self.gage.rect.x = self.rect.width * vol_scan + self.rect.x//1.2
 
     def draw(self, screen):
         image = pygame.transform.scale(self.image, (self.rect.w * self.scale, self.rect.h * self.scale))
         image.set_colorkey(False)
         screen.blit(image, self.rect)
-        screen.blit(self.font_render, (self.pos_x, self.pos_y))
+        screen.blit(self.font_render, self.text_rect)
         self.gage.draw(screen)
 
 
@@ -270,18 +269,14 @@ class Keyboard(Sprite_sheet):
 
         self.font = pygame.font.Font(font_function(self.letter), self.size)
         self.font_render = self.font.render(self.text, True, self.color)
-        self.text_rect   = self.font_render.get_rect(**kwargs)
-        self.pos_x = self.text_rect.centerx - self.text_rect.width  // 2
-        self.pos_y = self.text_rect.centery - self.text_rect.height // 2
-
+        self.text_rect   = self.font_render.get_rect(center=(self.rect.centerx, self.rect.centery))
         self.trigger = False
 
     def update(self):
         self.update_animation()
         self.font = pygame.font.Font(font_function(self.letter), self.size)
         self.font_render = self.font.render(self.text, True, self.color)
-        self.pos_x = self.text_rect.centerx - self.text_rect.width  // 2
-        self.pos_y = self.text_rect.centery - self.text_rect.height // 2
+        self.text_rect   = self.font_render.get_rect(center=(self.rect.centerx, self.rect.centery))
 
     def select_effect(self, select):
         # Make selection effect
@@ -301,8 +296,8 @@ class Keyboard(Sprite_sheet):
             self.rect.h -= 4
 
             self.color = COLOR('YELLOW')
-            self.pos_x += 3
-            self.pos_y += 1
+            self.text_rect.x += 3
+            self.text_rect.y += 1
             self.size -= 1
         else:
             self.rect.x -= 2
@@ -311,15 +306,15 @@ class Keyboard(Sprite_sheet):
             self.rect.h += 4
 
             self.color = COLOR('WHITE')
-            self.pos_x -= 3
-            self.pos_y -= 1
+            self.text_rect.x -= 3
+            self.text_rect.y -= 1
             self.size += 1
 
     def draw(self, screen):
         image = pygame.transform.scale(self.image, (self.rect.w * self.scale, self.rect.h * self.scale))
         image.set_colorkey(False)
         screen.blit(image, self.rect)
-        screen.blit(self.font_render, (self.pos_x, self.pos_y))
+        screen.blit(self.font_render, self.text_rect)
 
 
 class Board(Sprite_sheet):
@@ -382,58 +377,32 @@ class Board(Sprite_sheet):
 
 
 class Canvas(pygame.sprite.Sprite):
-    def __init__(self, **kwargs):
+    def __init__(self, text='', letter=3, size=18, color=COLOR('WHITE'), **kwargs):
         super().__init__()
-        self._text = ""
+        self.text   = text
+        self.letter = letter
+        self.size   = size
+        self.color  = color
+
         self.kwargs = kwargs
 
-        self.x = self._keys('x') or self.is_right() or SCREEN_WIDTH//10
-        self.y = self._keys('y') or SCREEN_HEIGHT//10
-        self.letter_f = self._keys('letter_f') or 0
-        self.size = self._keys('size') or 28
-        self.color = self._keys('color') or COLOR('WHITE')
+        self.font  = pygame.font.Font(font_function(self.letter), self.size)
+        self.image = self.font.render(self.text, True, self.color)
+        self.rect  = self.image.get_rect(**self.kwargs)
 
-        self.font = pygame.font.Font(font_function(self.letter_f), self.size)
-        self.image = self.font.render(self._text, True, self.color)
-        self.rect = self.image.get_rect(x=self.x, y=self.y)
+        self.delta_x = 0
+        self.delta_y = 0
+        self.fade = 0
 
     def update(self):
-        self.image = self.font.render(self._text, True, self.color)
-        self.rect = self.image.get_rect(x=self.x, y=self.y)
-        self.is_left()
-        self.is_center()
-        self.is_right()
-        self.is_right_text()
+        self.image = self.font.render(self.text, True, self.color)
+        self.rect = self.image.get_rect(**self.kwargs)
 
-    def _keys(self, key):
-        return key in self.kwargs.keys() and self.kwargs[key]
-
-    def is_left(self):
-        if self._keys('left'):
-            self.x = SCREEN_WIDTH // 4
-
-    def is_center(self):
-        if self._keys('center'):
-            self.x = SCREEN_WIDTH // 2 - self.rect.width // 2
-
-    def is_right(self):
-        if self._keys('right'):
-            self.x = SCREEN_WIDTH - (20 + len(self.text) * 10)
-
-    def is_right_text(self):
-        if self._keys('right_text'):
-            self.x = SCREEN_WIDTH - (20 + len(self.text) * 9)
-
-    @property
-    def text(self):
-        return self._text
-
-    @text.setter
-    def text(self, value):
-        self._text = str(value)
+        self.rect.x += self.delta_x
+        self.rect.y += self.delta_y
 
     def draw(self, screen):
-        screen.blit(self.image, (self.x, self.y))
+        screen.blit(self.image, self.rect)
 
 
 class Icon(Sprite_sheet):
@@ -493,9 +462,9 @@ class HealthBar():
         self.health = health
         # Calculate health ratio
         ratio = self.health / self.max_health
-        pygame.draw.rect(self.screen, COLOR('BLACK'), (self.x*0.04 - 2, self.y*0.04 - 2, self.x*0.25, self.y*0.02))
-        pygame.draw.rect(self.screen, COLOR('RED'),   (self.x*0.04, self.y*0.04, self.x*0.2, self.y*0.02))
-        pygame.draw.rect(self.screen, COLOR('GREEN'), (self.x*0.04, self.y*0.04, self.x*0.2 * ratio, self.y*0.02))
+        pygame.draw.rect(self.screen, COLOR('MAROON'), (self.x*0.04-2, self.y*0.04-2, self.x*0.208,     self.y*0.025))
+        pygame.draw.rect(self.screen, COLOR('RED'),    (self.x*0.04,   self.y*0.04,   self.x*0.2,       self.y*0.02))
+        pygame.draw.rect(self.screen, COLOR('GREEN'),  (self.x*0.04,   self.y*0.04,   self.x*0.2*ratio, self.y*0.02))
 
 
 class Screen_fade():

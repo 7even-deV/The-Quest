@@ -30,13 +30,10 @@ class Controller():
             # Manage each scene
             self.scene_caption(i)
             self.scene_list[i].music(i)
-            username, turnback = self.scene_list[i].main_loop(username)
+            username, scene_browser = self.scene_list[i].main_loop(username)
 
             # Cycle through each scene until reset to 0
-            if turnback:
-                i = (i - 1) % len(self.scene_list)
-            else:
-                i = (i + 1) % len(self.scene_list)
+            i = (i + scene_browser) % len(self.scene_list)
 
     def scene_caption(self, index):
         pygame.display.set_caption(CAPTION[0] + CAPTION[1][index])

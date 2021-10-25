@@ -1,7 +1,7 @@
 import pygame, random
 
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, enemy_dict
-from .manager  import enemy_select_function, explosion_3_img, explosion_dict
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, ENEMY_SCALE, enemy_dict
+from .manager  import enemy_select_function, explosion_2_img, explosion_dict
 from .tools    import Sprite_sheet, Timer
 from .weapons  import Bullet, Missile
 
@@ -44,19 +44,28 @@ class Enemy(Sprite_sheet):
 
         # Load enemy image
         self.create_animation(100, 100, enemy_action_dict)
-        self.sheet = pygame.image.load(explosion_3_img).convert_alpha()
+        self.sheet = pygame.image.load(explosion_2_img).convert_alpha()
         self.create_animation(100, 100, explosion_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
 
         # Get enemy rect
         self.rect = self.image.get_rect(**kwargs)
 
+        self.scale = enemy_dict['scale'][self.select]
+        self.rect.width  = self.image.get_width()  // ENEMY_SCALE
+        self.rect.height = self.image.get_height() // ENEMY_SCALE
+
+        # Define enemy action variables
         self.delta_x  = 0
         self.delta_y  = 0
         self.random_x = random.randint(0, 6)
         self.random_y = random.randint(0, 6)
+        self.direction_x    = 1
+        self.direction_y    = 1
 
-        # Define enemy action variables
+        # AI specific variables
+        self.ai_direction_x  = 1
+        self.ai_direction_y  = 1
         self.ai_spawn        = True
         self.ai_stop         = False
         self.ai_moving_left  = False
@@ -64,15 +73,13 @@ class Enemy(Sprite_sheet):
         self.ai_moving_up    = False
         self.ai_moving_down  = False
         self.ai_shoot        = False
+
         self.collide         = False
         self.retired         = False
-
-        # AI specific variables
         self.idling         = False
         self.idling_timer   = 200
         self.idling_counter = 0
-        self.direction_x    = 1
-        self.direction_y    = 1
+
         self.move_counter   = 0
         self.rep_total      = 6
         self.rep_count      = 0
@@ -97,7 +104,7 @@ class Enemy(Sprite_sheet):
         self.delta_y = 0
 
         # Assign bools if moving left or right or up or down
-        if not self.ai_stop:
+        if self.alive and not self.ai_stop:
             if self.ai_moving_left:
                 self.delta_x = -self.speed
                 self.direction_x = -1
@@ -163,7 +170,7 @@ class Enemy(Sprite_sheet):
         if self.throw_cooldown == 0 and self.load > 0:
             self.throw_cooldown = 400
             # Create missile load
-            missile = Missile(self.screen, self.rect.centerx, self.rect.bottom, self.direction_y, self.flip_x, self.flip_y,\
+            missile = Missile('enemy', self.screen, self.rect.centerx, self.rect.bottom, self.direction_y, self.flip_x, self.flip_y,\
                                 self.player, self.enemy_group, self.meteor_group, self.explosion_group, args[1], args[2], args[3])
             self.missile_group.add(missile)
             # Reduce load
@@ -249,43 +256,43 @@ class Enemy(Sprite_sheet):
                 self.kill()
 
             if not self.idling:
-                if self.direction_x == 1:
+                if self.ai_direction_x == 1:
                     self.rotate = -90
                     self.ai_moving_right = True
                     if self.limit_right():
                         self.ai_moving_right = False
-                        self.direction_x = 0
+                        self.ai_direction_x = 0
                         self.rep_count += 1
                         if self.rep_count > self.rep_total:
                             self.rep_count = 0
-                            self.direction_y = -1
+                            self.ai_direction_y = -1
                         else:
-                            self.direction_y = 1
+                            self.ai_direction_y = 1
 
-                elif self.direction_y == 1:
+                elif self.ai_direction_y == 1:
                     self.rotate = -180
                     self.ai_moving_down = True
                     if self.limit_down(self.rep_total * 100 - self.rep_count * 100):
                         self.ai_moving_down = False
-                        self.direction_y = 0
+                        self.ai_direction_y = 0
                         if self.rep_count % 2 == 0:
-                            self.direction_x = 1
+                            self.ai_direction_x = 1
                         else:
-                            self.direction_x = -1
+                            self.ai_direction_x = -1
 
-                elif self.direction_x == -1:
+                elif self.ai_direction_x == -1:
                     self.rotate = 90
                     self.ai_moving_left = True
                     if self.limit_left():
                         self.ai_moving_left = False
-                        self.direction_x = 0
+                        self.ai_direction_x = 0
                         self.rep_count += 1
                         if self.rep_count > self.rep_total:
                             self.rep_count = 0
-                            self.direction_y = -1
-                        else: self.direction_y = 1
+                            self.ai_direction_y = -1
+                        else: self.ai_direction_y = 1
 
-                elif self.direction_y == -1:
+                elif self.ai_direction_y == -1:
                     self.rotate = 0
                     self.ai_moving_up = True
                     self.ai_spawn = True
@@ -357,28 +364,25 @@ class Enemy(Sprite_sheet):
 
     # Check if the collision with the player
     def check_collision(self, sfx):
-        if not self.collide and not self.player.win and self.player.alive:
-            # margin_width  = self.player.rect.width // 10
-            # margin_height = self.player.rect.height // 10
-            margin_width  = 0
-            margin_height = 0
-            if self.rect.right  >= self.player.rect.left + margin_width and self.rect.left <= self.player.rect.right - margin_width and \
-                self.rect.bottom >= self.player.rect.top + margin_height and self.rect.top <= self.player.rect.bottom - margin_height:
+        if self.alive and self.player.alive and not self.collide and not self.player.win:
+            if abs(self.rect.centerx - self.player.rect.centerx) < self.rect.width  * self.scale and\
+               abs(self.rect.centery - self.player.rect.centery) < self.rect.height * self.scale:
                 self.collide = True
                 self.player.collide = True
                 self.player.rect.x += (self.delta_x - self.player.delta_x) * 2
                 self.player.rect.y += (self.delta_y - self.player.delta_y) * 2
-                self.player.score  += 10
                 self.player.health -= 50
-                self.health -= 100
+                self.health = 0
                 sfx.play()
 
     def check_alive(self):
         if self.health <= 0:
             self.health = 0
-            self.alive = False
-            self.exp = 0
             self.speed = 0
+            self.alive = False
+            if self.player.score < self.player.score + self.exp:
+                self.player.score += 1
+                if self.exp > 0: self.exp -= 1
             self.animation_cooldown = self.animation_cooldown // 4
             self.update_action('destroy')
         else: self.update_action('idle')

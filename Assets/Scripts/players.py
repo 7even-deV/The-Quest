@@ -1,21 +1,21 @@
 import pygame
 
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
-from .manager  import player_select_function, explosion_2_img, explosion_dict
+from .manager  import player_select_function, explosion_3_img, explosion_dict
 from .tools    import Sprite_sheet, Timer
 from .weapons  import Bullet, Missile
 
 
 class Player(Sprite_sheet):
 
-    def __init__(self, screen, lives, style, model, score, speed, ammo, load, *args, **kwargs):
+    def __init__(self, screen, style, model, score, speed, ammo, load, lives, *args, **kwargs):
         player_img, player_action_dict = player_select_function(style, model)
         super().__init__(player_img)
         self.screen = screen
         self.select = style
-        self.score = score
-        self.speed = speed
-        self.ammo = ammo
+        self.score  = score
+        self.speed  = speed
+        self.ammo   = ammo
         self.start_ammo = ammo
         self.shoot_cooldown = 0
         self.load = load
@@ -30,36 +30,33 @@ class Player(Sprite_sheet):
 
         # Load player image
         self.create_animation(100, 100, player_action_dict)
-        self.sheet = pygame.image.load(explosion_2_img).convert_alpha()
+        self.sheet = pygame.image.load(explosion_3_img).convert_alpha()
         self.create_animation(100, 100, explosion_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
         # Get player rect
-        self.rect = self.image.get_rect(midtop=(SCREEN_WIDTH//2, SCREEN_HEIGHT))
-
-        self.animation_cooldown = 100
+        self.rect = self.image.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT))
 
         self.direction_x = 1
         self.direction_y = -1
-        self.delta_x = 0
-        self.delta_y = 0
-        self.init_pos = (self.limit_left(), self.limit_right(), self.limit_up(), self.limit_down())
+        self.delta_x   = 0
+        self.delta_y   = 0
         self.auto_init = False
 
-        self.alive = True
-        self.lives = lives
+        self.alive  = True
         self.health = 100
         self.max_health = self.health
-        self.win = False
+        self.lives = lives
+        self.win   = False
 
         # Define player action variables
-        self.spawn = True
-        self.turbo = False
+        self.spawn   = True
+        self.turbo   = False
         self.collide = False
 
-        self.moving_left = False
+        self.moving_left  = False
         self.moving_right = False
-        self.moving_up = False
-        self.moving_down = False
+        self.moving_up    = False
+        self.moving_down  = False
         self.timer = Timer(FPS)
 
     def update(self):
@@ -79,7 +76,7 @@ class Player(Sprite_sheet):
         self.delta_y = 0
 
         # Assign bools if moving left or right or up or down
-        if not self.spawn and not self.turbo and not self.collide:
+        if self.alive and not self.spawn and not self.turbo and not self.collide:
             if self.moving_left:
                 self.delta_x = -self.speed
                 self.update_action('left')
@@ -117,7 +114,6 @@ class Player(Sprite_sheet):
 
     def auto_movement(self):
         if self.win:
-            if self.speed != 1: self.speed = 1
             if not self.auto_init:
                 if self.rect.centerx < SCREEN_WIDTH//2:
                     self.moving_right = True
@@ -165,20 +161,20 @@ class Player(Sprite_sheet):
 
                                 return self.win
 
-    def check_collision(self, *args):
-        # Check for collision
-        for sprite in args:
-            # Check for collision in the x direction
-            if sprite.colliderect(self.rect.x + self.delta_x, self.rect.y, self.rect.w, self.rect.h):
-                self.delta_x = 0
+    # def check_collision(self, *args):
+    #     # Check for collision
+    #     for sprite in args:
+    #         # Check for collision in the x direction
+    #         if sprite.colliderect(self.rect.x + self.delta_x, self.rect.y, self.rect.w, self.rect.h):
+    #             self.delta_x = 0
 
-            # Check for collision in the y direction
-            if sprite.colliderect(self.rect.x, self.rect.y + self.delta_y, self.rect.w, self.rect.h):
-                self.delta_y = 0
+    #         # Check for collision in the y direction
+    #         if sprite.colliderect(self.rect.x, self.rect.y + self.delta_y, self.rect.w, self.rect.h):
+    #             self.delta_y = 0
 
-        # Check if the collision with the enemy
-        # if pygame.sprite.spritecollide(self, args, False):
-        #     self.health -= 10
+    #     # Check if the collision with the enemy
+    #     if pygame.sprite.spritecollide(self, args, False):
+    #         self.health -= 10
 
     def shoot(self, *args):
         if self.shoot_cooldown == 0 and self.ammo > 0:
@@ -198,7 +194,7 @@ class Player(Sprite_sheet):
         if self.throw_cooldown == 0 and self.load > 0:
             self.throw_cooldown = 400
             # Create missile load
-            missile = Missile(self.screen, self.rect.centerx, self.rect.top, self.direction_y, self.flip_x, self.flip_y,\
+            missile = Missile('player', self.screen, self.rect.centerx, self.rect.top, self.direction_y, self.flip_x, self.flip_y,\
                                 self, self.enemy_group, self.meteor_group, self.explosion_group, args[1], args[2], args[3])
             self.missile_group.add(missile)
             # Reduce load
@@ -212,7 +208,7 @@ class Player(Sprite_sheet):
             self.health = 0
             self.speed = 0
             self.alive = False
-            self.animation_cooldown = self.animation_cooldown // 2
+            self.animation_cooldown = self.animation_cooldown // 4
             self.update_action('death')
         else: self.update_action('idle')
 

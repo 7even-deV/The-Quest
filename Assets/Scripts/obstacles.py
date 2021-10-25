@@ -18,11 +18,11 @@ class Meteor(Sprite_sheet):
         self.create_animation(100, 100, {'destroy': (6, 8, 2)})
         self.image = self.animation_dict[self.action][self.frame_index]
         # Get random meteor rect
-        self.rect = self.image.get_rect(center=(random.randint(0, SCREEN_WIDTH), -random.randint(0, 5000)))
+        self.rect   = self.image.get_rect(center=(random.randint(0, SCREEN_WIDTH), -random.randint(0, 5000)))
 
         self.scale = random.randint(1, METEOR_SCALE)
-        self.rect.width  = self.rect.width  // METEOR_SCALE
-        self.rect.height = self.rect.height // METEOR_SCALE
+        self.rect.width  = self.image.get_width()  // METEOR_SCALE
+        self.rect.height = self.image.get_height() // METEOR_SCALE
 
         self.flip_x = random.randint(False, True)
         self.flip_y = random.randint(False, True)
@@ -56,18 +56,13 @@ class Meteor(Sprite_sheet):
         self.rect.y += self.delta_y + speed_y
 
     def check_collision(self, sfx):
-        if not self.collide and not self.player.win and self.player.alive:
-            # margin_width  = self.rect.width // 10
-            # margin_height = self.rect.height // 10
-            margin_width  = 0
-            margin_height = 0
-            if self.rect.right  >= self.player.rect.left + margin_width and self.rect.left <= self.player.rect.right - margin_width and \
-                self.rect.bottom >= self.player.rect.top + margin_height and self.rect.top <= self.player.rect.bottom - margin_height:
+        if self.alive and self.player.alive and not self.collide and not self.player.win:
+            if abs(self.rect.centerx - self.player.rect.centerx) < self.rect.width  * self.scale and\
+               abs(self.rect.centery - self.player.rect.centery) < self.rect.height * self.scale:
                 self.collide = True
                 self.player.collide = True
                 self.player.rect.x += (self.delta_x - self.player.delta_x) * 2
                 self.player.rect.y += (self.delta_y - self.player.delta_y) * 2
-                self.player.score  += self.exp
                 self.player.health -= self.scale * 10
                 self.health = 0
                 sfx.play()
@@ -75,9 +70,11 @@ class Meteor(Sprite_sheet):
     def check_alive(self):
         if self.health <= 0:
             self.health = 0
-            self.alive = False
-            self.exp = 0
             self.speed = 0
+            self.alive = False
+            if self.player.score < self.player.score + self.exp:
+                self.player.score += 1
+                if self.exp > 0: self.exp -= 1
             self.animation_cooldown = self.animation_cooldown // 4
             self.update_action('destroy')
         else: self.update_action('turn_l')

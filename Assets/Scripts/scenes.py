@@ -40,7 +40,7 @@ class Scene():
         if level > highlevel:
             highlevel = level
 
-        highscore = username_data[0][-1]
+        highscore = username_data[0][6]
         if score > highscore:
             highscore = score
             new_highscore = True
@@ -78,7 +78,7 @@ class Main(Scene):
 
     def __init__(self, screen):
         super().__init__(screen)
-        self.message = Canvas(letter_f=2, size=20, center=True, y=SCREEN_HEIGHT//2.5, color=COLOR('WHITE'))
+        self.message = Canvas(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2.5), letter=2, size=20)
         self.board   = Board(midbottom=(SCREEN_WIDTH//2, 0))
 
         # Sounds fx
@@ -127,18 +127,18 @@ class Main(Scene):
         self.keyboard_buttons()
         self.keyboard_list[0][0].select_effect(True)
 
-        cursor = bar = column_key = row_key = select = 0
+        cursor = bar = row_key = column_key = select = 0
         login = create = confirm = False
 
         vol_scan = [0.5] * 2
 
         user = -1
         msg = 0
-        turnback = False
 
         username_list = self.load_username()
         button_list[1][0] = username_list
 
+        scene_browser = 1
         run = True
         while run:
             # Limit frames per second
@@ -171,6 +171,8 @@ class Main(Scene):
                                             vol_scan[1] = self.sound_vol(sfx, - 0.1)
                                             sfx.set_volume(vol_scan[1])
                                         self.config_list[bar].gage.rect.x -= 22
+
+                                # self.config_list[bar].displace_effect(vol_scan[0])
                         else:
                             if column_key > 0:
                                 column_key -= 1
@@ -199,6 +201,8 @@ class Main(Scene):
                                             vol_scan[1] = self.sound_vol(sfx, + 0.1)
                                             sfx.set_volume(vol_scan[1])
                                         self.config_list[bar].gage.rect.x += 22
+
+                                # self.config_list[bar].displace_effect(vol_scan[0])
                         else:
                             if column_key < len(self.keyboard_list[row_key]) - 1:
                                 column_key += 1
@@ -249,17 +253,19 @@ class Main(Scene):
 
                     if event.key == pygame.K_SPACE: # Turnback select
                         if create:
-                            if username == '':
-                                self.command_list[0].pos_x = self.command_list[0].init_pos
                             if len(username) < 10:
+                                # These 2 conditions are for not typing if the Delete key or the Shift key is pressed.
                                 if self.keyboard_list[row_key][column_key] != self.keyboard_list[-1][-1]\
                                 and self.keyboard_list[row_key][column_key] != self.keyboard_list[-1][-2]:
                                     username += self.keyboard_list[row_key][column_key].text
                                     button_list[2][0] = username
                             else: msg = 2
+
+                            # Delete characters from username if Delete key is pressed
                             if self.keyboard_list[row_key][column_key] == self.keyboard_list[-1][-2]:
                                 if len(username) > 0: username = username[:-1]
 
+                            # Turn keyboard capitalization on or off if the Shift key is pressed
                             if self.keyboard_list[row_key][column_key] == self.keyboard_list[-1][-1]:
                                 if not self.keyboard_list[-1][-1].trigger:
                                     self.keyboard_list[-1][-1].trigger = True
@@ -270,7 +276,7 @@ class Main(Scene):
                                 self.keyboard_list[row_key][column_key].trigger = True
                                 self.keyboard_list[row_key][column_key].active_effect(True)
                         else:
-                            turnback = True
+                            scene_browser = -1
                             run = False
 
                         self.confirm_fx.play()
@@ -296,26 +302,33 @@ class Main(Scene):
                             self.keyboard_list[row_key][column_key].active_effect(False)
 
                     if event.key == pygame.K_RETURN: # Confirm
+                        # Warning with this area of nested tabulated conditions as their order is very important
                         if self.command_list[0].trigger:
                             if not confirm:
                                 if login:
                                     if username_list[user] == username_list[0]:
                                         if create:
-                                            if username == '' or username in username_list[1:]:
-                                                msg = 1
+                                            msg = 6
+                                            if username == '': create = False
+                                            elif username in username_list[1:]: msg = 1
                                             else:
                                                 self.db.create_data(username)
                                                 username_list.append(username)
-                                                user = 0
+                                                user = -1
+                                                row_key = column_key = 0
+                                                self.keyboard_list[0][0].select_effect(True)
+                                                self.keyboard_list[-1][-1].trigger = False
                                                 create = False
                                                 msg = 3
                                         else:
                                             username = ''
+                                            msg = 7
                                             create = True
                                     else: confirm = True
                                 else: login = True
                             else:
                                 username = username_list[user]
+                                scene_browser = 2
                                 run = False
 
                         if self.command_list[1].trigger:
@@ -333,6 +346,11 @@ class Main(Scene):
                                         self.board.create_textline(HISTORY, center=(self.board.rect.centerx, self.board.rect.top))
                                     else: self.board.show = False
 
+                            else:
+                                username = username_list[user]
+                                scene_browser = 1
+                                run = False
+
                         if self.command_list[2].trigger:
                             if not create and not confirm:
                                 if not login:
@@ -348,7 +366,7 @@ class Main(Scene):
                             elif username_list[user] != username_list[0]:
                                 self.db.delete_data(username_list.pop(user))
                                 user = -1
-                                msg = 4
+                                msg  = 4
                                 confirm = False
                             elif len(username_list) > 1: msg = 0
                             else: msg = 5
@@ -358,7 +376,7 @@ class Main(Scene):
                             elif create:  create = False
                             elif  login:   login = False
                             else:
-                                turnback = True
+                                scene_browser = -1
                                 run = False
 
                         self.command_list[cursor].active_effect(False)
@@ -383,7 +401,6 @@ class Main(Scene):
                 if self.command != self.command_list[cursor]:
                     self.command.select_effect(False)
                     self.command.trigger = False
-                    # self.board.show = False
 
                 if not self.command_list[index] == self.command_list[0]:
                     self.command_list[index].text = button_list[select][index]
@@ -444,13 +461,13 @@ class Main(Scene):
 
             # Limit delay without event activity
             if self.menu_timer.countdown(1, True):
-                turnback = True
+                scene_browser = -1
                 run = False
 
             # Update screen
             pygame.display.update()
 
-        return username, turnback
+        return username, scene_browser
 
 
 class Menu(Scene):
@@ -488,10 +505,10 @@ class Menu(Scene):
             sfx.set_volume(sound)
 
         confirm   = False
-        turnback  = False
 
         vol = self.music_vol()
 
+        scene_browser = 1
         run = True
         while run:
             # Limit frames per second
@@ -522,7 +539,7 @@ class Menu(Scene):
 
                     if event.key == pygame.K_SPACE: # Turnback select
                         if not confirm:
-                            turnback = True
+                            scene_browser = -1
                             run = False
                         else:
                             confirm = False
@@ -549,7 +566,7 @@ class Menu(Scene):
                             self.select_fx.play()
 
                     if event.key == pygame.K_ESCAPE: # Quit game
-                        turnback = True
+                        scene_browser = -1
                         run = False
 
                 # keyboard release
@@ -587,8 +604,8 @@ class Menu(Scene):
 
             ''' --- AREA TO UPDATE AND DRAW --- '''
 
-            self.portal.update()
-            self.portal.draw()
+            # self.portal.update()
+            # self.portal.draw()
             self.screen.blit(self.statue, (0, SCREEN_HEIGHT//4))
 
             self.symbol.draw()
@@ -600,14 +617,14 @@ class Menu(Scene):
 
             # Limit delay without event activity
             if self.menu_timer.countdown(1, True):
-                turnback = True
+                scene_browser = -1
                 run = False
 
             # Update screen
             pygame.display.update()
 
         self.load_select(username, style, model, level)
-        return username, turnback
+        return username, scene_browser
 
 
 class Game(Scene):
@@ -618,14 +635,15 @@ class Game(Scene):
         self.intro_fade = Screen_fade(self.screen, 'intro', COLOR('BLACK'), 4)
         self.death_fade = Screen_fade(self.screen, 'death', COLOR('BLACK'), 4)
 
-        self.ammo_load_view = Canvas(size=15, y=50, letter_f=3)
-        self.username_view  = Canvas(size=18, center=True, y=-1, color=COLOR('GREEN'), letter_f=3)
-        self.level_view     = Canvas(size=18, center=True, y=SCREEN_HEIGHT*0.03, color=COLOR('GREEN'), letter_f=3)
-        self.timer_view     = Canvas(size=20, center=True, y=SCREEN_HEIGHT*0.06, letter_f=1)
-        self.highscore_view = Canvas(size=18, right_text=True, color=COLOR('RED'), letter_f=3)
-        self.score_view     = Canvas(size=22, y=40, right=True, letter_f=3)
+        self.ammo_load_view = Canvas(topleft =(SCREEN_WIDTH//30, SCREEN_HEIGHT*0.065), color=COLOR('YELLOW'))
+        self.username_view  = Canvas(center  =(SCREEN_WIDTH//2,  SCREEN_HEIGHT*0.02), color=COLOR('LIME'))
+        self.level_view     = Canvas(center  =(SCREEN_WIDTH//2,  SCREEN_HEIGHT*0.05), color=COLOR('PINK'))
+        self.timer_view     = Canvas(center  =(SCREEN_WIDTH//2,  SCREEN_HEIGHT*0.08), letter=1, size=20)
+        self.highscore_view = Canvas(topright=(SCREEN_WIDTH-SCREEN_WIDTH//30, SCREEN_HEIGHT*0.015), color=COLOR('ORANGE'))
+        self.score_view     = Canvas(topright=(SCREEN_WIDTH-SCREEN_WIDTH//30, SCREEN_HEIGHT*0.055), color=COLOR('CYAN'))
 
-        self.paused         = Canvas(size=60, center=True, y=SCREEN_HEIGHT//3, color=COLOR('RED'))
+        self.paused         = Canvas(center  =(SCREEN_WIDTH//2, SCREEN_HEIGHT//3), letter=0, size=60, color=COLOR('RED'))
+        self.space          = Canvas(center  =(SCREEN_WIDTH//2, SCREEN_HEIGHT//2), letter=0, size=20, color=COLOR('LIME'))
 
         self.bullet_group    = pygame.sprite.Group()
         self.missile_group   = pygame.sprite.Group()
@@ -703,9 +721,15 @@ class Game(Scene):
 
             self.meteor_list.append(temp_list)
 
-    def process_data(self, style, model, level, score, lives, init_planet):
+    def process_data(self, username, level, score, lives, init_planet):
+        self.load_data(username, level, score)
+        username_data = self.db.read_data(username)[0]
+        style = username_data[1]
+        model = username_data[2]
+        level = username_data[3]
+
         # Create sprites
-        self.player = Player(self.screen, lives, style, model, score, SPEED, level*100, level, self.group_list)
+        self.player = Player(self.screen, style, model, score, SPEED, level*100, level, lives, self.group_list)
         self.environment_create(init_planet)
         self.lives_view = pygame.image.load(lives_img).convert_alpha()
         self.health_bar = HealthBar(self.screen, self.player.health, self.player.max_health)
@@ -716,6 +740,8 @@ class Game(Scene):
         # Create game timer
         self.game_timer = Timer(FPS)
 
+        return username_data
+
     def config_buttons(self):
         self.config_list = []
         margin_y = SCREEN_HEIGHT//2
@@ -725,11 +751,13 @@ class Game(Scene):
 
     def main_loop(self, username):
         self.reset_level()
+        level = 1
+        score = 0
+        lives = LIVES
+        init_planet = random.randint(1, 9)
 
-        username_data = self.db.read_data(username)[0]
-        style     = username_data[1]
-        model     = username_data[2]
-        level     = username_data[3]
+        username_data = self.process_data(username, level, score, lives, init_planet)
+        username  = username_data[0]
         highscore = username_data[6]
 
         music     = username_data[7]
@@ -743,13 +771,6 @@ class Game(Scene):
         self.config_buttons()
         self.config_list[bar].gage.select_effect(True)
 
-        score = 0
-
-        lives = LIVES
-        init_planet = 1
-
-        self.process_data(style, model, level, score, lives, init_planet)
-
         pause = False
         restart = False
         death = False
@@ -759,8 +780,7 @@ class Game(Scene):
         throw = False
         throw_missiles = False
 
-        turnback = False
-
+        scene_browser = 1
         run = True
         while run:
             # Limit frames per second
@@ -830,7 +850,7 @@ class Game(Scene):
                             self.move_fx.play()
 
                     if event.key == pygame.K_SPACE: # Turbo
-                        if not self.player.spawn and self.player.alive and not self.player.win:
+                        if self.player.alive and not self.player.spawn and not self.player.win:
                             self.player.turbo = True
                             self.turbo_fx.play()
                         else: restart = True
@@ -849,7 +869,7 @@ class Game(Scene):
                         self.pause_fx.play()
 
                     if event.key == pygame.K_ESCAPE: # Exit game
-                        turnback = True
+                        scene_browser = -1
                         run = False
                         self.game_over_fx.play()
 
@@ -922,11 +942,11 @@ class Game(Scene):
                             self.meteor_group.add(self.meteor_list[self.surge_index])
                             self.surge_index += 1
                             self.surge_start = False
-                            # self.enemy.retired = True
+                            self.enemy.retired = True
                             self.music(4, 0.5)
                         else:
                             self.surge_end = True
-                            # self.enemy.retired = False
+                            self.enemy.retired = False
                             self.music(2, 0.5)
 
                 for self.environment in self.environment_list:
@@ -944,8 +964,8 @@ class Game(Scene):
 
                 for self.enemy in self.enemy_group:
                     if not self.player.spawn:
-                        self.enemy.update()
                         self.enemy.check_collision(self.explosion_fx)
+                        self.enemy.update()
                         self.enemy.draw()
 
                 self.bullet_group.update()
@@ -978,6 +998,8 @@ class Game(Scene):
                     if not self.player.win and self.game_timer.countdown(level, self.player.turbo, True):
                         self.game_timer.text_time = 0
                         self.player.win = True
+                        self.player.turbo = False
+                        self.player.speed = 1
                         self.win_fx.play()
 
                     # Check if player has completed the level
@@ -985,7 +1007,8 @@ class Game(Scene):
                         level += 1
                         self.reset_level()
                         init_planet = self.environment.destiny_planet
-                        self.process_data(style, model, level, self.player.score, lives, init_planet)
+                        username_data = self.process_data(username, level, self.player.score, lives, init_planet)
+                        # highscore = username_data[6]
                 else:
                     if not death:
                         death = True
@@ -995,12 +1018,13 @@ class Game(Scene):
                     elif death and self.death_fade.fade():
                         if restart:
                             self.death_fade.fade_counter = 0
-                            self.player.score = 0
                             if lives > 0:
                                 lives -= 1
                                 self.reset_level()
                                 init_planet = self.environment.origin_planet
-                                self.process_data(style, model, level, self.player.score, lives, init_planet)
+                                username_data = self.process_data(username, level, self.player.score, lives, init_planet)
+                                highscore = username_data[6]
+                                self.player.score = 0
                                 self.player.alive = True
                                 death = False
                                 restart = False
@@ -1010,21 +1034,28 @@ class Game(Scene):
                 pygame.draw.rect(self.screen, COLOR('ARCADE'), (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT//10))
                 pygame.draw.line(self.screen, COLOR('SILVER'), (0, SCREEN_HEIGHT//10), (SCREEN_WIDTH, SCREEN_HEIGHT//10), 4)
 
-                # Show player lives
-                for x in range(self.player.lives):
-                    self.screen.blit(self.lives_view, (0 + (x * SCREEN_WIDTH*0.05), 0))
                 # Show player health
                 self.health_bar.draw(self.player.health)
+                # Show player lives
+                for x in range(self.player.lives):
+                    self.screen.blit(self.lives_view, (x * SCREEN_WIDTH * 0.05, 0))
 
                 self.ammo_load_view.text = f"ammo: {self.player.ammo} | load: {self.player.load}"
-                self.username_view.text  = f"- {username_data[0][0]} -"
+                self.username_view.text  = f"- {username} -"
                 self.level_view.text     = f"Level - {level} -"
                 self.timer_view.text     = f"Time: {self.game_timer.text_time}"
                 self.score_view.text     = f"Score: {self.player.score}"
                 if self.player.score > highscore:
-                    self.highscore_view.x = SCREEN_WIDTH-200
-                    self.highscore_view.text = "New  Highscore"
-                else: self.highscore_view.text = f"Highscore: {highscore}"
+                    self.highscore_view.text  = "New Highscore"
+                    self.highscore_view.color = COLOR('RED')
+                else:
+                    self.highscore_view.text  = f"Highscore: {highscore}"
+                    self.highscore_view.color = COLOR('ORANGE')
+
+                if death and not restart:
+                    self.space.text = "press <SPACE> to continue"
+                    self.space.update()
+                    self.space.draw(self.screen)
 
                 self.ui_bar.update()
                 self.ui_bar.draw(self.screen)
@@ -1033,7 +1064,7 @@ class Game(Scene):
             pygame.display.update()
 
         self.load_data(username, level, self.player.score)
-        return username, turnback
+        return username, scene_browser
 
 
 class Record(Scene):
@@ -1044,10 +1075,10 @@ class Record(Scene):
         self.logo_x = (SCREEN_WIDTH - LOGO) // 2
         self.logo_y = SCREEN_HEIGHT
 
-        self.text_score    = Canvas(size=24, center=True, y=SCREEN_HEIGHT//3, letter_f=3)
-        self.text_continue = Canvas(size=44, center=True, y=SCREEN_HEIGHT//1.7, letter_f=2, color=COLOR('GREEN'))
-        self.text_replay   = Canvas(size=40, center=True, y=SCREEN_HEIGHT//1.5, letter_f=2, color=COLOR('YELLOW'))
-        self.text_exit     = Canvas(size=34, center=True, y=SCREEN_HEIGHT//1.22, letter_f=2, color=COLOR('RED'))
+        self.text_score    = Canvas(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//3),    letter=3, size=24)
+        self.text_continue = Canvas(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//1.7),  letter=2, size=44, color=COLOR('GREEN'))
+        self.text_replay   = Canvas(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//1.5),  letter=2, size=40, color=COLOR('YELLOW'))
+        self.text_exit     = Canvas(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//1.22), letter=2, size=34, color=COLOR('RED'))
 
         self.text_continue.text = "Press <SPC> to Continue"
         self.text_replay.text   = "Press <ENTER> to Menu"
@@ -1060,27 +1091,28 @@ class Record(Scene):
         self.record_timer = Timer(FPS)
 
     def reset_ranking(self):
-        top_ranking = self.db.read_data()
+        top_ranking = self.db.read_data('HIGHSCORE', -1)
+
         self.ranking_list = []
-        pos_y = 0.0
+        margin_y = SCREEN_HEIGHT//3
+
         for user in range(len(top_ranking)):
-            temp_var = Canvas(size=20, x=SCREEN_WIDTH//2, y=SCREEN_HEIGHT*(0.1+pos_y), letter_f=1, color=COLOR('BLACK'))
-            temp_var.text = f"Ranking {user+1}: {top_ranking[user][0]} -> {top_ranking[user][-1]}"
-            pos_y += 0.1
+            temp_var = Canvas(midbottom=(SCREEN_WIDTH//2, user * -SCREEN_HEIGHT//20 + margin_y), letter=1, size=20, color=COLOR('BLACK'))
+            temp_var.text = f"Ranking {len(top_ranking)-user}: {top_ranking[user][0]} -> {top_ranking[user][6]}"
             self.ranking_list.append(temp_var)
 
     def main_loop(self, username):
         if username != '':
             username_data = self.db.read_data(username)[0]
             new_highscore = self.load_data(username, username_data[3], username_data[5])
-        else: new_highscore = False
+            self.text_continue.text = "Press <SPC> to Continue"
+        else:
+            new_highscore = False
+            self.text_continue.text = ""
 
         self.reset_ranking()
 
-        color_up = 0
-        color_down = 255
-        turnback = False
-
+        scene_browser = 1
         run = True
         while run:
             # Limit frames per second
@@ -1094,7 +1126,8 @@ class Record(Scene):
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE: # Restart game
-                        turnback = True
+                        if username != '':
+                            scene_browser = -1
                         run = False
                     if event.key == pygame.K_RETURN: # Show menu
                         run = False
@@ -1114,15 +1147,13 @@ class Record(Scene):
                 self.logo_y -= 2
             else:
                 for ranking in self.ranking_list:
-                    if self.ranking_list[0].y < SCREEN_HEIGHT * 0.8:
-                        ranking.y += 0.5
-                    if ranking.y > SCREEN_HEIGHT * 0.25 and ranking.y < SCREEN_HEIGHT * 1.05:
-                        if color_up < 255: color_up += 1
-                        ranking.color = ([color_up]*3)
-                    else:
-                        if color_down > 0: color_down -= 1
-                        ranking.color = ([color_down]*3)
+                    if self.ranking_list[-1].rect.y < SCREEN_HEIGHT//2.6:
+                        ranking.delta_y += 0.2
+                    if ranking.rect.y > SCREEN_HEIGHT//3 and ranking.rect.y < SCREEN_HEIGHT//2:
+                        if ranking.fade < 255: ranking.fade += 1
+                    elif ranking.fade > 0: ranking.fade -= 1
 
+                    ranking.color = ([ranking.fade]*3)
                     ranking.update()
                     ranking.draw(self.screen)
 
@@ -1140,4 +1171,4 @@ class Record(Scene):
 
         self.logo_y = SCREEN_HEIGHT
 
-        return username, turnback
+        return username, scene_browser

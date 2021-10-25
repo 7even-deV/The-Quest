@@ -36,7 +36,7 @@ class Database():
 
     def read_data(self, field=None, tidy=None):
         if tidy!= None:
-            self.crud_query(f'SELECT * FROM {self.table} ORDER BY {field} DESC LIMIT {tidy}')
+            self.crud_query(f'SELECT * FROM {self.table} ORDER BY {field} ASC LIMIT {tidy}')
         elif field != None:
             self.crud_query(f'SELECT * FROM {self.table} WHERE USERNAME like "{field}"')
         else:

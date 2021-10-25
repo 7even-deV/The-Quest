@@ -14,7 +14,7 @@ SQL = '''(
 
 MEMORY_LIST = []
 for num in range(10):
-    MEMORY_LIST.append((num, f"Empty-{num}", 0, 0, 0, 0, 0))
+    MEMORY_LIST.append((f"Empty-{num}", 0, 0, 1, 1, 0, 0, 0.5, 0.5))
 
 
 msg_dict = {
@@ -24,6 +24,8 @@ msg_dict = {
     3 : "User created successfully",
     4 : "User removed successfully",
     5 : "The user list is empty",
+    6 : "Select a user",
+    7 : "Press <Space> to write and <Enter> to confirm",
 }
 
 
@@ -58,7 +60,7 @@ button_list = [
 
 bar_img = 'Assets/Images/bar.png'
 bar_dict = {
-    'turn' : (1, 1, 1, 1),
+    'displace' : (1, 1, 1, 1),
 }
 bar_list = [
     "Music  vol.",

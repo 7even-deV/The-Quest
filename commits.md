@@ -30,3 +30,4 @@
 28. Create function: config buttons (class Main) and class Bar (script tools)
 29. Create md: README & commits and code fixes
 30. Finished work: The Quest v1.0
+31. Design a template for new investigations (template.py)

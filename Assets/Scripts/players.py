@@ -2,7 +2,7 @@ import pygame
 
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
 from .manager  import player_select_function, explosion_3_img, explosion_dict
-from .tools    import Sprite_sheet, Timer
+from .tools    import Sprite_sheet, Timer, Particles
 from .weapons  import Bullet, Missile
 
 
@@ -59,11 +59,15 @@ class Player(Sprite_sheet):
         self.moving_down  = False
         self.timer = Timer(FPS)
 
+        self.particles = Particles(self.screen)
+
     def update(self):
         # Update player events
         self.move()
         self.check_alive()
         self.update_animation(self.animation_cooldown)
+        self.particles.add_circle(self.rect.centerx-self.rect.width//4, self.rect.bottom-self.rect.height//10, self.direction_x, self.direction_y)
+        self.particles.add_circle(self.rect.centerx+self.rect.width//4, self.rect.bottom-self.rect.height//10, self.direction_x, self.direction_y)
         # Update cooldown
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1

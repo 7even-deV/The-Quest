@@ -1,4 +1,4 @@
-import pygame
+import pygame, random
 
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, COLOR
 from .manager  import icon_type_function, button_img, button_dict, bar_img, bar_dict, key_img, key_dict, board_img, board_dict, font_function
@@ -491,3 +491,69 @@ class Screen_fade():
             fade_complete = True
 
         return fade_complete
+
+
+class Particles():
+
+    def __init__(self, screen, size=10):
+        self.screen = screen
+        self.size   = size
+        self.image  = pygame.image.load('Assets/Images/lives.png').convert_alpha()
+        self.width  = self.image.get_rect().width
+        self.height = self.image.get_rect().height
+
+        self.color_list = [pygame.Color('Red'), pygame.Color('Orange'), pygame.Color('Yellow')]
+        self.particle_list = []
+
+    def add_circle(self, pos_x, pos_y, direction_x, direction_y):
+        colour = random.randint(0, len(self.color_list) -1)
+        move_x = random.randint(0, 20) / 10 -1
+        move_y = random.randint(1, 2)
+        radius = random.randint(2, 6)
+
+        self.particle_list.append([self.color_list[colour], [pos_x, pos_y], [move_x, move_y], radius])
+
+        for particle in self.particle_list:
+            particle[1][0] += particle[2][0] * direction_x * -1
+            particle[1][1] += particle[2][1] * direction_y * -1
+            particle[2][1] += 0.1
+            particle[3] -= 0.1
+            pygame.draw.circle(self.screen, particle[0], particle[1], int(particle[3]))
+            if particle[3] <= 0:
+                self.particle_list.remove(particle)
+
+    def add_rect(self, pos_x, pos_y, direction_x, direction_y):
+        particle_rect = pygame.Rect(int(pos_x - self.size/2), int(pos_y - self.size/2), self.size, self.size)
+        colour = random.randint(0, len(self.color_list) -1)
+        self.particle_list.append((particle_rect, self.color_list[colour]))
+
+        for particle in self.particle_list:
+            particle[0].y += 1
+            pygame.draw.rect(self.screen,particle[1], particle[0])
+            if particle[0].y <= 0:
+                self.particle_list.remove(particle)
+
+        rect = self.image.get_rect(center=(pos_x, pos_y))
+        self.screen.blit(self.image, rect)
+
+    def add_image(self, pos_x, pos_y, direction_x, direction_y):
+        _x  = pos_x - self.width  / 2
+        _y  = pos_y - self.height / 2
+        move_x = random.randint(-2, 2)
+        move_y = random.randint(1, 2)
+        lifetime = random.randint(4, 10)
+        particle_rect = pygame.Rect(int(_x), int(_y), self.width, self.height)
+        self.particle_list.append([particle_rect, move_x, move_y, lifetime])
+        if self.particle_list:
+            self.del_image()
+            for particle in self.particle_list:
+                particle[0].x += particle[1]
+                particle[0].y += particle[2]
+                particle[3] -= 0.2
+                self.screen.blit(self.image, particle[0])
+                # if particle[3].y <= 0:
+                #     self.particle_list.remove(particle)
+
+    def del_image(self):
+        particle_copy = [particle for particle in self.particle_list if particle[3] > 0]
+        self.particle_list = particle_copy

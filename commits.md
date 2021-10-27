@@ -31,3 +31,4 @@
 29. Create md: README & commits and code fixes
 30. Finished work: The Quest v1.0
 31. Design a template for new investigations (template.py)
+32. Add class Particles to objects (tools.py)

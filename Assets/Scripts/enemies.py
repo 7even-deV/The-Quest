@@ -157,7 +157,7 @@ class Enemy(Sprite_sheet):
         if self.shoot_cooldown == 0 and self.ammo > 0:
             self.shoot_cooldown = 50
             # create bullet ammo
-            self.bullet = Bullet('enemy', self.screen, self.select, self.rect.centerx, self.rect.bottom*1.1, self.direction_y,\
+            self.bullet = Bullet('enemy', self.screen, self.select, self.rect.centerx, self.rect.bottom, self.rect.width, self.direction_y,\
                             self.flip_x, self.flip_y, self.player, self.bullet_group, self.enemy_group, self.meteor_group)
             self.bullet_group.add(self.bullet)
             # Reduce ammo

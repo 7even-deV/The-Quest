@@ -968,11 +968,15 @@ class Game(Scene):
                         self.enemy.update()
                         self.enemy.draw()
 
-                self.bullet_group.update()
+                for bullet in self.bullet_group:
+                    bullet.update()
+                    bullet.draw()
+
+                # self.bullet_group.update()
                 self.missile_group.update()
                 self.explosion_group.update()
 
-                self.bullet_group.draw(self.screen)
+                # self.bullet_group.draw(self.screen)
                 self.missile_group.draw(self.screen)
                 self.explosion_group.draw(self.screen)
 

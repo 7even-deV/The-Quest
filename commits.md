@@ -32,3 +32,4 @@
 30. Finished work: The Quest v1.0
 31. Design a template for new investigations (template.py)
 32. Add class Particles to objects (tools.py)
+33. Increase more bullets per shoot (weapons.py)

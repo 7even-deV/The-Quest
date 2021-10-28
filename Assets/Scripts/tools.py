@@ -502,13 +502,13 @@ class Particles():
         self.width  = self.image.get_rect().width
         self.height = self.image.get_rect().height
 
-        self.color_list = [pygame.Color('Red'), pygame.Color('Orange'), pygame.Color('Yellow')]
+        self.color_list = [pygame.Color('Orange'), pygame.Color('Yellow'), pygame.Color('Cyan'), pygame.Color('Gray')]
         self.particle_list = []
 
     def add_circle(self, pos_x, pos_y, direction_x, direction_y):
         colour = random.randint(0, len(self.color_list) -1)
-        move_x = random.randint(0, 20) / 10 -1
-        move_y = random.randint(1, 2)
+        move_x = random.randint(0, 8) / 4 -1
+        move_y = random.randint(0, 1)
         radius = random.randint(2, 6)
 
         self.particle_list.append([self.color_list[colour], [pos_x, pos_y], [move_x, move_y], radius])

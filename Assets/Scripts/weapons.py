@@ -2,12 +2,12 @@ import pygame
 
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
 from .manager  import weapon_select_function, missile_img, missile_dict, missile_exp_img, missile_exp_dict
-from .tools    import Sprite_sheet, Timer
+from .tools    import Sprite_sheet, Timer, Particles
 
 
 class Bullet(Sprite_sheet):
 
-    def __init__(self, origin, screen, select, x, y, direction, flip_x, flip_y, *args, **kwargs):
+    def __init__(self, origin, screen, select, x, y, w, direction, flip_x, flip_y, *args, **kwargs):
         bullet_img, weapon_dict = weapon_select_function(select)
         super().__init__(bullet_img)
         self.origin = origin
@@ -18,8 +18,11 @@ class Bullet(Sprite_sheet):
         # Load bullet image
         self.create_animation(50, 50, weapon_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
-        self.rect  = self.image.get_rect(**kwargs)
-        self.rect.center = (x, y)
+        self.rect_list = []
+        for i in range(2):
+            self.rect = self.image.get_rect(center=(x - w//4 * (i-0.5), y))
+            self.rect_list.append(self.rect)
+
         self.direction   = direction
         self.flip_x  = flip_x
         self.flip_y  = flip_y
@@ -30,28 +33,33 @@ class Bullet(Sprite_sheet):
         self.enemy_group    = args[2]
         self.obstacle_group = args[3]
 
+        self.particles = Particles(self.screen)
+
         self.update_action('bullet')
 
     def update(self):
         # Update bullet events
         self.update_animation(10)
+        # self.particles.add_circle(self.rect.centerx-self.rect.width//4, self.rect.bottom-self.rect.height//10, self.direction, self.direction)
 
-        if not self.collide:
-            if self.origin == 'player':
-                self.player_shoot()
-            elif self.origin == 'enemy':
-                self.enemy_shoot()
+        for self.rect in self.rect_list:
+            if not self.collide:
+                if self.origin == 'player':
+                    self.player_shoot()
+                elif self.origin == 'enemy':
+                    self.enemy_shoot()
 
-            # Check if bullet has gone off screen
-            if self.rect.bottom < 0 or self.rect.top > SCREEN_HEIGHT:
+                # Check if bullet has gone off screen
+                if self.rect.bottom < 0 or self.rect.top > SCREEN_HEIGHT:
+                    self.kill() # Kill the animation
+
+            else: # If the bullet collide it stop and destroy
+                self.speed = 1
+                # self.update_action('destroy')
                 self.kill() # Kill the animation
 
-        else: # If the bullet collide it stop and destroy
-            self.speed = 1
-            self.update_action('destroy')
-
-        # Move bullet
-        self.rect.y += self.speed * self.direction
+            # Move bullet
+            self.rect.y += self.speed * self.direction
 
     def player_shoot(self):
         # Check for collision with enemies
@@ -74,6 +82,9 @@ class Bullet(Sprite_sheet):
                 self.collide = True
                 self.player.health -= 10
 
+    def draw(self):
+        for self.rect in self.rect_list:
+            self.screen.blit(self.image, self.rect)
 
 class Missile(Sprite_sheet):
 

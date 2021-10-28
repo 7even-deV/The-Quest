@@ -34,7 +34,7 @@ class Player(Sprite_sheet):
         self.create_animation(100, 100, explosion_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
         # Get player rect
-        self.rect = self.image.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT))
+        self.rect = self.image.get_rect(midbottom=(SCREEN_WIDTH//2, SCREEN_HEIGHT+SCREEN_HEIGHT//10))
 
         self.direction_x = 1
         self.direction_y = -1
@@ -58,7 +58,6 @@ class Player(Sprite_sheet):
         self.moving_up    = False
         self.moving_down  = False
         self.timer = Timer(FPS)
-
         self.particles = Particles(self.screen)
 
     def update(self):
@@ -78,15 +77,18 @@ class Player(Sprite_sheet):
         # Reset movement variables
         self.delta_x = 0
         self.delta_y = 0
+        self.rotate = 0
 
         # Assign bools if moving left or right or up or down
         if self.alive and not self.spawn and not self.turbo and not self.collide:
             if self.moving_left:
                 self.delta_x = -self.speed
+                self.rotate = 5
                 self.update_action('left')
 
             if self.moving_right:
                 self.delta_x = self.speed
+                self.rotate = -5
                 self.update_action('right')
 
             if self.moving_up:
@@ -184,9 +186,8 @@ class Player(Sprite_sheet):
         if self.shoot_cooldown == 0 and self.ammo > 0:
             self.shoot_cooldown = 10
             # create bullet ammo
-            bullet = Bullet('player', self.screen, self.select, self.rect.centerx, self.rect.top//1.1, self.direction_y,\
+            bullet = Bullet('player', self.screen, self.select, self.rect.centerx, self.rect.top, self.rect.width, self.direction_y,\
                             self.flip_x, self.flip_y, self, self.bullet_group, self.enemy_group, self.meteor_group)
-            bullet.player_shoot()
             self.bullet_group.add(bullet)
             # Reduce ammo
             self.ammo -= 1

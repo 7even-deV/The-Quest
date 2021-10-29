@@ -13,7 +13,7 @@ class Template():
         # Create Test
         self.game   = Game(self.screen)
 
-        self.player = Player(self.screen, 0, 5, 0, SPEED, 1000, 1000, 3, self.game.group_list)
+        self.player = Player(self.screen, 0, 5, 0, 1000, 1000, 3, self.game.group_list)
         self.player.spawn = False
 
         self.meteor_list = []
@@ -86,13 +86,17 @@ class Template():
             self.player.update()
             self.player.draw()
 
-            for meteor in self.meteor_list:
-                meteor.check_collision(self.game.explosion_fx)
-                meteor.update(self.player.turbo)
-                meteor.draw()
+            for bullet in self.game.bullet_group:
+                bullet.update()
+                bullet.draw()
 
-            self.game.group_list[0].update()
-            self.game.group_list[0].draw(self.screen)
+            # for meteor in self.meteor_list:
+            #     meteor.check_collision(self.game.explosion_fx)
+            #     meteor.update(self.player.turbo)
+            #     meteor.draw()
+
+            # self.game.group_list[0].update()
+            # self.game.group_list[0].draw(self.screen)
 
             # Update screen
             pygame.display.update()

@@ -17,7 +17,7 @@ class Foreground():
 
     def update(self, delta_x, delta_y, win=False):
         # Follow the self.bg_img with the Player
-        self.fg_x = -(delta_x / 5)
+        self.fg_x = -(delta_x / 4)
         self.fg_y = 0.5 + delta_y
 
     def draw(self, screen):
@@ -48,7 +48,7 @@ class Background():
         self.relative_y = self.bg_y % self.bg_img.get_rect().height
 
         # Follow the self.bg_img with the Player
-        self.bg_x += -(delta_x / 5)
+        self.bg_x += -(delta_x / 4)
         self.bg_y += 0.5 + delta_y
 
     def draw(self, screen):
@@ -73,7 +73,7 @@ class Farground():
 
     def update(self, delta_x, delta_y, win=False):
         # Follow the movement with the Player
-        self.fg_x = -(delta_x / 5)
+        self.fg_x = -(delta_x / 4)
         self.fg_y = 0.5 + delta_y
 
     def draw(self, screen):
@@ -118,7 +118,7 @@ class Planet(Sprite_sheet):
             if self.rect.top < SCREEN_HEIGHT:
                 delta_y += 1
                 # Follow the movement with the Player
-                self.move_x += -(delta_x / 5)
+                self.move_x += -(delta_x / 4)
                 self.rect.y += delta_y
             else: self.kill()
 

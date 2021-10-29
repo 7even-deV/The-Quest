@@ -61,8 +61,8 @@ class Meteor(Sprite_sheet):
                abs(self.rect.centery - self.player.rect.centery) < self.rect.height * self.scale:
                 self.collide = True
                 self.player.collide = True
-                self.player.rect.x += (self.delta_x - self.player.delta_x) * 2
-                self.player.rect.y += (self.delta_y - self.player.delta_y) * 2
+                self.player.rect.x += (self.delta_x - self.player.delta.x) * 2
+                self.player.rect.y += (self.delta_y - self.player.delta.y) * 2
                 self.player.health -= self.scale * 10
                 self.health = 0
                 sfx.play()

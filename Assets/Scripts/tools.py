@@ -495,10 +495,10 @@ class Screen_fade():
 
 class Particles():
 
-    def __init__(self, screen, size=10):
+    def __init__(self, screen, size=10, image=None):
         self.screen = screen
         self.size   = size
-        self.image  = pygame.image.load('Assets/Images/lives.png').convert_alpha()
+        self.image  = image
         self.width  = self.image.get_rect().width
         self.height = self.image.get_rect().height
 
@@ -507,7 +507,8 @@ class Particles():
 
     def add_circle(self, pos_x, pos_y, direction_x, direction_y):
         colour = random.randint(0, len(self.color_list) -1)
-        move_x = random.randint(0, 8) / 4 -1
+        # move_x = random.randint(0, 8) / 4 -1
+        move_x = 0
         move_y = random.randint(0, 1)
         radius = random.randint(2, 6)
 

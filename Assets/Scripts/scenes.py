@@ -1,6 +1,6 @@
 import pygame, random
 
-from .settings    import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, MUSIC_VOL, SOUND_VOL, LOGO, COLOR, STARS, LIVES, SPEED, SURGE_NUM, enemy_select, enemy_position
+from .settings    import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, MUSIC_VOL, SOUND_VOL, LOGO, COLOR, STARS, LIVES, SURGE_NUM, enemy_select, enemy_position
 from .documents   import CREDITS, HISTORY, GUIDE
 from .manager     import msg_dict, button_list, bar_list, keyboard_list, statue_img, bg_img, lives_img, game_over_img, load_music, load_sound
 from .tools       import Timer, Button, Bar, Keyboard, Board, Canvas, Icon, HealthBar, Screen_fade
@@ -729,7 +729,7 @@ class Game(Scene):
         level = username_data[3]
 
         # Create sprites
-        self.player = Player(self.screen, style, model, score, SPEED, level*100, level, lives, self.group_list)
+        self.player = Player(self.screen, style, model, score, level*100, level, lives, self.group_list)
         self.environment_create(init_planet)
         self.lives_view = pygame.image.load(lives_img).convert_alpha()
         self.health_bar = HealthBar(self.screen, self.player.health, self.player.max_health)
@@ -950,7 +950,7 @@ class Game(Scene):
                             self.music(2, 0.5)
 
                 for self.environment in self.environment_list:
-                    self.environment.update(self.player.delta_x, self.player.turbo, self.player.win)
+                    self.environment.update(self.player.delta.x, self.player.turbo, self.player.win)
                     self.environment.draw(self.screen)
 
                 # self.player.check_collision()
@@ -1067,6 +1067,7 @@ class Game(Scene):
             # Update screen
             pygame.display.update()
 
+        # *After* exiting the while loop, return data
         self.load_data(username, level, self.player.score)
         return username, scene_browser
 

@@ -33,16 +33,17 @@ class Bullet(Sprite_sheet):
         self.enemy_group    = args[2]
         self.obstacle_group = args[3]
 
-        self.particles = Particles(self.screen)
+        self.particles = Particles(self.screen, 10, self.image)
 
         self.update_action('bullet')
 
     def update(self):
         # Update bullet events
         self.update_animation(10)
-        # self.particles.add_circle(self.rect.centerx-self.rect.width//4, self.rect.bottom-self.rect.height//10, self.direction, self.direction)
 
         for self.rect in self.rect_list:
+            self.particles.add_image(self.rect.centerx, self.rect.bottom, self.direction, self.direction)
+
             if not self.collide:
                 if self.origin == 'player':
                     self.player_shoot()

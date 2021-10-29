@@ -1,6 +1,6 @@
 import pygame
 
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, SPEED
 from .manager  import player_select_function, explosion_3_img, explosion_dict
 from .tools    import Sprite_sheet, Timer, Particles
 from .weapons  import Bullet, Missile
@@ -8,13 +8,12 @@ from .weapons  import Bullet, Missile
 
 class Player(Sprite_sheet):
 
-    def __init__(self, screen, style, model, score, speed, ammo, load, lives, *args, **kwargs):
+    def __init__(self, screen, style, model, score, ammo, load, lives, *args, **kwargs):
         player_img, player_action_dict = player_select_function(style, model)
         super().__init__(player_img)
         self.screen = screen
         self.select = style
         self.score  = score
-        self.speed  = speed
         self.ammo   = ammo
         self.start_ammo = ammo
         self.shoot_cooldown = 0
@@ -34,12 +33,15 @@ class Player(Sprite_sheet):
         self.create_animation(100, 100, explosion_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
         # Get player rect
-        self.rect = self.image.get_rect(midbottom=(SCREEN_WIDTH//2, SCREEN_HEIGHT+SCREEN_HEIGHT//10))
+        self.rect = self.image.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT+SCREEN_HEIGHT//10))
+
+        self.vector = pygame.math.Vector2
+        self.max_speed = 4.0
+        self.speed     = self.vector(0, 0)
+        self.delta     = self.vector(0, 0)
 
         self.direction_x = 1
         self.direction_y = -1
-        self.delta_x   = 0
-        self.delta_y   = 0
         self.auto_init = False
 
         self.alive  = True
@@ -58,7 +60,7 @@ class Player(Sprite_sheet):
         self.moving_up    = False
         self.moving_down  = False
         self.timer = Timer(FPS)
-        self.particles = Particles(self.screen)
+        self.particles = Particles(self.screen, 10, self.image)
 
     def update(self):
         # Update player events
@@ -74,49 +76,66 @@ class Player(Sprite_sheet):
             self.throw_cooldown -= 1
 
     def move(self):
-        # Reset movement variables
-        self.delta_x = 0
-        self.delta_y = 0
-        self.rotate = 0
+        self.speed = self.vector(0, 0)
 
         # Assign bools if moving left or right or up or down
         if self.alive and not self.spawn and not self.turbo and not self.collide:
-            if self.moving_left:
-                self.delta_x = -self.speed
-                self.rotate = 5
-                self.update_action('left')
 
-            if self.moving_right:
-                self.delta_x = self.speed
-                self.rotate = -5
-                self.update_action('right')
+            if not self.moving_left and not self.moving_right:
+                # Recover the axis of delta x and rotate to 0
+                if   self.delta.x > 0.1: self.delta.x -= 0.1
+                elif self.delta.x < 0.0: self.delta.x += 0.1
+                if    self.rotate > 0.0: self.rotate  -= 0.1
+                elif  self.rotate < 0.0: self.rotate  += 0.1
+            else:
+                if self.moving_left:
+                    self.speed.x = -0.1
+                    if self.rotate < 5: self.rotate += 0.5
+                    self.update_action('left')
 
-            if self.moving_up:
-                self.delta_y = -self.speed
+                if self.moving_right:
+                    self.speed.x = 0.1
+                    if self.rotate > -5: self.rotate -= 0.5
+                    self.update_action('right')
 
-            if self.moving_down:
-                self.delta_y = self.speed
+            if not self.moving_up and not self.moving_down:
+                # Recover the axis of delta y to 0
+                if   self.delta.y > 0.1: self.delta.y -= 0.1
+                elif self.delta.y < 0.0: self.delta.y += 0.1
+            else:
+                if self.moving_up:
+                    self.speed.y = -0.1
+
+                if self.moving_down:
+                    self.speed.y = 0.1
 
         # Check if going off the edges of the screen
         if self.limit_left():
-            if self.limit_left(+1): self.delta_x = 0.1
-            else: self.delta_x = 0
+            if self.limit_left(1): self.speed.x = 1.0
+            else: self.speed.x = 0.0
 
         if self.limit_right():
-            if self.limit_right(-1): self.delta_x = -0.1
-            else: self.delta_x = 0
+            if self.limit_right(-1): self.speed.x = -1.0
+            else: self.speed.x = 0.0
 
         if self.limit_up():
-            if self.limit_up(+1): self.delta_y = 0.1
-            else: self.delta_y = 0
+            if self.limit_up(1): self.speed.y = 1.0
+            else: self.speed.y = 0.0
 
         if self.limit_down():
-            if self.limit_down(-1): self.delta_y = -0.1
-            else: self.delta_y = 0
+            if self.limit_down(-1): self.speed.y = -1.0
+            else: self.speed.y = 0.0
 
-        # Update rectangle position
-        self.rect.x += self.delta_x
-        self.rect.y += self.delta_y
+        # Update the movement of the rectangle
+        if self.delta.x > -self.max_speed and self.delta.x < self.max_speed:
+            self.delta.x += self.speed.x
+        if self.delta.y > -self.max_speed and self.delta.y < self.max_speed:
+            self.delta.y += self.speed.y
+
+        self.rect.x += self.delta.x + self.max_speed * self.speed.x
+        self.rect.y += self.delta.y + self.max_speed * self.speed.y
+
+        print(self.rect.center, self.delta, self.speed, self.max_speed)
 
     def auto_movement(self):
         if self.win:
@@ -171,12 +190,12 @@ class Player(Sprite_sheet):
     #     # Check for collision
     #     for sprite in args:
     #         # Check for collision in the x direction
-    #         if sprite.colliderect(self.rect.x + self.delta_x, self.rect.y, self.rect.w, self.rect.h):
-    #             self.delta_x = 0
+    #         if sprite.colliderect(self.rect.x + self.delta.x, self.rect.y, self.rect.w, self.rect.h):
+    #             self.delta.x = 0
 
     #         # Check for collision in the y direction
-    #         if sprite.colliderect(self.rect.x, self.rect.y + self.delta_y, self.rect.w, self.rect.h):
-    #             self.delta_y = 0
+    #         if sprite.colliderect(self.rect.x, self.rect.y + self.delta.y, self.rect.w, self.rect.h):
+    #             self.delta.y = 0
 
     #     # Check if the collision with the enemy
     #     if pygame.sprite.spritecollide(self, args, False):
@@ -211,20 +230,20 @@ class Player(Sprite_sheet):
     def check_alive(self):
         if self.health <= 0:
             self.health = 0
-            self.speed = 0
+            self.speed = self.vector(0, 0)
             self.alive = False
             self.animation_cooldown = self.animation_cooldown // 4
             self.update_action('death')
         else: self.update_action('idle')
 
     def limit_left(self, value=0):
-        return self.rect.left + self.delta_x < self.rect.width//10 + value
+        return self.rect.left + self.delta.x < self.rect.width//10 + value
 
     def limit_right(self, value=0):
-        return self.rect.right + self.delta_x > SCREEN_WIDTH - (self.rect.height//10 + value)
+        return self.rect.right + self.delta.x > SCREEN_WIDTH - (self.rect.height//10 + value)
 
     def limit_up(self, value=0):
-        return self.rect.top + self.delta_y < self.rect.height + value
+        return self.rect.top + self.delta.y < self.rect.height + value
 
     def limit_down(self, value=0):
-        return self.rect.bottom + self.delta_y > SCREEN_HEIGHT - (self.rect.height//10 + value)
+        return self.rect.bottom + self.delta.y > SCREEN_HEIGHT - (self.rect.height//10 + value)

@@ -34,3 +34,4 @@
 32. Add class Particles to objects (tools.py)
 33. Increase more bullets per shoot (weapons.py)
 34. Implement new speed for the Player (players.py)
+35. Convert main.py to run.exe using pyinstaller and auto-py-to-exe

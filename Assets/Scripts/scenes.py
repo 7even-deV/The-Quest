@@ -1,4 +1,4 @@
-import pygame, random
+import pygame, sys, random
 
 from .settings    import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, MUSIC_VOL, SOUND_VOL, LOGO, COLOR, STARS, LIVES, SURGE_NUM, enemy_select, enemy_position
 from .documents   import CREDITS, HISTORY, GUIDE
@@ -147,7 +147,8 @@ class Main(Scene):
             for event in pygame.event.get():
                 # Quit game
                 if event.type == pygame.QUIT:
-                    exit()
+                    pygame.quit()
+                    sys.exit()
 
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
@@ -293,7 +294,8 @@ class Main(Scene):
                                 username = username[:-1]
 
                     if event.key == pygame.K_ESCAPE: # Quit game
-                        exit()
+                        pygame.quit()
+                        sys.exit()
 
                 # keyboard release
                 if event.type == pygame.KEYUP:
@@ -517,7 +519,8 @@ class Menu(Scene):
             for event in pygame.event.get():
                 # Quit game
                 if event.type == pygame.QUIT:
-                    exit()
+                    pygame.quit()
+                    sys.exit()
 
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
@@ -789,7 +792,8 @@ class Game(Scene):
             for event in pygame.event.get():
                 # Quit game
                 if event.type == pygame.QUIT:
-                    exit()
+                    pygame.quit()
+                    sys.exit()
 
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
@@ -1126,7 +1130,8 @@ class Record(Scene):
             for event in pygame.event.get():
                 # Quit game
                 if event.type == pygame.QUIT:
-                    exit()
+                    pygame.quit()
+                    sys.exit()
 
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
@@ -1137,7 +1142,8 @@ class Record(Scene):
                     if event.key == pygame.K_RETURN: # Show menu
                         run = False
                     if event.key == pygame.K_ESCAPE: # Quit game
-                        exit()
+                        pygame.quit()
+                        sys.exit()
 
             # Clear screen and set background color
             self.screen.fill(COLOR('BLACK'))

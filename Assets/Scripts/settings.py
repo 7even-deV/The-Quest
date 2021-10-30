@@ -21,7 +21,7 @@ FPS = 60
 # Define game variables
 SCENE = 0
 LIVES = 3
-SPEED = 2
+SPEED = 4.0
 LEVEL = 1
 ENEMY_SCALE = 1
 METEOR_SCALE = 3

@@ -36,7 +36,7 @@ class Player(Sprite_sheet):
         self.rect = self.image.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT+SCREEN_HEIGHT//10))
 
         self.vector = pygame.math.Vector2
-        self.max_speed = 4.0
+        self.max_speed = SPEED
         self.speed     = self.vector(0, 0)
         self.delta     = self.vector(0, 0)
 
@@ -135,7 +135,7 @@ class Player(Sprite_sheet):
         self.rect.x += self.delta.x + self.max_speed * self.speed.x
         self.rect.y += self.delta.y + self.max_speed * self.speed.y
 
-        print(self.rect.center, self.delta, self.speed, self.max_speed)
+        # print(self.rect.center, self.delta, self.speed, self.max_speed)
 
     def auto_movement(self):
         if self.win:

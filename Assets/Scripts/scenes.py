@@ -129,6 +129,8 @@ class Main(Scene):
 
         cursor = bar = row_key = column_key = select = 0
         login = create = confirm = False
+        str_key   = ''
+        press_key = False
 
         vol_scan = [0.5] * 2
 
@@ -178,7 +180,6 @@ class Main(Scene):
                             if column_key > 0:
                                 column_key -= 1
                             else: column_key = len(self.keyboard_list[row_key]) - 1
-                            self.keyboard_list[row_key][column_key].select_effect(True)
 
                         self.select_fx.play()
 
@@ -208,7 +209,6 @@ class Main(Scene):
                             if column_key < len(self.keyboard_list[row_key]) - 1:
                                 column_key += 1
                             else: column_key = 0
-                            self.keyboard_list[row_key][column_key].select_effect(True)
 
                         self.select_fx.play()
 
@@ -227,7 +227,6 @@ class Main(Scene):
                             if row_key > 0:
                                 row_key -= 1
                             else: row_key = len(self.keyboard_list) - 1
-                            self.keyboard_list[row_key][column_key].select_effect(True)
 
                         self.board.show = False
                         self.select_fx.play()
@@ -247,16 +246,18 @@ class Main(Scene):
                             if row_key < len(self.keyboard_list) - 1:
                                 row_key += 1
                             else: row_key = 0
-                            self.keyboard_list[row_key][column_key].select_effect(True)
 
                         self.board.show = False
                         self.select_fx.play()
+
+                    # Select the effect of the key that is pressed
+                    if create: self.keyboard_list[row_key][column_key].select_effect(True)
 
                     if event.key == pygame.K_SPACE: # Turnback select
                         if create:
                             if len(username) < 10:
                                 # These 2 conditions are for not typing if the Delete key or the Shift key is pressed.
-                                if self.keyboard_list[row_key][column_key] != self.keyboard_list[-1][-1]\
+                                if  self.keyboard_list[row_key][column_key] != self.keyboard_list[-1][-1]\
                                 and self.keyboard_list[row_key][column_key] != self.keyboard_list[-1][-2]:
                                     username += self.keyboard_list[row_key][column_key].text
                                     button_list[2][0] = username
@@ -276,6 +277,7 @@ class Main(Scene):
                             else:
                                 self.keyboard_list[row_key][column_key].trigger = True
                                 self.keyboard_list[row_key][column_key].active_effect(True)
+
                         else:
                             scene_browser = -1
                             run = False
@@ -297,11 +299,27 @@ class Main(Scene):
                         pygame.quit()
                         sys.exit()
 
+                # keyboard text input
+                if create and event.type == pygame.TEXTINPUT:
+                    if str_key != str(event)[31]:
+                        str_key = str(event)[31]
+                        press_key = True
+
+                    if str(event)[31] != ' ':
+                        if len(username) < 10:
+                            username += str_key
+                            button_list[2][0] = username
+                        else: msg = 2
+                        self.confirm_fx.play()
+
+                    else: msg = 0
+
                 # keyboard release
                 if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_SPACE: # Turnback select
-                        if create:
-                            self.keyboard_list[row_key][column_key].active_effect(False)
+                    # Turns off the effect of the key that is release
+                    if create and self.keyboard_list[row_key][column_key].trigger:
+                        self.keyboard_list[row_key][column_key].trigger = False
+                        self.keyboard_list[row_key][column_key].active_effect(False)
 
                     if event.key == pygame.K_RETURN: # Confirm
                         # Warning with this area of nested tabulated conditions as their order is very important
@@ -442,10 +460,23 @@ class Main(Scene):
             if create:
                 for row in range(len(self.keyboard_list)):
                     for self.keyboard, index in zip(self.keyboard_list[row], range(len(self.keyboard_list[row]))):
+
                         if self.keyboard != self.keyboard_list[row_key][column_key]:
                             self.keyboard.select_effect(False)
                             if self.keyboard != self.keyboard_list[-1][-1]:
-                                self.keyboard.trigger = False
+                                if  self.keyboard.trigger:
+                                    self.keyboard.trigger = False
+                                    self.keyboard.active_effect(False)
+
+                        if press_key:
+                            if self.keyboard_list[row][index].text == str_key\
+                            or self.keyboard_list[row][index].text.upper() == str_key:
+                                row_key = row
+                                column_key = index
+                                self.keyboard.trigger = True
+                                self.keyboard.select_effect(True)
+                                self.keyboard.active_effect(True)
+                                press_key = False
 
                         if self.keyboard_list[-1][-1].trigger:
                             self.keyboard.text = self.keyboard.text.upper()

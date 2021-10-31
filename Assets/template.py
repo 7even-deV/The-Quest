@@ -20,11 +20,9 @@ class Template():
         for _ in range(10):
             self.meteor_list.append(Meteor(self.screen, self.player))
 
-        # Main loop
-        self.main_loop()
-
     def main_loop(self):
-        run = True
+        loop = True
+        run  = True
         while run:
             # Limit frames per second
             self.clock.tick(FPS)
@@ -65,7 +63,8 @@ class Template():
                         pass
 
                     if event.key == pygame.K_ESCAPE: # Quit game
-                        run = False
+                        loop = False
+                        run  = False
 
                 # keyboard release
                 if event.type == pygame.KEYUP:
@@ -101,9 +100,13 @@ class Template():
             # Update screen
             pygame.display.update()
 
-        # Quit pygame
-        pygame.quit()
+        return loop
 
 
 if __name__ == '__main__':
     template = Template()
+    loop = True
+    while loop:
+        loop = template.main_loop()
+
+    pygame.quit() # Quit pygame

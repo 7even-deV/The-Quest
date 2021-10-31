@@ -83,10 +83,12 @@ class Player(Sprite_sheet):
 
             if not self.moving_left and not self.moving_right:
                 # Recover the axis of delta x and rotate to 0
-                if   self.delta.x > 0.1: self.delta.x -= 0.1
-                elif self.delta.x < 0.0: self.delta.x += 0.1
-                if    self.rotate > 0.0: self.rotate  -= 0.1
-                elif  self.rotate < 0.0: self.rotate  += 0.1
+                if    self.delta.x > 0.1: self.delta.x -= 0.1
+                elif  self.delta.x < 0.0: self.delta.x += 0.1
+                else: self.delta.x = 0
+
+                if    self.rotate > 0.0: self.rotate -= 0.1
+                elif  self.rotate < 0.0: self.rotate += 0.1
             else:
                 if self.moving_left:
                     self.speed.x = -0.1
@@ -100,8 +102,10 @@ class Player(Sprite_sheet):
 
             if not self.moving_up and not self.moving_down:
                 # Recover the axis of delta y to 0
-                if   self.delta.y > 0.1: self.delta.y -= 0.1
-                elif self.delta.y < 0.0: self.delta.y += 0.1
+                if    self.delta.y > 0.1: self.delta.y -= 0.1
+                elif  self.delta.y < 0.0: self.delta.y += 0.1
+                else: self.delta.y = 0
+
             else:
                 if self.moving_up:
                     self.speed.y = -0.1
@@ -110,21 +114,21 @@ class Player(Sprite_sheet):
                     self.speed.y = 0.1
 
         # Check if going off the edges of the screen
-        if self.limit_left():
-            if self.limit_left(1): self.speed.x = 1.0
-            else: self.speed.x = 0.0
+        if self.limit_left(self.rect.width//10):
+            if self.limit_left(): self.speed.x = 0.1
+            else: self.moving_left = False
 
-        if self.limit_right():
-            if self.limit_right(-1): self.speed.x = -1.0
-            else: self.speed.x = 0.0
+        if self.limit_right(self.rect.width//10):
+            if self.limit_right(): self.speed.x = -0.1
+            else: self.moving_right = False
 
-        if self.limit_up():
-            if self.limit_up(1): self.speed.y = 1.0
-            else: self.speed.y = 0.0
+        if self.limit_up(self.rect.height//10):
+            if self.limit_up(): self.speed.y = 0.1
+            else: self.moving_up = False
 
-        if self.limit_down():
-            if self.limit_down(-1): self.speed.y = -1.0
-            else: self.speed.y = 0.0
+        if self.limit_down(self.rect.height//10):
+            if self.limit_down(): self.speed.y = -0.1
+            else: self.moving_down = False
 
         # Update the movement of the rectangle
         if self.delta.x > -self.max_speed and self.delta.x < self.max_speed:
@@ -135,7 +139,7 @@ class Player(Sprite_sheet):
         self.rect.x += self.delta.x + self.max_speed * self.speed.x
         self.rect.y += self.delta.y + self.max_speed * self.speed.y
 
-        # print(self.rect.center, self.delta, self.speed, self.max_speed)
+        print(self.rect.center, self.delta, self.speed, self.max_speed)
 
     def auto_movement(self):
         if self.win:

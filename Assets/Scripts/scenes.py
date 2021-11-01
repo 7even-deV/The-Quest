@@ -8,6 +8,7 @@ from .environment import Foreground, Background, Farground, Planet, Portal
 from .players     import Player
 from .enemies     import Enemy
 from .obstacles   import Meteor
+from .items       import Item
 from .database    import Database
 
 
@@ -684,36 +685,39 @@ class Game(Scene):
         self.enemy_group     = pygame.sprite.Group()
         self.meteor_group    = pygame.sprite.Group()
         self.explosion_group = pygame.sprite.Group()
+        self.item_group      = pygame.sprite.Group()
 
         self.ui_bar          = pygame.sprite.Group()
         self.settings        = pygame.sprite.Group()
 
         self.meteor_list_copy = []
-        self.group_list = [self.bullet_group, self.missile_group, self.enemy_group, self.meteor_group, self.explosion_group]
+        self.group_list = [self.bullet_group, self.missile_group, self.enemy_group, self.meteor_group, self.explosion_group, self.item_group]
 
         self.ui_bar.add(self.ammo_load_view, self.username_view, self.level_view, self.timer_view, self.highscore_view, self.score_view)
         self.settings.add(self.paused)
 
         # Sounds fx
-        self.move_fx        = self.sound('move')
-        self.backmove_fx    = self.sound('backmove')
-        self.turbo_fx       = self.sound('turbo')
-        self.explosion_fx   = self.sound('explosion')
+        self.move_fx         = self.sound('move')
+        self.backmove_fx     = self.sound('backmove')
+        self.turbo_fx        = self.sound('turbo')
+        self.explosion_fx    = self.sound('explosion')
 
-        self.bullet_fx      = self.sound('bullet')
-        self.empty_ammo_fx  = self.sound('empty_ammo')
-        self.missile_fx     = self.sound('missile')
-        self.missile_cd_fx  = self.sound('missile_countdown')
-        self.missile_exp_fx = self.sound('missile_explosion')
-        self.empty_load_fx  = self.sound('empty_load')
+        self.bullet_fx       = self.sound('bullet')
+        self.empty_ammo_fx   = self.sound('empty_ammo')
+        self.missile_fx      = self.sound('missile')
+        self.missile_cd_fx   = self.sound('missile_countdown')
+        self.missile_exp_fx  = self.sound('missile_explosion')
+        self.empty_load_fx   = self.sound('empty_load')
+        self.item_standby_fx = self.sound('item_standby')
+        self.item_get_fx     = self.sound('item_get')
 
-        self.pause_fx       = self.sound('pause')
-        self.select_fx      = self.sound('select')
-        self.win_fx         = self.sound('win')
-        self.game_over_fx   = self.sound('game_over')
+        self.pause_fx        = self.sound('pause')
+        self.select_fx       = self.sound('select')
+        self.win_fx          = self.sound('win')
+        self.game_over_fx    = self.sound('game_over')
 
-        self.enemy_sfx_list = [self.empty_ammo_fx, self.bullet_fx, self.empty_load_fx, self.missile_fx, self.missile_cd_fx, self.missile_exp_fx]
-        self.sfx_list       = [self.move_fx, self.backmove_fx, self.turbo_fx, self.explosion_fx, self.pause_fx, self.select_fx, self.win_fx, self.game_over_fx]
+        self.enemy_sfx_list  = [self.empty_ammo_fx, self.bullet_fx, self.empty_load_fx, self.missile_fx, self.missile_cd_fx, self.missile_exp_fx, self.item_standby_fx, self.item_get_fx]
+        self.sfx_list        = [self.move_fx, self.backmove_fx, self.turbo_fx, self.explosion_fx, self.pause_fx, self.select_fx, self.win_fx, self.game_over_fx]
         self.sfx_list.extend(self.enemy_sfx_list)
 
     # Function to reset level
@@ -721,6 +725,7 @@ class Game(Scene):
         self.bullet_group.empty()
         self.missile_group.empty()
         self.explosion_group.empty()
+        self.item_group.empty()
         self.enemy_group.empty()
         self.meteor_group.empty()
         self.meteor_list = self.meteor_list_copy
@@ -732,6 +737,10 @@ class Game(Scene):
         destiny_planet = Planet('destiny', init_planet, midbottom=(SCREEN_WIDTH//2, 0))
 
         self.environment_list = [bg, fg, origin_planet, destiny_planet]
+
+    def item_create(self, player):
+        self.item = Item(self.screen, player, [self.item_standby_fx, self.item_get_fx], bottomleft=(random.randint(0, SCREEN_WIDTH-SCREEN_WIDTH//10), 0))
+        self.item_group.add(self.item)
 
     def enemy_create(self, level):
         enemy_select = random.randint(0, 2)
@@ -751,7 +760,7 @@ class Game(Scene):
             temp_list = []
             # Increase the number of meteors per surge
             for _ in range((number + level) * 100 // 4):
-                temp_list.append(Meteor(self.screen, self.player))
+                temp_list.append(Meteor(self.screen, self.player, self.item_group, [self.item_standby_fx, self.item_get_fx]))
 
             self.meteor_list.append(temp_list)
 
@@ -764,6 +773,7 @@ class Game(Scene):
 
         # Create sprites
         self.player = Player(self.screen, style, model, score, level*100, level, lives, self.group_list)
+        # self.item_create(self.player)
         self.environment_create(init_planet)
         self.lives_view = pygame.image.load(lives_img).convert_alpha()
         self.health_bar = HealthBar(self.screen, self.player.health, self.player.max_health)
@@ -992,6 +1002,10 @@ class Game(Scene):
                 self.player.update()
                 self.player.draw()
 
+                for item in self.item_group:
+                    item.update()
+                    item.draw()
+
                 for self.meteor in self.meteor_group:
                     self.meteor.check_collision(self.explosion_fx)
                     self.meteor.update(self.player.turbo)
@@ -1018,7 +1032,9 @@ class Game(Scene):
                 if self.player.alive:
                     if self.player.spawn and self.intro_fade.fade():
                         self.intro_fade.fade_counter = 0
-                        self.player.spawn  = False
+                        self.player.spawn = False
+
+                    # self.item_create(self.player)
 
                     if self.player.collide and self.game_timer.counter(1, True):
                         self.player.collide = False
@@ -1034,7 +1050,7 @@ class Game(Scene):
                         throw_missiles = True
 
                     # Level countdown
-                    if not self.player.win and self.game_timer.countdown(level, self.player.turbo, True):
+                    if not self.player.win and self.game_timer.countdown(level, self.player.turbo, self.player.item_time, True):
                         self.game_timer.text_time = 0
                         self.player.win = True
                         self.player.turbo = False

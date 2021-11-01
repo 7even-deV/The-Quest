@@ -204,13 +204,28 @@ missile_exp_img = f'Assets/Images/missile_exp_2.png'
 missile_exp_dict = {'destroy': (5, 6)}
 
 
+item_img = 'Assets/Images/items.png'
+item_type_dict = {
+    'lives'  : (1, 1, 1, 5),
+    'health' : (1, 1, 5, 1),
+    'shield' : (1, 1, 1, 2),
+    'speed'  : (1, 1, 4, 2),
+    'turbo'  : (1, 1, 3, 1),
+    'time'   : (1, 1, 8, 3),
+    'ammo'   : (1, 1, 7, 4),
+    'load'   : (1, 1, 3, 3),
+    'weapon' : (1, 1, 5, 5),
+}
+item_get_img = 'Assets/Images/bullet_2.png'
+
+
 bg_img = 'Assets/Images/background.jpg'
 
 
 meteor_img = 'Assets/Images/meteor.png'
 meteor_action_dict = {
-    'turn_l': (8, 4, 1, 1),
-    'turn_r': (8, 4, 5, 1),
+    'turn_l' : (8, 4, 1, 1),
+    'turn_r' : (8, 4, 5, 1),
 }
 
 
@@ -263,6 +278,8 @@ sound_list = [
     'backmove',
     'turbo',
     'explosion',
+    'item_standby',
+    'item_get',
     'win',
     'death',
     'game_over',

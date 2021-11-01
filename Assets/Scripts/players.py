@@ -47,20 +47,22 @@ class Player(Sprite_sheet):
         self.alive  = True
         self.health = 100
         self.max_health = self.health
-        self.lives = lives
-        self.win   = False
+        self.lives  = lives
+        self.shield = False
+        self.win    = False
 
         # Define player action variables
-        self.spawn   = True
-        self.turbo   = False
-        self.collide = False
+        self.spawn     = True
+        self.turbo     = False
+        self.item_time = False
+        self.collide   = False
 
         self.moving_left  = False
         self.moving_right = False
         self.moving_up    = False
         self.moving_down  = False
         self.timer = Timer(FPS)
-        self.particles = Particles(self.screen, 10, self.image)
+        self.particles = Particles('fire', self.screen, 10, self.image)
 
     def update(self):
         # Update player events
@@ -139,7 +141,7 @@ class Player(Sprite_sheet):
         self.rect.x += self.delta.x + self.max_speed * self.speed.x
         self.rect.y += self.delta.y + self.max_speed * self.speed.y
 
-        print(self.rect.center, self.delta, self.speed, self.max_speed)
+        # print(self.rect.center, self.delta, self.speed, self.max_speed)
 
     def auto_movement(self):
         if self.win:

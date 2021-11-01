@@ -1,12 +1,12 @@
 import pygame, random
 
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, COLOR
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, COLOR
 from .manager  import icon_type_function, button_img, button_dict, bar_img, bar_dict, key_img, key_dict, board_img, board_dict, font_function
 
 
 class Timer():
 
-    def __init__(self, FPS):
+    def __init__(self, FPS=FPS):
         self.count = 0
         self.start_time = pygame.time.get_ticks()
         self.frame_num = 0
@@ -40,7 +40,7 @@ class Timer():
             return events
 
     # Countdown for minutes
-    def countdown(self, timer, turbo=False, *events):
+    def countdown(self, timer, turbo=False, item_time=False, *events):
         self.level_time = timer * 60
         # Calculate time left
         self.time_left = self.level_time - (self.frame_num // self.frame_rate)
@@ -51,7 +51,10 @@ class Timer():
         # Use string format for leading zeros
         self.text_time = "{0:02}:{1:02}".format(minutes, seconds)
 
-        if turbo: # Reduce time if turbo is used
+        # Reduce time if turbo or item time is used
+        if turbo and item_time:
+            self.frame_num += 4
+        elif turbo or item_time:
             self.frame_num += 2
         else: self.frame_num += 1
 
@@ -482,7 +485,7 @@ class Screen_fade():
         if self.direction == 'intro': # Whole screen fade
             pygame.draw.rect(self.screen, self.colour, (0 - self.fade_counter, 0, SCREEN_WIDTH // 2, SCREEN_HEIGHT)) # Opening left
             pygame.draw.rect(self.screen, self.colour, (SCREEN_WIDTH // 2 + self.fade_counter, 0, SCREEN_WIDTH, SCREEN_HEIGHT)) # Opening right
-            pygame.draw.rect(self.screen, self.colour, (0, 0 - self.fade_counter, SCREEN_WIDTH, SCREEN_HEIGHT)) # Opening up
+            # pygame.draw.rect(self.screen, self.colour, (0, 0 - self.fade_counter, SCREEN_WIDTH, SCREEN_HEIGHT)) # Opening up
             # pygame.draw.rect(self.screen, self.colour, (0, SCREEN_HEIGHT // 2 + self.fade_counter, SCREEN_WIDTH, SCREEN_HEIGHT)) # Opening down
         if self.direction == 'death': # Vertical screen fade down
             pygame.draw.rect(self.screen, self.colour, (0, 0, SCREEN_WIDTH, 0 + self.fade_counter))
@@ -495,15 +498,40 @@ class Screen_fade():
 
 class Particles():
 
-    def __init__(self, screen, size=10, image=None):
+    def __init__(self, particle_type, screen, size=10, image=None):
+        self.particle_type = particle_type
         self.screen = screen
         self.size   = size
         self.image  = image
         self.width  = self.image.get_rect().width
         self.height = self.image.get_rect().height
 
-        self.color_list = [pygame.Color('Orange'), pygame.Color('Yellow'), pygame.Color('Cyan'), pygame.Color('Gray')]
+        if   self.particle_type == 'glow':
+            self.color_list = [pygame.Color('Gray'), pygame.Color('White')]
+
+        elif self.particle_type == 'shoot':
+            self.color_list = [pygame.Color('White'), pygame.Color('Yellow'), pygame.Color('Orange')]
+
+        elif self.particle_type == 'fire':
+            self.color_list = [pygame.Color('Orange'), pygame.Color('Yellow'), pygame.Color('Cyan'), pygame.Color('Gray')]
+
         self.particle_list = []
+
+    def add_glow(self, pos_x, pos_y, direction_x, direction_y):
+        colour = random.randint(0, 255)
+        move_x = random.randint(-3, 3)
+        move_y = random.randint(-3, 3)
+        radius = random.randint(1, 5)
+
+        self.particle_list.append([(colour, colour, colour), [pos_x, pos_y], [move_x, move_y], radius])
+
+        for particle in self.particle_list:
+            particle[1][0] += particle[2][0] * direction_x * -1
+            particle[1][1] += particle[2][1] * direction_y * -1
+            particle[3] -= 0.05
+            pygame.draw.circle(self.screen, particle[0], particle[1], int(particle[3]))
+            if particle[3] <= 0:
+                self.particle_list.remove(particle)
 
     def add_circle(self, pos_x, pos_y, direction_x, direction_y):
         colour = random.randint(0, len(self.color_list) -1)

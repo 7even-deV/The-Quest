@@ -3,14 +3,18 @@ import pygame, random
 from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, METEOR_SCALE
 from .manager  import meteor_img, meteor_action_dict, explosion_1_img, explosion_dict
 from .tools    import Sprite_sheet
+from .items    import Item
 
 
 class Meteor(Sprite_sheet):
 
-    def __init__(self, screen, player):
+    def __init__(self, screen, player, item_group, *args):
         super().__init__(meteor_img)
         self.screen = screen
         self.player = player
+        self.item_group = item_group
+        self.item_standby_fx = args[0][0]
+        self.item_get_fx     = args[0][1]
 
         # Load meteor and explosion image
         self.create_animation(100, 100, meteor_action_dict)
@@ -55,6 +59,11 @@ class Meteor(Sprite_sheet):
         self.rect.x += self.delta_x
         self.rect.y += self.delta_y + speed_y
 
+    # Create item
+    def item_spawn(self):
+        item = Item(self.screen, self.player, [self.item_standby_fx, self.item_get_fx], center=(self.rect.centerx, self.rect.centery))
+        self.item_group.add(item)
+
     def check_collision(self, sfx):
         if self.alive and self.player.alive and not self.collide and not self.player.win:
             if abs(self.rect.centerx - self.player.rect.centerx) < self.rect.width  * self.scale and\
@@ -63,18 +72,25 @@ class Meteor(Sprite_sheet):
                 self.player.collide = True
                 self.player.rect.x += (self.delta_x - self.player.delta.x) * 2
                 self.player.rect.y += (self.delta_y - self.player.delta.y) * 2
-                self.player.health -= self.scale * 10
+                if self.player.shield:
+                    self.player.shield = False
+                else: self.player.health -= self.scale * 10
                 self.health = 0
                 sfx.play()
 
     def check_alive(self):
         if self.health <= 0:
-            self.health = 0
-            self.speed = 0
-            self.alive = False
+            if self.alive:
+                self.alive = False
+                self.health = 0
+                self.speed = 0
+                self.item_spawn()
+
             if self.player.score < self.player.score + self.exp:
                 self.player.score += 1
                 if self.exp > 0: self.exp -= 1
+
             self.animation_cooldown = self.animation_cooldown // 4
             self.update_action('destroy')
+
         else: self.update_action('turn_l')

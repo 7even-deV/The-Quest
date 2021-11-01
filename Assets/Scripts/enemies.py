@@ -4,6 +4,7 @@ from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, ENEMY_SCALE, enemy_dict
 from .manager  import enemy_select_function, explosion_2_img, explosion_dict
 from .tools    import Sprite_sheet, Timer
 from .weapons  import Bullet, Missile
+from .items    import Item
 
 
 class Enemy(Sprite_sheet):
@@ -22,6 +23,7 @@ class Enemy(Sprite_sheet):
         self.enemy_group     = args[0][0][2]
         self.meteor_group    = args[0][0][3]
         self.explosion_group = args[0][0][4]
+        self.item_group      = args[0][0][5]
 
         self.empty_ammo_fx   = args[0][1][0]
         self.bullet_fx       = args[0][1][1]
@@ -29,6 +31,9 @@ class Enemy(Sprite_sheet):
         self.missile_fx      = args[0][1][3]
         self.missile_cd_fx   = args[0][1][4]
         self.missile_exp_fx  = args[0][1][5]
+
+        self.item_standby_fx = args[0][1][6]
+        self.item_get_fx     = args[0][1][7]
 
         self.ammo = enemy_dict['ammo'][self.select]
         self.load = enemy_dict['load'][self.select]
@@ -362,6 +367,11 @@ class Enemy(Sprite_sheet):
             # Update ai vision as the enemy moves
             self.vision.midtop = (self.rect.centerx, self.rect.centery)
 
+    # Create item
+    def item_spawn(self):
+        item = Item(self.screen, self.player, [self.item_standby_fx, self.item_get_fx], center=(self.rect.centerx, self.rect.centery))
+        self.item_group.add(item)
+
     # Check if the collision with the player
     def check_collision(self, sfx):
         if self.alive and self.player.alive and not self.collide and not self.player.win:
@@ -371,20 +381,27 @@ class Enemy(Sprite_sheet):
                 self.player.collide = True
                 self.player.rect.x += (self.delta_x - self.player.delta.x) * 2
                 self.player.rect.y += (self.delta_y - self.player.delta.y) * 2
-                self.player.health -= 50
+                if self.player.shield:
+                    self.player.shield = False
+                else: self.player.health -= 50
                 self.health = 0
                 sfx.play()
 
     def check_alive(self):
         if self.health <= 0:
-            self.health = 0
-            self.speed = 0
-            self.alive = False
+            if self.alive:
+                self.alive = False
+                self.health = 0
+                self.speed = 0
+                self.item_spawn()
+
             if self.player.score < self.player.score + self.exp:
                 self.player.score += 1
                 if self.exp > 0: self.exp -= 1
+
             self.animation_cooldown = self.animation_cooldown // 4
             self.update_action('destroy')
+
         else: self.update_action('idle')
 
     def limit_left(self, value=0):

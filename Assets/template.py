@@ -11,17 +11,25 @@ class Template():
         pygame.display.set_caption("Template")
 
         # Create Test
-        self.game   = Game(self.screen)
+        self.game = Game(self.screen)
+        self.item_group = pygame.sprite.Group()
 
-        self.player = Player(self.screen, 0, 5, 0, 1000, 1000, 3, self.game.group_list)
+    def restart(self):
+        self.player = Player(self.screen, 0, 5, 0, 10, 10, 3, self.game.group_list)
         self.player.spawn = False
+        item = Item(self.screen, self.player, [self.game.item_standby_fx, self.game.item_get_fx], bottomleft=(random.randint(0, SCREEN_WIDTH-SCREEN_WIDTH//10), 0))
+        self.item_group.empty()
+        self.item_group.add(item)
 
         self.meteor_list = []
         for _ in range(10):
-            self.meteor_list.append(Meteor(self.screen, self.player))
+            self.meteor_list.append(Meteor(self.screen, self.player, self.item_group, [self.game.item_standby_fx, self.game.item_get_fx]))
+
 
     def main_loop(self):
-        loop = True
+        self.restart()
+
+        loop = False
         run  = True
         while run:
             # Limit frames per second
@@ -63,7 +71,7 @@ class Template():
                         pass
 
                     if event.key == pygame.K_ESCAPE: # Quit game
-                        loop = False
+                        loop = True
                         run  = False
 
                 # keyboard release
@@ -84,18 +92,24 @@ class Template():
 
             self.player.update()
             self.player.draw()
+            print(self.player.delta.y, self.player.speed.y, self.player.health, self.player.ammo, self.player.load)
 
-            for bullet in self.game.bullet_group:
-                bullet.update()
-                bullet.draw()
+            for item in self.item_group:
+                item.update()
+                item.draw()
+
+            # for bullet in self.game.bullet_group:
+            #     bullet.update()
+            #     bullet.draw()
 
             # for meteor in self.meteor_list:
             #     meteor.check_collision(self.game.explosion_fx)
             #     meteor.update(self.player.turbo)
             #     meteor.draw()
 
-            # self.game.group_list[0].update()
-            # self.game.group_list[0].draw(self.screen)
+            for group in self.game.group_list:
+                group.update()
+                group.draw(self.screen)
 
             # Update screen
             pygame.display.update()
@@ -105,8 +119,7 @@ class Template():
 
 if __name__ == '__main__':
     template = Template()
-    loop = True
-    while loop:
+    while True:
         loop = template.main_loop()
 
     pygame.quit() # Quit pygame

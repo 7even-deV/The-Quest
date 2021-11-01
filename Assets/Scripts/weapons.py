@@ -33,7 +33,7 @@ class Bullet(Sprite_sheet):
         self.enemy_group    = args[2]
         self.obstacle_group = args[3]
 
-        self.particles = Particles(self.screen, 10, self.image)
+        self.particles = Particles('shoot', self.screen, 10, self.image)
 
         self.update_action('bullet')
 
@@ -81,7 +81,9 @@ class Bullet(Sprite_sheet):
         if pygame.sprite.spritecollide(self.player, self.bullet_group, False):
             if self.player.alive and not self.player.win:
                 self.collide = True
-                self.player.health -= 10
+                if self.player.shield:
+                    self.player.shield = False
+                else: self.player.health -= 10
 
     def draw(self):
         for self.rect in self.rect_list:
@@ -173,7 +175,9 @@ class Missile(Sprite_sheet):
         if abs(self.rect.centerx - self.player.rect.centerx) < self.width  * 5 and\
            abs(self.rect.centery - self.player.rect.centery) < self.height * 5:
             self.player.collide = True
-            self.player.health -= 50
+            if self.player.shield:
+                self.player.shield = False
+            else: self.player.health -= 50
 
 
 class Explosion(Sprite_sheet):

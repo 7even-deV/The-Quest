@@ -494,7 +494,7 @@ class Main(Scene):
             self.board.draw(self.screen)
 
             # Limit delay without event activity
-            if self.menu_timer.countdown(1, True):
+            if self.menu_timer.counter(FPS, True):
                 scene_browser = -1
                 run = False
 
@@ -731,12 +731,12 @@ class Game(Scene):
         self.meteor_list = self.meteor_list_copy
 
     def environment_create(self, init_planet):
-        bg = Background(bg_img)
-        fg  = Farground(STARS)
-        origin_planet  = Planet('origin' , init_planet, midbottom=(SCREEN_WIDTH//2, SCREEN_HEIGHT))
-        destiny_planet = Planet('destiny', init_planet, midbottom=(SCREEN_WIDTH//2, 0))
+        background = Background(self.screen, bg_img)
+        farground   = Farground(self.screen, STARS)
+        origin_planet  = Planet(self.screen, 'origin' , init_planet, midbottom=(SCREEN_WIDTH//2, SCREEN_HEIGHT))
+        destiny_planet = Planet(self.screen, 'destiny', init_planet, midbottom=(SCREEN_WIDTH//2, 0))
 
-        self.environment_list = [bg, fg, origin_planet, destiny_planet]
+        self.environment_list = [background, farground, origin_planet, destiny_planet]
 
     def item_create(self, player):
         self.item = Item(self.screen, player, [self.item_standby_fx, self.item_get_fx], bottomleft=(random.randint(0, SCREEN_WIDTH-SCREEN_WIDTH//10), 0))
@@ -995,10 +995,9 @@ class Game(Scene):
                             self.music(2, 0.5)
 
                 for self.environment in self.environment_list:
-                    self.environment.update(self.player.delta.x, self.player.turbo, self.player.win)
-                    self.environment.draw(self.screen)
+                    self.environment.update(self.player)
+                    self.environment.draw()
 
-                # self.player.check_collision()
                 self.player.update()
                 self.player.draw()
 
@@ -1040,19 +1039,24 @@ class Game(Scene):
                         self.player.collide = False
 
                     # Shoot bullets
-                    if shoot and not shoot_bullets:
+                    # if shoot and not shoot_bullets:
+                    if shoot:
                         self.player.shoot(self.empty_ammo_fx, self.bullet_fx)
                         shoot_bullets = True
 
                     # Throw missiles
-                    elif throw and not throw_missiles:
+                    if throw and not throw_missiles:
                         self.player.throw(self.empty_load_fx, self.missile_fx, self.missile_cd_fx, self.missile_exp_fx)
                         throw_missiles = True
 
                     # Level countdown
-                    if not self.player.win and self.game_timer.countdown(level, self.player.turbo, self.player.item_time, True):
+                    if not self.player.win and self.game_timer.countdown(level, self.player, True):
                         self.game_timer.text_time = 0
                         self.player.win = True
+                        self.player.moving_left = False
+                        self.player.moving_right = False
+                        self.player.moving_up = False
+                        self.player.moving_down = False
                         self.player.turbo = False
                         self.player.speed = 1
                         self.win_fx.play()
@@ -1221,7 +1225,7 @@ class Record(Scene):
             self.text_group.draw(self.screen)
 
             # Limit delay without event activity
-            if self.record_timer.countdown(1, True):
+            if self.record_timer.counter(FPS, True):
                 run = False
 
             # Update screen

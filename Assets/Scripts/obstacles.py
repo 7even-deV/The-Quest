@@ -1,6 +1,6 @@
 import pygame, random
 
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, METEOR_SCALE
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, SPEED, METEOR_SCALE
 from .manager  import meteor_img, meteor_action_dict, explosion_1_img, explosion_dict
 from .tools    import Sprite_sheet
 from .items    import Item
@@ -34,7 +34,7 @@ class Meteor(Sprite_sheet):
 
         self.moving_x = False
         self.delta_x = 0
-        self.delta_y = random.randint(1, 4)
+        self.delta_y = random.randint(1, 3)
         self.collide = False
 
         self.alive  = True
@@ -56,13 +56,16 @@ class Meteor(Sprite_sheet):
             self.kill() # Kill the object
 
         # Update rectangle position
-        self.rect.x += self.delta_x
-        self.rect.y += self.delta_y + speed_y
+        if not self.player.freeze:
+            self.rect.x += self.delta_x
+            self.rect.y += self.delta_y + speed_y
 
     # Create item
-    def item_spawn(self):
-        item = Item(self.screen, self.player, [self.item_standby_fx, self.item_get_fx], center=(self.rect.centerx, self.rect.centery))
-        self.item_group.add(item)
+    def item_chance(self, spawn):
+        chance = random.randint(0, 100)
+        if chance <= spawn:
+            item = Item(self.screen, self.player, [self.item_standby_fx, self.item_get_fx], center=(self.rect.centerx, self.rect.centery))
+            self.item_group.add(item)
 
     def check_collision(self, sfx):
         if self.alive and self.player.alive and not self.collide and not self.player.win:
@@ -72,25 +75,31 @@ class Meteor(Sprite_sheet):
                 self.player.collide = True
                 self.player.rect.x += (self.delta_x - self.player.delta.x) * 2
                 self.player.rect.y += (self.delta_y - self.player.delta.y) * 2
-                if self.player.shield:
-                    self.player.shield = False
-                else: self.player.health -= self.scale * 10
+                if self.player.shield: self.player.shield = False
+                else:
+                    self.player.health -= self.scale * 10
+                    self.player.max_speed = SPEED
+                    self.player.less_time = False
+                    self.player.freeze    = False
+                    self.player.turbo_up  = 0
+                    self.player.weapon_up = 0
+
                 self.health = 0
                 sfx.play()
 
     def check_alive(self):
         if self.health <= 0:
             if self.alive:
-                self.alive = False
+                self.alive  = False
                 self.health = 0
-                self.speed = 0
-                self.item_spawn()
+                self.speed  = 0
+                self.item_chance(self.scale * 10)
 
             if self.player.score < self.player.score + self.exp:
                 self.player.score += 1
                 if self.exp > 0: self.exp -= 1
 
-            self.animation_cooldown = self.animation_cooldown // 4
+            self.animation_cooldown = self.animation_cooldown // 2
             self.update_action('destroy')
 
         else: self.update_action('turn_l')

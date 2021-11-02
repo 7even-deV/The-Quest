@@ -40,7 +40,7 @@ class Timer():
             return events
 
     # Countdown for minutes
-    def countdown(self, timer, turbo=False, item_time=False, *events):
+    def countdown(self, timer, player=None, *events):
         self.level_time = timer * 60
         # Calculate time left
         self.time_left = self.level_time - (self.frame_num // self.frame_rate)
@@ -52,11 +52,12 @@ class Timer():
         self.text_time = "{0:02}:{1:02}".format(minutes, seconds)
 
         # Reduce time if turbo or item time is used
-        if turbo and item_time:
+        if player.turbo and player.less_time:
             self.frame_num += 4
-        elif turbo or item_time:
+        elif player.turbo or player.less_time:
             self.frame_num += 2
         else: self.frame_num += 1
+        self.frame_num += player.turbo_up
 
         if self.time_left < 0:
             self.time_left = 0

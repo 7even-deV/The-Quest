@@ -7,7 +7,8 @@ from .tools    import Sprite_sheet
 
 class Foreground():
 
-    def __init__(self, *args):
+    def __init__(self, screen, *args):
+        self.screen = screen
 
         self.pos_list = []
         for star in range(*args):
@@ -15,19 +16,24 @@ class Foreground():
             pos_y = random.randint(0, SCREEN_HEIGHT)
             self.pos_list.append([pos_x, pos_y])
 
-    def update(self, delta_x, delta_y, win=False):
-        # Follow the self.bg_img with the Player
-        self.fg_x = -(delta_x / 4)
-        self.fg_y = 0.5 + delta_y
+        self.delta_x = 0
+        self.delta_y = 0
+        self.speed = 0.5
 
-    def draw(self, screen):
+    def update(self, player):
+        # Follow the movement with the Player
+        self.delta_x = -(player.delta.x * (self.speed/2))
+        if player.turbo: self.delta_y = self.speed * (2 + player.turbo_up)
+        else: self.delta_y = self.speed
+
+    def draw(self):
         # Draw randomly placed stars on the screen
         for pos in self.pos_list:
             color = random.randint(0, 255)
             radius = random.randint(0, 4)
-            pygame.draw.circle(screen, (color, color, color), pos, radius)
-            pos[0] += self.fg_x
-            pos[1] += self.fg_y
+            pygame.draw.circle(self.screen, (color, color, color), pos, radius)
+            pos[0] += self.delta_x
+            pos[1] += self.delta_y
             # Random reset from top when loop ends down
             if pos[1] > SCREEN_HEIGHT:
                 pos[0] = random.randint(0, SCREEN_WIDTH)
@@ -36,34 +42,37 @@ class Foreground():
 
 class Background():
 
-    def __init__(self, *args):
-        self.bg_img = pygame.image.load(*args).convert_alpha()
-        self.bg_x = 0
-        self.bg_y = 0
+    def __init__(self, screen, *args):
+        self.screen = screen
+        self.image  = pygame.image.load(*args).convert_alpha()
 
-    def update(self, delta_x, delta_y, win=False):
-        # Follow the self.bg_img movement with the Player from the center of the screen
-        self.relative_x = self.bg_x + (SCREEN_WIDTH // 2 - self.bg_img.get_rect().width // 2)
-        # Move the self.bg_y of the self.bg_img and increase the speed with self.player.turbo
-        self.relative_y = self.bg_y % self.bg_img.get_rect().height
+        self.rect    = self.image.get_rect()
+        self.delta_y = 0
+        self.speed   = 0.5
 
-        # Follow the self.bg_img with the Player
-        self.bg_x += -(delta_x / 4)
-        self.bg_y += 0.5 + delta_y
+    def update(self, player):
+        self.player_x = player.rect.x
 
-    def draw(self, screen):
-        # Repeat self.bg_img in loop
-        screen.blit(self.bg_img, (self.relative_x, self.relative_y - self.bg_img.get_rect().height))
-        # Recover what was lost from the self.bg_img
-        if self.relative_y < SCREEN_HEIGHT:
-            screen.blit(self.bg_img, (self.relative_x, self.relative_y))
+        # Move the delta y and increase the speed if the player turbo
+        if player.turbo: self.delta_y += self.speed * (2 + player.turbo_up)
+        else: self.delta_y += self.speed
+
+        # Relative y that uses the rest of the image height for looping display
+        self.relative_y = self.delta_y % self.rect.height
+
+    def draw(self):
+        # Repeat the image in a loop following the movement with the player
+        for scroll_x in range(2):
+            self.screen.blit(self.image, (scroll_x * self.rect.width - self.player_x * self.speed/2, self.relative_y - self.rect.height))
+            # Recover the image if it finishes before
+            if self.relative_y < SCREEN_HEIGHT:
+                self.screen.blit(self.image, (scroll_x * self.rect.width - self.player_x * self.speed/2, self.relative_y))
 
 
 class Farground():
 
-    def __init__(self, *args):
-        self.fg_x = 0
-        self.fg_y = 0
+    def __init__(self, screen, *args):
+        self.screen = screen
 
         self.pos_list = []
         for star in range(*args):
@@ -71,19 +80,24 @@ class Farground():
             pos_y = random.randint(0, SCREEN_HEIGHT)
             self.pos_list.append([pos_x, pos_y])
 
-    def update(self, delta_x, delta_y, win=False):
-        # Follow the movement with the Player
-        self.fg_x = -(delta_x / 4)
-        self.fg_y = 0.5 + delta_y
+        self.delta_x = 0
+        self.delta_y = 0
+        self.speed = 0.5
 
-    def draw(self, screen):
+    def update(self, player):
+        # Follow the movement with the Player
+        self.delta_x = -(player.delta.x * (self.speed/2))
+        if player.turbo: self.delta_y = self.speed * (2 + player.turbo_up)
+        else: self.delta_y = self.speed
+
+    def draw(self):
         # Draw randomly placed stars on the screen
         for pos in self.pos_list:
             color = random.randint(0, 255)
             radius = random.randint(0, 4)
-            pygame.draw.circle(screen, (color, color, color), pos, radius)
-            pos[0] += self.fg_x
-            pos[1] += self.fg_y
+            pygame.draw.circle(self.screen, (color, color, color), pos, radius)
+            pos[0] += self.delta_x
+            pos[1] += self.delta_y
             # Random reset from top when loop ends down
             if pos[1] > SCREEN_HEIGHT:
                 pos[0] = random.randint(0, SCREEN_WIDTH)
@@ -92,19 +106,21 @@ class Farground():
 
 class Planet(Sprite_sheet):
 
-    def __init__(self, planet, init_planet, **kwargs):
+    def __init__(self, screen, planet, init_planet, **kwargs):
         super().__init__(planet_img)
         self.create_animation(700, 400, planet_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
         self.rect  = self.image.get_rect(**kwargs)
 
-        self.move_x = 0
-
+        self.screen = screen
         self.planet = planet
         self.origin_planet  = init_planet
         self.destiny_planet = random.randint(1, 9)
 
-    def update(self, delta_x, delta_y, win=False):
+        self.move_x = 0
+        self.speed = 1
+
+    def update(self, player):
         # Follow the image movement with the Player from the center of the screen
         self.relative_x = self.move_x + (SCREEN_WIDTH // 2 - self.image.get_rect().width // 2)
         self.update_animation()
@@ -116,25 +132,25 @@ class Planet(Sprite_sheet):
             self.update_action(f'planet_{self.origin_planet}')
             self.flip_x = self.flip_y = False
             if self.rect.top < SCREEN_HEIGHT:
-                delta_y += 1
                 # Follow the movement with the Player
-                self.move_x += -(delta_x / 4)
-                self.rect.y += delta_y
+                self.move_x += 0
+                if player.turbo: self.rect.y += self.speed * (2 + player.turbo_up)
+                else: self.rect.y += self.speed
             else: self.kill()
 
         if self.planet == 'destiny':
             self.update_action(f'planet_{self.destiny_planet}')
             self.flip_x = self.flip_y = True
-            if win and self.rect.top < 0:
-                delta_y += 1
+            if player.win and self.rect.top < 0:
                 # Follow the movement with the Player
-                self.move_x += -(delta_x / 5)
-                self.rect.y += delta_y
+                self.move_x += 0
+                if player.turbo: self.rect.y += self.speed * (2 + player.turbo_up)
+                else: self.rect.y += self.speed
 
-    def draw(self, screen):
+    def draw(self):
         image = pygame.transform.flip(self.image, self.flip_x, self.flip_y)
         image.set_colorkey((255, 255, 255))
-        screen.blit(image, (self.relative_x, self.rect.y))
+        self.screen.blit(image, (self.relative_x, self.rect.y))
 
 
 class Portal(Sprite_sheet):

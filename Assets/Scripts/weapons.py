@@ -1,6 +1,6 @@
 import pygame
 
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, SPEED
 from .manager  import weapon_select_function, missile_img, missile_dict, missile_exp_img, missile_exp_dict
 from .tools    import Sprite_sheet, Timer, Particles
 
@@ -81,9 +81,14 @@ class Bullet(Sprite_sheet):
         if pygame.sprite.spritecollide(self.player, self.bullet_group, False):
             if self.player.alive and not self.player.win:
                 self.collide = True
-                if self.player.shield:
-                    self.player.shield = False
-                else: self.player.health -= 10
+                if self.player.shield: self.player.shield = False
+                else:
+                    self.player.health -= 10
+                    self.player.max_speed = SPEED
+                    self.player.less_time = False
+                    self.player.freeze    = False
+                    self.player.turbo_up  = 0
+                    self.player.weapon_up = 0
 
     def draw(self):
         for self.rect in self.rect_list:
@@ -175,9 +180,14 @@ class Missile(Sprite_sheet):
         if abs(self.rect.centerx - self.player.rect.centerx) < self.width  * 5 and\
            abs(self.rect.centery - self.player.rect.centery) < self.height * 5:
             self.player.collide = True
-            if self.player.shield:
-                self.player.shield = False
-            else: self.player.health -= 50
+            if self.player.shield: self.player.shield = False
+            else:
+                self.player.health -= 50
+                self.player.max_speed = SPEED
+                self.player.less_time = False
+                self.player.freeze    = False
+                self.player.turbo_up  = 0
+                self.player.weapon_up = 0
 
 
 class Explosion(Sprite_sheet):

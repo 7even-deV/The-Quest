@@ -212,9 +212,13 @@ item_type_dict = {
     'speed'  : (1, 1, 4, 2),
     'turbo'  : (1, 1, 3, 1),
     'time'   : (1, 1, 8, 3),
+    'freeze' : (1, 1, 3, 1),
     'ammo'   : (1, 1, 7, 4),
     'load'   : (1, 1, 3, 3),
     'weapon' : (1, 1, 5, 5),
+    'atomic' : (1, 1, 6, 1),
+    'score'  : (1, 1, 6, 5),
+    'super'  : (1, 1, 3, 5),
 }
 item_get_img = 'Assets/Images/bullet_2.png'
 

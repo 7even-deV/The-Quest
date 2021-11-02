@@ -17,9 +17,9 @@ class Template():
     def restart(self):
         self.player = Player(self.screen, 0, 5, 0, 10, 10, 3, self.game.group_list)
         self.player.spawn = False
-        item = Item(self.screen, self.player, [self.game.item_standby_fx, self.game.item_get_fx], bottomleft=(random.randint(0, SCREEN_WIDTH-SCREEN_WIDTH//10), 0))
-        self.item_group.empty()
-        self.item_group.add(item)
+        # item = Item(self.screen, self.player, [self.game.item_standby_fx, self.game.item_get_fx], bottomleft=(random.randint(0, SCREEN_WIDTH-SCREEN_WIDTH//10), 0))
+        # self.item_group.empty()
+        # self.item_group.add(item)
 
         self.meteor_list = []
         for _ in range(10):
@@ -64,8 +64,8 @@ class Template():
                     if event.key == pygame.K_e:
                         self.player.throw(self.game.empty_load_fx, self.game.missile_fx, self.game.missile_cd_fx, self.game.missile_exp_fx)
 
-                    if event.key == pygame.K_SPACE:
-                        pass
+                    if event.key == pygame.K_SPACE: # Turbo
+                        self.player.turbo = True
 
                     if event.key == pygame.K_RETURN:
                         pass
@@ -84,6 +84,8 @@ class Template():
                         self.player.moving_up = False
                     if event.key == pygame.K_DOWN:  # Moving down
                         self.player.moving_down = False
+                    if event.key == pygame.K_SPACE: # Turbo
+                        self.player.turbo = False
 
             # Clear screen and set background color
             self.screen.fill(COLOR('ARCADE'))
@@ -92,11 +94,11 @@ class Template():
 
             self.player.update()
             self.player.draw()
-            print(self.player.delta.y, self.player.speed.y, self.player.health, self.player.ammo, self.player.load)
+            # print(self.player.delta.x, self.player.speed.y, self.player.health, self.player.ammo, self.player.load)
 
-            for item in self.item_group:
-                item.update()
-                item.draw()
+            # for item in self.item_group:
+            #     item.update()
+            #     item.draw()
 
             # for bullet in self.game.bullet_group:
             #     bullet.update()
@@ -107,9 +109,9 @@ class Template():
             #     meteor.update(self.player.turbo)
             #     meteor.draw()
 
-            for group in self.game.group_list:
-                group.update()
-                group.draw(self.screen)
+            # for group in self.game.group_list:
+            #     group.update()
+            #     group.draw(self.screen)
 
             # Update screen
             pygame.display.update()

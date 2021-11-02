@@ -93,10 +93,13 @@ class Item(Sprite_sheet):
                 self.player.max_speed += 1.0
 
             elif self.item_type == 'turbo':
-                self.player.turbo = True
+                self.player.turbo_up += 1
 
             elif self.item_type == 'time':
-                self.player.item_time = True
+                self.player.less_time = True
+
+            elif self.item_type == 'freeze':
+                self.player.freeze = True
 
             elif self.item_type == 'ammo':
                 self.player.ammo += 20
@@ -104,8 +107,23 @@ class Item(Sprite_sheet):
             elif self.item_type == 'load':
                 self.player.load += 1
 
-            # elif self.item_type == 'weapon':
-            #     self.player.weapon += 1
+            elif self.item_type == 'weapon':
+                if self.player.weapon_up < 4:
+                    self.player.weapon_up += 1
+
+            elif self.item_type == 'atomic':
+                self.player.atomic = True
+
+            elif self.item_type == 'score':
+                self.player.score += 1000
+
+            elif self.item_type == 'super':
+                self.player.health = self.player.max_health
+                self.player.shield = True
+                self.player.max_speed += 1.0
+                self.player.turbo_up += 1
+                self.player.ammo = self.start_ammo
+                self.player.load = self.start_load
 
             self.collide = True
             self.item_get_fx.play()

@@ -14,7 +14,7 @@ class Controller():
 
     def __init__(self):
         # Create window
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
         pygame.display.set_icon(pygame.image.load(logo_icon))
 
         # List of all scenes
@@ -24,13 +24,15 @@ class Controller():
         i = SCENE
         level = LEVEL
         username = ''
+        SCREEN_WIDTH = 800
+        SCREEN_HEIGHT = 800
 
         # Main loop
         while True:
             # Manage each scene
             self.scene_caption(i)
             self.scene_list[i].music(i)
-            username, scene_browser = self.scene_list[i].main_loop(username)
+            username, scene_browser, SCREEN_WIDTH, SCREEN_HEIGHT = self.scene_list[i].main_loop(username, SCREEN_WIDTH, SCREEN_HEIGHT)
 
             # Cycle through each scene until reset to 0
             i = (i + scene_browser) % len(self.scene_list)

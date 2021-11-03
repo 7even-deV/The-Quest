@@ -40,7 +40,26 @@ class Timer():
             return events
 
     # Countdown for minutes
-    def countdown(self, timer, player=None, *events):
+    def countdown(self, timer, *events):
+        self.level_time = timer * 60
+        # Calculate time left
+        self.time_left = self.level_time - (self.frame_num // self.frame_rate)
+        # Divide by 60 to get total minutes
+        minutes = self.time_left // 60
+        # Use the modulo operator to get the seconds
+        seconds = self.time_left % 60
+        # Use string format for leading zeros
+        self.text_time = "{0:02}:{1:02}".format(minutes, seconds)
+
+        self.frame_num += 1
+
+        if self.time_left < 0:
+            self.time_left = 0
+            self.frame_num = 0
+            return events
+
+    # Level timer for minutes
+    def level_timer(self, timer, player, *events):
         self.level_time = timer * 60
         # Calculate time left
         self.time_left = self.level_time - (self.frame_num // self.frame_rate)

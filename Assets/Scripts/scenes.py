@@ -1,6 +1,6 @@
 import pygame, sys, random
 
-from .settings    import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, MUSIC_VOL, SOUND_VOL, LOGO, COLOR, STARS, LIVES, SURGE_NUM, enemy_select, enemy_position
+from .settings    import SCREEN_WIDTH, SCREEN_HEIGHT, resize, FPS, MUSIC_VOL, SOUND_VOL, LOGO, COLOR, STARS, LIVES, SURGE_NUM, enemy_select, enemy_position
 from .documents   import CREDITS, HISTORY, GUIDE
 from .manager     import msg_dict, button_list, bar_list, keyboard_list, statue_img, bg_img, lives_img, game_over_img, load_music, load_sound
 from .tools       import Timer, Button, Bar, Keyboard, Board, Canvas, Icon, HealthBar, Screen_fade
@@ -15,10 +15,12 @@ from .database    import Database
 class Scene():
 
     def __init__(self, screen):
+        self.monitor_size = [pygame.display.Info().current_w, pygame.display.Info().current_h]
         self.screen = screen # Parameterize the screen for all scenes
         self.clock  = pygame.time.Clock() # Manage screen refresh rate
 
         self.db = Database()
+        self.fullscreen = False
 
     def load_username(self):
         read_data_list = self.db.read_data()
@@ -118,7 +120,7 @@ class Main(Scene):
                 temp_list.append(Keyboard(keyboard_list[row][column], center=(column * SCREEN_WIDTH//11 + margin_x, row * SCREEN_HEIGHT//15 + margin_y)))
             self.keyboard_list.append(temp_list)
 
-    def main_loop(self, username):
+    def main_loop(self, username, SCREEN_WIDTH, SCREEN_HEIGHT):
         self.command_buttons()
         self.command_list[0].select_effect(True)
 
@@ -153,8 +155,22 @@ class Main(Scene):
                     pygame.quit()
                     sys.exit()
 
+                # Video resize
+                if event.type == pygame.VIDEORESIZE:
+                    if not self.fullscreen:
+                        self.screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+                        SCREEN_WIDTH  = event.w
+                        SCREEN_HEIGHT = event.h
+
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_f:
+                        self.fullscreen = not self.fullscreen
+                        if self.fullscreen:
+                            self.screen = pygame.display.set_mode(self.monitor_size, pygame.FULLSCREEN)
+                        else:
+                            self.screen = pygame.display.set_mode((self.screen.get_width(), self.screen.get_height()), pygame.RESIZABLE)
+
                     if event.key == pygame.K_LEFT: # Back select
                         if not create:
                             if login: # Account select
@@ -404,6 +420,7 @@ class Main(Scene):
 
             # Clear screen and set background color
             self.screen.fill(COLOR('ARCADE'))
+            # pygame.draw.rect(self.screen, (255, 0, 0), pygame.Rect(self.screen.get_width() - 5 - (self.screen.get_width() / 5), 50, self.screen.get_width() / 5, 50))
 
             ''' --- AREA TO UPDATE AND DRAW --- '''
 
@@ -494,25 +511,20 @@ class Main(Scene):
             self.board.draw(self.screen)
 
             # Limit delay without event activity
-            if self.menu_timer.counter(FPS, True):
+            if self.menu_timer.countdown(1, True):
                 scene_browser = -1
                 run = False
 
             # Update screen
             pygame.display.update()
 
-        return username, scene_browser
+        return username, scene_browser, SCREEN_WIDTH, SCREEN_HEIGHT
 
 
 class Menu(Scene):
 
     def __init__(self, screen):
         super().__init__(screen)
-        self.symbol    = Icon(self.screen, 'symbol', 1.5, center=(SCREEN_WIDTH//1.8, SCREEN_HEIGHT//1.39))
-        self.spaceship = Icon(self.screen, 'spaceships', 4, center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2.5))
-        self.portal = Portal(self.screen, center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2.5))
-        self.statue = pygame.image.load(statue_img).convert_alpha()
-
         # Sounds fx
         self.portal_loop_fx = self.sound('portal_loop')
         self.select_loop_fx = self.sound('select_loop')
@@ -525,7 +537,15 @@ class Menu(Scene):
         # Create menu timer
         self.menu_timer = Timer(FPS)
 
-    def main_loop(self, username):
+    def reset(self, SCREEN_WIDTH, SCREEN_HEIGHT):
+        self.symbol    = Icon(self.screen, 'symbol', 1.5, center=(SCREEN_WIDTH//1.8, SCREEN_HEIGHT//1.39))
+        self.spaceship = Icon(self.screen, 'spaceships', 4, center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2.5))
+        self.portal = Portal(self.screen, center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2.5))
+        self.statue = pygame.image.load(statue_img).convert_alpha()
+
+    def main_loop(self, username, SCREEN_WIDTH, SCREEN_HEIGHT):
+        self.reset(SCREEN_WIDTH, SCREEN_HEIGHT)
+
         username_data = self.db.read_data(username)[0]
         style     = username_data[1]
         model     = username_data[2]
@@ -553,6 +573,13 @@ class Menu(Scene):
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+
+                # Video resize
+                if event.type == pygame.VIDEORESIZE:
+                    if not self.fullscreen:
+                        self.screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+                        SCREEN_WIDTH  = event.w
+                        SCREEN_HEIGHT = event.h
 
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
@@ -659,27 +686,13 @@ class Menu(Scene):
             pygame.display.update()
 
         self.load_select(username, style, model, level)
-        return username, scene_browser
+        return username, scene_browser, SCREEN_WIDTH, SCREEN_HEIGHT
 
 
 class Game(Scene):
 
     def __init__(self, screen):
         super().__init__(screen)
-        # Create screen fades
-        self.intro_fade = Screen_fade(self.screen, 'intro', COLOR('BLACK'), 4)
-        self.death_fade = Screen_fade(self.screen, 'death', COLOR('BLACK'), 4)
-
-        self.ammo_load_view = Canvas(topleft =(SCREEN_WIDTH//30, SCREEN_HEIGHT*0.065), color=COLOR('YELLOW'))
-        self.username_view  = Canvas(center  =(SCREEN_WIDTH//2,  SCREEN_HEIGHT*0.02), color=COLOR('LIME'))
-        self.level_view     = Canvas(center  =(SCREEN_WIDTH//2,  SCREEN_HEIGHT*0.05), color=COLOR('PINK'))
-        self.timer_view     = Canvas(center  =(SCREEN_WIDTH//2,  SCREEN_HEIGHT*0.08), letter=1, size=20)
-        self.highscore_view = Canvas(topright=(SCREEN_WIDTH-SCREEN_WIDTH//30, SCREEN_HEIGHT*0.015), color=COLOR('ORANGE'))
-        self.score_view     = Canvas(topright=(SCREEN_WIDTH-SCREEN_WIDTH//30, SCREEN_HEIGHT*0.055), color=COLOR('CYAN'))
-
-        self.paused         = Canvas(center  =(SCREEN_WIDTH//2, SCREEN_HEIGHT//3), letter=0, size=60, color=COLOR('RED'))
-        self.space          = Canvas(center  =(SCREEN_WIDTH//2, SCREEN_HEIGHT//2), letter=0, size=20, color=COLOR('LIME'))
-
         self.bullet_group    = pygame.sprite.Group()
         self.missile_group   = pygame.sprite.Group()
         self.enemy_group     = pygame.sprite.Group()
@@ -692,9 +705,6 @@ class Game(Scene):
 
         self.meteor_list_copy = []
         self.group_list = [self.bullet_group, self.missile_group, self.enemy_group, self.meteor_group, self.explosion_group, self.item_group]
-
-        self.ui_bar.add(self.ammo_load_view, self.username_view, self.level_view, self.timer_view, self.highscore_view, self.score_view)
-        self.settings.add(self.paused)
 
         # Sounds fx
         self.move_fx         = self.sound('move')
@@ -719,6 +729,25 @@ class Game(Scene):
         self.enemy_sfx_list  = [self.empty_ammo_fx, self.bullet_fx, self.empty_load_fx, self.missile_fx, self.missile_cd_fx, self.missile_exp_fx, self.item_standby_fx, self.item_get_fx]
         self.sfx_list        = [self.move_fx, self.backmove_fx, self.turbo_fx, self.explosion_fx, self.pause_fx, self.select_fx, self.win_fx, self.game_over_fx]
         self.sfx_list.extend(self.enemy_sfx_list)
+
+    def reset(self, SCREEN_WIDTH, SCREEN_HEIGHT):
+        self.intro_fade = Screen_fade(self.screen, 'intro', COLOR('BLACK'), 4)
+        self.death_fade = Screen_fade(self.screen, 'death', COLOR('BLACK'), 4)
+
+        self.ammo_load_view = Canvas(topleft =(SCREEN_WIDTH//30, SCREEN_HEIGHT*0.065), color=COLOR('YELLOW'))
+        self.username_view  = Canvas(center  =(SCREEN_WIDTH//2,  SCREEN_HEIGHT*0.02), color=COLOR('LIME'))
+        self.level_view     = Canvas(center  =(SCREEN_WIDTH//2,  SCREEN_HEIGHT*0.05), color=COLOR('PINK'))
+        self.timer_view     = Canvas(center  =(SCREEN_WIDTH//2,  SCREEN_HEIGHT*0.08), letter=1, size=20)
+        self.highscore_view = Canvas(topright=(SCREEN_WIDTH-SCREEN_WIDTH//30, SCREEN_HEIGHT*0.015), color=COLOR('ORANGE'))
+        self.score_view     = Canvas(topright=(SCREEN_WIDTH-SCREEN_WIDTH//30, SCREEN_HEIGHT*0.055), color=COLOR('CYAN'))
+
+        self.paused         = Canvas(center  =(SCREEN_WIDTH//2, SCREEN_HEIGHT//3), letter=0, size=60, color=COLOR('RED'))
+        self.space          = Canvas(center  =(SCREEN_WIDTH//2, SCREEN_HEIGHT//2), letter=0, size=20, color=COLOR('LIME'))
+
+        self.ui_bar.empty()
+        self.settings.empty()
+        self.ui_bar.add(self.ammo_load_view, self.username_view, self.level_view, self.timer_view, self.highscore_view, self.score_view)
+        self.settings.add(self.paused)
 
     # Function to reset level
     def reset_level(self):
@@ -793,7 +822,8 @@ class Game(Scene):
         for bar in range(len(bar_list)):
             self.config_list.append(Bar(bar_list[bar], center=(SCREEN_WIDTH//1.8, bar * SCREEN_HEIGHT//10 + margin_y)))
 
-    def main_loop(self, username):
+    def main_loop(self, username, SCREEN_WIDTH, SCREEN_HEIGHT):
+        self.reset(SCREEN_WIDTH, SCREEN_HEIGHT)
         self.reset_level()
         level = 1
         score = 0
@@ -835,6 +865,13 @@ class Game(Scene):
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+
+                # Video resize
+                if event.type == pygame.VIDEORESIZE:
+                    if not self.fullscreen:
+                        self.screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+                        SCREEN_WIDTH  = event.w
+                        SCREEN_HEIGHT = event.h
 
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
@@ -899,6 +936,7 @@ class Game(Scene):
                             self.player.turbo = True
                             self.turbo_fx.play()
                         else: restart = True
+
                     if event.key == pygame.K_r: # Shoot bullets
                         if not self.player.win: shoot = True
                     if event.key == pygame.K_e: # Throw missiles
@@ -1050,7 +1088,7 @@ class Game(Scene):
                         throw_missiles = True
 
                     # Level countdown
-                    if not self.player.win and self.game_timer.countdown(level, self.player, True):
+                    if not self.player.win and self.game_timer.level_timer(level, self.player, True):
                         self.game_timer.text_time = 0
                         self.player.win = True
                         self.player.moving_left = False
@@ -1062,12 +1100,14 @@ class Game(Scene):
                         self.win_fx.play()
 
                     # Check if player has completed the level
-                    elif self.player.win and self.player.auto_movement():
-                        level += 1
-                        self.reset_level()
-                        init_planet = self.environment.destiny_planet
-                        username_data = self.process_data(username, level, self.player.score, lives, init_planet)
-                        # highscore = username_data[6]
+                    elif self.player.win:
+                        if restart or self.player.auto_movement():
+                            level += 1
+                            self.reset_level()
+                            init_planet = self.environment.destiny_planet
+                            username_data = self.process_data(username, level, self.player.score, lives, init_planet)
+                            restart = False
+                            # highscore = username_data[6]
                 else:
                     if not death:
                         death = True
@@ -1124,7 +1164,7 @@ class Game(Scene):
 
         # *After* exiting the while loop, return data
         self.load_data(username, level, self.player.score)
-        return username, scene_browser
+        return username, scene_browser, SCREEN_WIDTH, SCREEN_HEIGHT
 
 
 class Record(Scene):
@@ -1161,7 +1201,7 @@ class Record(Scene):
             temp_var.text = f"Ranking {len(top_ranking)-user}: {top_ranking[user][0]} -> {top_ranking[user][6]}"
             self.ranking_list.append(temp_var)
 
-    def main_loop(self, username):
+    def main_loop(self, username, SCREEN_WIDTH, SCREEN_HEIGHT):
         if username != '':
             username_data = self.db.read_data(username)[0]
             new_highscore = self.load_data(username, username_data[3], username_data[5])
@@ -1183,6 +1223,13 @@ class Record(Scene):
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+
+                # Video resize
+                if event.type == pygame.VIDEORESIZE:
+                    if not self.fullscreen:
+                        self.screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+                        SCREEN_WIDTH  = event.w
+                        SCREEN_HEIGHT = event.h
 
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
@@ -1225,7 +1272,7 @@ class Record(Scene):
             self.text_group.draw(self.screen)
 
             # Limit delay without event activity
-            if self.record_timer.counter(FPS, True):
+            if self.record_timer.countdown(1, True):
                 run = False
 
             # Update screen
@@ -1233,4 +1280,4 @@ class Record(Scene):
 
         self.logo_y = SCREEN_HEIGHT
 
-        return username, scene_browser
+        return username, scene_browser, SCREEN_WIDTH, SCREEN_HEIGHT

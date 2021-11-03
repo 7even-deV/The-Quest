@@ -38,3 +38,4 @@
 36. Keyboard input interactivity for username creation (class Main)
 37. Design new class for the player item creator (items.py)
 38. Correct background follow with the Player and improve items
+39. Investigation of scalable screen resolutions

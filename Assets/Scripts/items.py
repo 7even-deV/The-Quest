@@ -122,8 +122,8 @@ class Item(Sprite_sheet):
                 self.player.shield = True
                 self.player.max_speed += 1.0
                 self.player.turbo_up += 1
-                self.player.ammo = self.start_ammo
-                self.player.load = self.start_load
+                self.player.ammo = self.player.start_ammo
+                self.player.load = self.player.start_load
 
             self.collide = True
             self.item_get_fx.play()

@@ -1,13 +1,20 @@
 import random
 
+# Standard screen resolutions
+SCREEN_SIZE = {
+    'VGA'  : (640, 480),
+    'SVGA' : (800, 600),
+    'XGA'  : (1024, 768),
+    'XVGA' : (1280, 1024),
+}
+# Game window
+resize = 1
+SCREEN_WIDTH  = SCREEN_SIZE[list(SCREEN_SIZE)[resize]][0]
+SCREEN_HEIGHT = SCREEN_SIZE[list(SCREEN_SIZE)[resize]][0]
 
 # Define caption
 CAPTION = ('T h e   Q u e s t   -   ',
 ('M a i n', 'M e n u', 'G a m e', 'R e c o r d'))
-
-# Screen size
-SCREEN_WIDTH = 600
-SCREEN_HEIGHT = 800
 
 
 MUSIC_VOL = 0.5

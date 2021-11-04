@@ -1,6 +1,6 @@
 import pygame, random
 
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, COLOR
+from .settings import FPS, COLOR
 from .manager  import icon_type_function, button_img, button_dict, bar_img, bar_dict, key_img, key_dict, board_img, board_dict, font_function
 
 
@@ -472,13 +472,12 @@ class Icon(Sprite_sheet):
 
 
 class HealthBar():
-    def __init__(self, screen, health, max_health):
+    def __init__(self, screen, health, max_health, SCREEN_W, SCREEN_H):
         self.screen = screen
         self.health = health
         self.max_health = max_health
-
-        self.x = SCREEN_WIDTH
-        self.y = SCREEN_HEIGHT
+        self.x = SCREEN_W
+        self.y = SCREEN_H
 
     def draw(self, health):
         # Update with new health
@@ -492,25 +491,27 @@ class HealthBar():
 
 class Screen_fade():
 
-    def __init__(self, screen, direction, colour, speed):
+    def __init__(self, screen, direction, colour, speed, SCREEN_W, SCREEN_H):
         self.screen = screen
         self.direction = direction
         self.colour = colour
         self.speed = speed
         self.fade_counter = 0
+        self.SCREEN_W = SCREEN_W
+        self.SCREEN_H = SCREEN_H
 
     def fade(self):
         fade_complete = False
         self.fade_counter += self.speed
         if self.direction == 'intro': # Whole screen fade
-            pygame.draw.rect(self.screen, self.colour, (0 - self.fade_counter, 0, SCREEN_WIDTH // 2, SCREEN_HEIGHT)) # Opening left
-            pygame.draw.rect(self.screen, self.colour, (SCREEN_WIDTH // 2 + self.fade_counter, 0, SCREEN_WIDTH, SCREEN_HEIGHT)) # Opening right
-            # pygame.draw.rect(self.screen, self.colour, (0, 0 - self.fade_counter, SCREEN_WIDTH, SCREEN_HEIGHT)) # Opening up
-            # pygame.draw.rect(self.screen, self.colour, (0, SCREEN_HEIGHT // 2 + self.fade_counter, SCREEN_WIDTH, SCREEN_HEIGHT)) # Opening down
+            pygame.draw.rect(self.screen, self.colour, (0 - self.fade_counter, 0, self.SCREEN_W // 2, self.SCREEN_H)) # Opening left
+            pygame.draw.rect(self.screen, self.colour, (self.SCREEN_W // 2 + self.fade_counter, 0, self.SCREEN_W, self.SCREEN_H)) # Opening right
+            # pygame.draw.rect(self.screen, self.colour, (0, 0 - self.fade_counter, self.SCREEN_W, self.SCREEN_H)) # Opening up
+            # pygame.draw.rect(self.screen, self.colour, (0, self.SCREEN_H // 2 + self.fade_counter, self.SCREEN_W, self.SCREEN_H)) # Opening down
         if self.direction == 'death': # Vertical screen fade down
-            pygame.draw.rect(self.screen, self.colour, (0, 0, SCREEN_WIDTH, 0 + self.fade_counter))
+            pygame.draw.rect(self.screen, self.colour, (0, 0, self.SCREEN_W, 0 + self.fade_counter))
 
-        if self.fade_counter >= SCREEN_HEIGHT:
+        if self.fade_counter >= self.SCREEN_H:
             fade_complete = True
 
         return fade_complete

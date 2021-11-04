@@ -11,7 +11,7 @@ class Database():
 
     def init_table(self):
         self.crud_query(f'''CREATE TABLE {self.table} {self.sql}''')
-        # self.create_data('', 0, 0, 1, 1, 0, 0, 0.5, 0.5, self.memory_list)
+        self.create_data('', 0, 0, 1, 1, 0, 0, 0.5, 0.5, 800, 800, self.memory_list)
 
     def crud_query(self, query, *args):
         cnn = sqlite3.connect(self.db_file) # Create the database or connect to it
@@ -25,14 +25,14 @@ class Database():
         finally:
             self.data = cur.fetchall() # Search the data
             cnn.commit() # Commit changes
-            cnn.close() # Close connection
+            cnn.close()  # Close connection
 
-    def create_data(self, username='', style=0, model=0, level=1, highlevel=1, score=0, highscore=0, music=0.5, sound=0.5, *args):
+    def create_data(self, username='', style=0, model=0, level=1, highlevel=1, score=0, highscore=0, music=0.5, sound=0.5, screen_w=800, screen_h=800, *args):
         if args != ():
-            mul = '?,' * 9
+            mul = '?,' * len(self.memory_list[0])
             self.crud_query(f'INSERT INTO {self.table} VALUES ({mul[:-1]})', *args)
         else:
-            self.crud_query(f'INSERT INTO {self.table} VALUES ("{username}", {style}, {model}, {level}, {highlevel}, {score}, {highscore}, {music}, {sound})')
+            self.crud_query(f'INSERT INTO {self.table} VALUES ("{username}", {style}, {model}, {level}, {highlevel}, {score}, {highscore}, {music}, {sound}, {screen_w}, {screen_h})')
 
     def read_data(self, field=None, tidy=None):
         if tidy!= None:

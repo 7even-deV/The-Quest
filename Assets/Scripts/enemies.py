@@ -1,6 +1,6 @@
 import pygame, random
 
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, SPEED, ENEMY_SCALE, enemy_dict
+from .settings import FPS, SPEED, ENEMY_SCALE, enemy_dict
 from .manager  import enemy_select_function, explosion_2_img, explosion_dict
 from .tools    import Sprite_sheet, Timer
 from .weapons  import Bullet, Missile
@@ -9,7 +9,7 @@ from .items    import Item
 
 class Enemy(Sprite_sheet):
 
-    def __init__(self, screen, style, speed, player, *args, **kwargs):
+    def __init__(self, screen, style, speed, player, SCREEN_W, SCREEN_H, *args, **kwargs):
         enemy_img, enemy_action_dict = enemy_select_function(style)
         super().__init__(enemy_img)
         self.screen = screen
@@ -17,6 +17,8 @@ class Enemy(Sprite_sheet):
         self.speed  = speed
         self.player = player
         self.win    = self.player.win
+        self.SCREEN_W = SCREEN_W
+        self.SCREEN_H = SCREEN_H
 
         self.bullet_group    = args[0][0][0]
         self.missile_group   = args[0][0][1]
@@ -88,7 +90,7 @@ class Enemy(Sprite_sheet):
         self.move_counter   = 0
         self.rep_total      = 6
         self.rep_count      = 0
-        self.vision = pygame.Rect(0, 0, self.rect.width//2, SCREEN_HEIGHT)
+        self.vision = pygame.Rect(0, 0, self.rect.width//2, self.SCREEN_H)
         self.timer  = Timer(FPS)
 
     def update(self):
@@ -133,7 +135,7 @@ class Enemy(Sprite_sheet):
             self.flip_y = True
             self.ai_moving_down = True
             # Check if fallen off the map
-            if self.rect.top > SCREEN_HEIGHT:
+            if self.rect.top > self.SCREEN_H:
                 self.kill()
 
         elif not self.ai_spawn:
@@ -372,7 +374,7 @@ class Enemy(Sprite_sheet):
     def item_chance(self, spawn):
         chance = random.randint(0, 100)
         if chance <= spawn:
-            item = Item(self.screen, self.player, [self.item_standby_fx, self.item_get_fx], center=(self.rect.centerx, self.rect.centery))
+            item = Item(self.screen, self.player, self.SCREEN_W, self.SCREEN_H, [self.item_standby_fx, self.item_get_fx], center=(self.rect.centerx, self.rect.centery))
             self.item_group.add(item)
 
     # Check if the collision with the player
@@ -417,10 +419,10 @@ class Enemy(Sprite_sheet):
         return self.rect.left + self.delta_x < self.rect.width//10 + value
 
     def limit_right(self, value=0):
-        return self.rect.right + self.delta_x > SCREEN_WIDTH - (self.rect.height//10 + value)
+        return self.rect.right + self.delta_x > self.SCREEN_W - (self.rect.height//10 + value)
 
     def limit_up(self, value=0):
         return self.rect.top + self.delta_y < self.rect.height + value
 
     def limit_down(self, value=0):
-        return self.rect.bottom + self.delta_y > SCREEN_HEIGHT - (self.rect.height//10 + value)
+        return self.rect.bottom + self.delta_y > self.SCREEN_H - (self.rect.height//10 + value)

@@ -1,16 +1,17 @@
 import pygame, random
 
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT
 from .manager  import item_img, item_type_dict, item_get_img
 from .tools    import Sprite_sheet, Particles, Timer
 
 
 class Item(Sprite_sheet):
 
-    def __init__(self, screen, player, *args, **kwargs):
+    def __init__(self, screen, player, SCREEN_W, SCREEN_H, *args, **kwargs):
         super().__init__(item_img)
         self.screen = screen
         self.player = player
+        self.SCREEN_W = SCREEN_W
+        self.SCREEN_H = SCREEN_H
         self.item_standby_fx = args[0][0]
         self.item_get_fx     = args[0][1]
 
@@ -48,7 +49,7 @@ class Item(Sprite_sheet):
                 self.item_standby_fx.play()
 
             # kill if it moves off the bottom of the screen
-            if self.rect.top > SCREEN_HEIGHT:
+            if self.rect.top > self.SCREEN_H:
                 self.kill()
 
             self.rect.y += self.speed

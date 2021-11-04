@@ -1,6 +1,6 @@
 import pygame, random
 
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, SPEED, METEOR_SCALE
+from .settings import SPEED, METEOR_SCALE
 from .manager  import meteor_img, meteor_action_dict, explosion_1_img, explosion_dict
 from .tools    import Sprite_sheet
 from .items    import Item
@@ -8,11 +8,13 @@ from .items    import Item
 
 class Meteor(Sprite_sheet):
 
-    def __init__(self, screen, player, item_group, *args):
+    def __init__(self, screen, player, item_group, SCREEN_W, SCREEN_H, *args):
         super().__init__(meteor_img)
         self.screen = screen
         self.player = player
         self.item_group = item_group
+        self.SCREEN_W = SCREEN_W
+        self.SCREEN_H = SCREEN_H
         self.item_standby_fx = args[0][0]
         self.item_get_fx     = args[0][1]
 
@@ -22,7 +24,7 @@ class Meteor(Sprite_sheet):
         self.create_animation(100, 100, {'destroy': (6, 8, 2)})
         self.image = self.animation_dict[self.action][self.frame_index]
         # Get random meteor rect
-        self.rect   = self.image.get_rect(center=(random.randint(0, SCREEN_WIDTH), -random.randint(0, 5000)))
+        self.rect   = self.image.get_rect(center=(random.randint(0, self.SCREEN_W), -random.randint(0, 5000)))
 
         self.scale = random.randint(1, METEOR_SCALE)
         self.rect.width  = self.image.get_width()  // METEOR_SCALE
@@ -52,7 +54,7 @@ class Meteor(Sprite_sheet):
             self.delta_x = random.randint(-1, 1)
 
         # Check if going off the edges of the screen
-        if self.rect.right < 0 or self.rect.left > SCREEN_WIDTH or self.rect.top > SCREEN_HEIGHT:
+        if self.rect.right < 0 or self.rect.left > self.SCREEN_W or self.rect.top > self.SCREEN_H:
             self.kill() # Kill the object
 
         # Update rectangle position
@@ -64,7 +66,7 @@ class Meteor(Sprite_sheet):
     def item_chance(self, spawn):
         chance = random.randint(0, 100)
         if chance <= spawn:
-            item = Item(self.screen, self.player, [self.item_standby_fx, self.item_get_fx], center=(self.rect.centerx, self.rect.centery))
+            item = Item(self.screen, self.player, self.SCREEN_W, self.SCREEN_H, [self.item_standby_fx, self.item_get_fx], center=(self.rect.centerx, self.rect.centery))
             self.item_group.add(item)
 
     def check_collision(self, sfx):

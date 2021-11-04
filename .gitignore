@@ -8,7 +8,8 @@
 .vscode/
 
 # Import cache folder
-*__pycache__/
+.__pycache__/
+**__pycache__/
 
 # Test script
 test.py

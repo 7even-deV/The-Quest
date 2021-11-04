@@ -1,6 +1,6 @@
 import pygame
 
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, SPEED
+from .settings import FPS, SPEED
 from .manager  import player_select_function, explosion_3_img, explosion_dict
 from .tools    import Sprite_sheet, Timer, Particles
 from .weapons  import Bullet, Missile
@@ -8,7 +8,7 @@ from .weapons  import Bullet, Missile
 
 class Player(Sprite_sheet):
 
-    def __init__(self, screen, style, model, score, ammo, load, lives, *args, **kwargs):
+    def __init__(self, screen, style, model, score, ammo, load, lives, SCREEN_W, SCREEN_H, *args, **kwargs):
         player_img, player_action_dict = player_select_function(style, model)
         super().__init__(player_img)
         self.screen = screen
@@ -20,6 +20,8 @@ class Player(Sprite_sheet):
         self.load = load
         self.start_load = load
         self.throw_cooldown = 0
+        self.SCREEN_W = SCREEN_W
+        self.SCREEN_H = SCREEN_H
 
         self.bullet_group    = args[0][0]
         self.missile_group   = args[0][1]
@@ -33,7 +35,7 @@ class Player(Sprite_sheet):
         self.create_animation(100, 100, explosion_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
         # Get player rect
-        self.rect = self.image.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT+SCREEN_HEIGHT//10))
+        self.rect = self.image.get_rect(center=(self.SCREEN_W//2, self.SCREEN_H+self.SCREEN_H//10))
 
         self.vector = pygame.math.Vector2
         self.delta     = self.vector(0, 0)
@@ -67,7 +69,7 @@ class Player(Sprite_sheet):
         self.atomic    = False
         self.turbo_up  = 0
         self.weapon_up = 0
-        self.vision = pygame.Rect(SCREEN_WIDTH//20, SCREEN_HEIGHT//7, SCREEN_WIDTH-SCREEN_WIDTH//10, SCREEN_HEIGHT-SCREEN_HEIGHT//5.5)
+        self.vision = pygame.Rect(self.SCREEN_W//20, self.SCREEN_H//7, self.SCREEN_W-self.SCREEN_W//10, self.SCREEN_H-self.SCREEN_H//5.5)
         self.particles = Particles('fire', self.screen, 10, self.image)
         self.timer_list = []
         for _ in range(2):
@@ -157,10 +159,10 @@ class Player(Sprite_sheet):
     def auto_movement(self):
         if self.win:
             if not self.auto_init:
-                if self.rect.centerx < SCREEN_WIDTH//2:
+                if self.rect.centerx < self.SCREEN_W//2:
                     self.moving_right = True
                 else: self.moving_right = False
-                if self.rect.centerx > SCREEN_WIDTH//2:
+                if self.rect.centerx > self.SCREEN_W//2:
                     self.moving_left = True
                 else: self.moving_left = False
                 if not self.limit_down():
@@ -174,17 +176,17 @@ class Player(Sprite_sheet):
                     self.moving_right = True
                     if self.rotate > -15:
                         self.rotate -= 0.2
-                    if self.limit_right(+SCREEN_WIDTH//10):
+                    if self.limit_right(+self.SCREEN_W//10):
                         self.moving_right = False
                         self.direction_x  = 0
                         self.direction_y  = -1
 
                 if self.direction_y == -1:
                     self.moving_up = True
-                    if self.limit_up(+SCREEN_HEIGHT//2):
+                    if self.limit_up(+self.SCREEN_H//2):
                         if self.rotate < 15:
                             self.rotate += 0.2
-                        if self.limit_up(+SCREEN_HEIGHT//11):
+                        if self.limit_up(+self.SCREEN_H//11):
                             self.moving_up = False
                             self.direction_y = 0
                             self.direction_x = -1
@@ -193,7 +195,7 @@ class Player(Sprite_sheet):
                     self.moving_left = True
                     if self.rotate < 90:
                         self.rotate += 0.2
-                        if self.limit_left(+SCREEN_WIDTH//3):
+                        if self.limit_left(+self.SCREEN_W//3):
                             self.moving_left = False
                             if self.rect.width != 0 and self.rect.height != 0:
                                 self.rect.width  -= 0.1
@@ -262,10 +264,10 @@ class Player(Sprite_sheet):
         return self.rect.left + self.delta.x < self.rect.width//10 + value
 
     def limit_right(self, value=0):
-        return self.rect.right + self.delta.x > SCREEN_WIDTH - (self.rect.height//10 + value)
+        return self.rect.right + self.delta.x > self.SCREEN_W - (self.rect.height//10 + value)
 
     def limit_up(self, value=0):
         return self.rect.top + self.delta.y < self.rect.height + value
 
     def limit_down(self, value=0):
-        return self.rect.bottom + self.delta.y > SCREEN_HEIGHT - (self.rect.height//10 + value)
+        return self.rect.bottom + self.delta.y > self.SCREEN_H - (self.rect.height//10 + value)

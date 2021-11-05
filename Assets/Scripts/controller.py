@@ -23,7 +23,7 @@ class Controller():
     def launch_manager(self):
         i = SCENE
         level = LEVEL
-        username = 'empty'
+        username = ''
 
         # Main loop
         while True:

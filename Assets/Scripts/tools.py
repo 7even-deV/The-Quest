@@ -1,7 +1,7 @@
 import pygame, random
 
 from .settings import FPS, COLOR
-from .manager  import icon_type_function, button_img, button_dict, bar_img, bar_dict, key_img, key_dict, board_img, board_dict, font_function
+from .manager  import icon_type_function, game_over_img, button_img, button_dict, bar_img, bar_dict, key_img, key_dict, board_img, board_dict, font_function
 
 
 class Timer():
@@ -95,7 +95,7 @@ class Sprite_sheet(pygame.sprite.Sprite):
         self.update_time = pygame.time.get_ticks()
         self.animation_cooldown = 100
 
-        self.scale = 1
+        self.scale  = 1
         self.flip_x = False
         self.flip_y = False
         self.rotate = 0
@@ -164,12 +164,28 @@ class Sprite_sheet(pygame.sprite.Sprite):
             self.frame_index = 0
             self.update_time = pygame.time.get_ticks()
 
+    def update(self):
+        # Update the first action by default
+        self.update_action(list(self.animation_dict)[0])
+        self.update_animation()
+
     def draw(self):
         image = pygame.transform.scale(self.image, (self.rect.width * self.scale, self.rect.height * self.scale))
         image = pygame.transform.flip(image, self.flip_x, self.flip_y)
         image = pygame.transform.rotate(image, self.rotate)
         image.set_colorkey(False)
         self.screen.blit(image, self.rect)
+
+
+class Logo(Sprite_sheet):
+    def __init__(self, screen, **kwargs):
+        super().__init__(game_over_img)
+        self.create_animation(600, 350, {'game_over': (1, 3, 1, 1)})
+
+        self.screen = screen
+
+        self.image  = self.animation_dict[self.action][self.frame_index]
+        self.rect   = self.image.get_rect(**kwargs)
 
 
 class Button(Sprite_sheet):

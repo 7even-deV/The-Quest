@@ -14,10 +14,10 @@ SQL = '''(
     SCREEN_H integer
 )'''
 
-MEMORY_LIST = [('empty', 0, 0, 1, 1, 0, 0, 0.5, 0.5, 800, 800)]
-# MEMORY_LIST = []
-# for num in range(10):
-#     MEMORY_LIST.append((f"empty-{num}", 0, 0, 1, 1, 0, 0, 0.5, 0.5, 800, 800))
+# MEMORY_LIST = [('empty', 0, 0, 1, 1, 0, 0, 0.5, 0.5, 800, 800)]
+MEMORY_LIST = []
+for num in range(10):
+    MEMORY_LIST.append((f"empty-{num}", 0, 0, 1, 1, 0, 0, 0.5, 0.5, 800, 800))
 
 
 msg_dict = {
@@ -59,6 +59,13 @@ button_list = [
     "Delete",
     "Back",
     ]
+]
+
+record_btn_list = [
+    "Continue",
+    "Main menu",
+    "Records",
+    "Exit",
 ]
 
 bar_img = 'Assets/Images/bar.png'

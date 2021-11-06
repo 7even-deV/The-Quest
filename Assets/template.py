@@ -6,7 +6,7 @@ class Template():
 
     def __init__(self):
         # Create window
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.screen = pygame.display.set_mode((800, 800))
         self.clock  = pygame.time.Clock()
         pygame.display.set_caption("Template")
 
@@ -15,15 +15,15 @@ class Template():
         self.item_group = pygame.sprite.Group()
 
     def restart(self):
-        self.player = Player(self.screen, 0, 5, 0, 10, 10, 3, self.game.group_list)
+        self.player = Player(self.screen, 0, 5, 0, 10, 10, 3, 800, 800, self.game.group_list)
         self.player.spawn = False
-        # item = Item(self.screen, self.player, [self.game.item_standby_fx, self.game.item_get_fx], bottomleft=(random.randint(0, SCREEN_WIDTH-SCREEN_WIDTH//10), 0))
+        # item = Item(self.screen, self.player, 800, 800, [self.game.item_standby_fx, self.game.item_get_fx], bottomleft=(random.randint(0, SCREEN_WIDTH-SCREEN_WIDTH//10), 0))
         # self.item_group.empty()
         # self.item_group.add(item)
 
         self.meteor_list = []
         for _ in range(10):
-            self.meteor_list.append(Meteor(self.screen, self.player, self.item_group, [self.game.item_standby_fx, self.game.item_get_fx]))
+            self.meteor_list.append(Meteor(self.screen, self.player, self.item_group, 800, 800, [self.game.item_standby_fx, self.game.item_get_fx]))
 
 
     def main_loop(self):

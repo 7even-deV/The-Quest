@@ -283,8 +283,26 @@ class Bar(Sprite_sheet):
         self.gage.text_rect.x = self.rect.right + self.rect.width//12
 
     def displace_effect(self, vol_scan):
-        # Make displace effect
-        self.gage.rect.x = self.rect.width * vol_scan + self.rect.x//1.2
+        # Make scrolling effect calculating the volume of the database user
+        self.gage.rect.x = self.rect.width//1.25 * vol_scan + self.rect.x
+
+        if self.gage.trigger:
+            self.gage.select_effect(True)
+            self.gage.color = COLOR('YELLOW')
+            self.color      = COLOR('YELLOW')
+        else:
+            self.gage.select_effect(False)
+            self.gage.color = COLOR('WHITE')
+            self.color      = COLOR('WHITE')
+
+        if vol_scan == 0.0:
+            self.gage.text = "min"
+            self.gage.color = COLOR('ORANGE')
+        elif vol_scan == 1.0:
+            self.gage.text = "max"
+            self.gage.color = COLOR('ORANGE')
+        else:
+            self.gage.text = str(vol_scan)[-1]
 
     def draw(self, screen):
         image = pygame.transform.scale(self.image, (self.rect.w * self.scale, self.rect.h * self.scale))

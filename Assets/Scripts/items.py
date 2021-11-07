@@ -25,7 +25,6 @@ class Item(Sprite_sheet):
         self.rect   = self.image.get_rect(**kwargs)
 
         self.item_type = random.choice(list(item_type_dict)[:-1])
-        print(self.item_type)
         self.update_action(self.item_type)
         self.speed   = 1
         self.collide = False
@@ -37,6 +36,7 @@ class Item(Sprite_sheet):
 
     def update(self):
         self.update_animation(10)
+        # print(self.player.freeze)
 
         if not self.collide:
             self.check_collision()
@@ -83,7 +83,7 @@ class Item(Sprite_sheet):
                 self.player.lives += 1
 
             elif self.item_type == 'health':
-                self.player.health += 25
+                self.player.health += self.player.max_health // 2
                 if self.player.health > self.player.max_health:
                     self.player.health = self.player.max_health
 

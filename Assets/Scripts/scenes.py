@@ -863,7 +863,6 @@ class Game(Scene):
 
         bar = 0
         vol_scan = [music, sound]
-        print(vol_scan[0], vol_scan[1])
         self.config_buttons(SCREEN_W, SCREEN_H)
 
         pause = False
@@ -1051,10 +1050,6 @@ class Game(Scene):
                 self.player.update()
                 self.player.draw()
 
-                for item in self.item_group:
-                    item.update()
-                    item.draw()
-
                 for self.meteor in self.meteor_group:
                     self.meteor.check_collision(self.explosion_fx)
                     self.meteor.update(self.player.turbo)
@@ -1070,13 +1065,15 @@ class Game(Scene):
                     bullet.update()
                     bullet.draw()
 
-                # self.bullet_group.update()
                 self.missile_group.update()
-                self.explosion_group.update()
-
-                # self.bullet_group.draw(self.screen)
                 self.missile_group.draw(self.screen)
+
+                self.explosion_group.update()
                 self.explosion_group.draw(self.screen)
+
+                for item in self.item_group:
+                    item.update()
+                    item.draw()
 
                 if self.player.alive:
                     if self.player.spawn and self.intro_fade.fade():
@@ -1103,17 +1100,11 @@ class Game(Scene):
                     if not self.player.win and self.timer_list[0].level_timer(level, self.player, True):
                         self.timer_list[0].text_time = 0
                         self.player.win = True
-                        self.player.moving_left = False
-                        self.player.moving_right = False
-                        self.player.moving_up = False
-                        self.player.moving_down = False
-                        self.player.turbo = False
-                        self.player.speed = 1
                         self.win_fx.play()
 
                     # Check if player has completed the level
                     elif self.player.win:
-                        if restart or self.player.auto_movement():
+                        if self.player.auto_movement() or self.player.auto_land and restart:
                             level += 1
                             self.reset_level()
                             init_planet = self.environment.destiny_planet

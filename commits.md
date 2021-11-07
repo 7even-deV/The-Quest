@@ -42,3 +42,4 @@
 40. Adjust screen size and save to Player database
 41. Enhance the show in the last scene (game over and records)
 42. Update volume bar settings based on database username
+43. Correct auto-movement (Player) when win and their specific statistics

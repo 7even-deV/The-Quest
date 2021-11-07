@@ -25,7 +25,6 @@ class Template():
         for _ in range(10):
             self.meteor_list.append(Meteor(self.screen, self.player, self.item_group, 800, 800, [self.game.item_standby_fx, self.game.item_get_fx]))
 
-
     def main_loop(self):
         self.restart()
 
@@ -68,7 +67,7 @@ class Template():
                         self.player.turbo = True
 
                     if event.key == pygame.K_RETURN:
-                        pass
+                        self.player.win = True
 
                     if event.key == pygame.K_ESCAPE: # Quit game
                         loop = True
@@ -92,6 +91,7 @@ class Template():
 
             ''' --- AREA TO UPDATE AND DRAW --- '''
 
+            self.player.auto_movement()
             self.player.update()
             self.player.draw()
             # print(self.player.delta.x, self.player.speed.y, self.player.health, self.player.ammo, self.player.load)

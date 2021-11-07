@@ -34,13 +34,18 @@ ENEMY_SCALE = 1
 METEOR_SCALE = 3
 SURGE_NUM = 1
 
-# enemy_select = random.randint(0, 2)
+player_dict = {
+    'ammo'   : (200, 100, 50),
+    'health' : (100, 200, 150),
+    'speed'  : (2.0, 1.0, 3.0),
+}
+
 enemy_select = 0
 enemy_dict = {
-    'scale' : [ENEMY_SCALE] * 3,
-    'ammo'  : [100, 10, 0],
-    'load'  : [0, 0, 1],
-    'exp'   : [20, 10, 30],
+    'scale' : (1, 1, 1),
+    'ammo'  : (100, 10, 0),
+    'load'  : (0, 0, 1),
+    'exp'   : (20, 10, 30),
 }
 def enemy_position(select, for_enemy):
     if select == 0:

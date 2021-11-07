@@ -1,6 +1,6 @@
 import pygame
 
-from .settings import FPS, SPEED
+from .settings import FPS, SPEED, player_dict
 from .manager  import player_select_function, explosion_3_img, explosion_dict
 from .tools    import Sprite_sheet, Timer, Particles
 from .weapons  import Bullet, Missile
@@ -14,7 +14,7 @@ class Player(Sprite_sheet):
         self.screen = screen
         self.select = style
         self.score  = score
-        self.ammo   = ammo
+        self.ammo = (ammo + player_dict['ammo'][self.select]) // 2
         self.start_ammo = ammo
         self.shoot_cooldown = 0
         self.load = load
@@ -40,14 +40,15 @@ class Player(Sprite_sheet):
         self.vector = pygame.math.Vector2
         self.delta     = self.vector(0, 0)
         self.speed     = self.vector(0, 0)
-        self.max_speed = SPEED
+        self.max_speed = player_dict['speed'][self.select]
 
         self.direction_x = 1
         self.direction_y = -1
         self.auto_init = False
+        self.auto_land = False
 
         self.alive  = True
-        self.health = 100
+        self.health = player_dict['health'][self.select]
         self.max_health = self.health
         self.lives  = lives
         self.shield = False
@@ -81,7 +82,7 @@ class Player(Sprite_sheet):
         self.check_collision()
         self.check_alive()
         self.update_animation(self.animation_cooldown)
-        if self.alive and not self.win:
+        if self.alive and not self.auto_init:
             self.particles.add_circle(self.rect.centerx-self.rect.width//4, self.rect.bottom-self.rect.height//10, self.direction_x, self.direction_y)
             self.particles.add_circle(self.rect.centerx+self.rect.width//4, self.rect.bottom-self.rect.height//10, self.direction_x, self.direction_y)
         # Update cooldown
@@ -127,26 +128,30 @@ class Player(Sprite_sheet):
 
         # Check if going off the edges of the screen
         if self.limit_left(self.rect.width//10):
-            if self.limit_left(): self.speed.x = 0.2
+            if self.limit_left(): self.speed.x = 0.1
             else: self.moving_left = False
 
         if self.limit_right(self.rect.width//10):
-            if self.limit_right(): self.speed.x = -0.2
+            if self.limit_right(): self.speed.x = -0.1
             else: self.moving_right = False
 
         if self.limit_up(self.rect.height//10):
-            if self.limit_up(): self.speed.y = 0.2
+            if self.limit_up(): self.speed.y = 0.1
             else: self.moving_up = False
 
         if self.limit_down(self.rect.height//10):
-            if self.limit_down(): self.speed.y = -0.2
+            if self.limit_down(): self.speed.y = -0.1
             else: self.moving_down = False
 
         # Limits the maximum speed
         if not self.spawn and not self.collide:
-            if self.delta.x > -self.max_speed and self.delta.x < self.max_speed:
+            if self.moving_left and self.delta.x > -self.max_speed:
                 self.delta.x += self.speed.x
-            if self.delta.y > -self.max_speed and self.delta.y < self.max_speed:
+            if self.moving_right and self.delta.x < self.max_speed:
+                self.delta.x += self.speed.x
+            if self.moving_up and self.delta.y > -self.max_speed:
+                self.delta.y += self.speed.y
+            if self.moving_down and self.delta.y < self.max_speed:
                 self.delta.y += self.speed.y
 
         # Update the movement of the rectangle
@@ -159,51 +164,43 @@ class Player(Sprite_sheet):
     def auto_movement(self):
         if self.win:
             if not self.auto_init:
+                self.turbo = False
+
                 if self.rect.centerx < self.SCREEN_W//2:
                     self.moving_right = True
                 else: self.moving_right = False
+
                 if self.rect.centerx > self.SCREEN_W//2:
                     self.moving_left = True
                 else: self.moving_left = False
-                if not self.limit_down():
+
+                if self.rect.centery < self.SCREEN_H//2:
                     self.moving_down = True
-                else:
-                    self.moving_down = False
-                    self.auto_init = True
+                else: self.moving_down = False
 
-            else:
-                if self.direction_x == 1:
-                    self.moving_right = True
-                    if self.rotate > -15:
-                        self.rotate -= 0.2
-                    if self.limit_right(+self.SCREEN_W//10):
-                        self.moving_right = False
-                        self.direction_x  = 0
-                        self.direction_y  = -1
-
-                if self.direction_y == -1:
+                if self.rect.centery > self.SCREEN_H//2:
                     self.moving_up = True
-                    if self.limit_up(+self.SCREEN_H//2):
-                        if self.rotate < 15:
-                            self.rotate += 0.2
-                        if self.limit_up(+self.SCREEN_H//11):
-                            self.moving_up = False
-                            self.direction_y = 0
-                            self.direction_x = -1
+                else: self.moving_up = False
 
-                if self.direction_x == -1:
-                    self.moving_left = True
-                    if self.rotate < 90:
-                        self.rotate += 0.2
-                        if self.limit_left(+self.SCREEN_W//3):
-                            self.moving_left = False
-                            if self.rect.width != 0 and self.rect.height != 0:
-                                self.rect.width  -= 0.1
-                                self.rect.height -= 0.1
-                            else:
-                                self.direction_x  = 0
+                if not self.moving_left and not self.moving_right and not self.moving_up and not self.moving_down:
+                    self.auto_init = True
+            else:
+                if not self.auto_land:
+                    if not self.limit_up(): self.rect.y -= 0.1
 
-                                return self.win
+                    if self.limit_up(self.rect.height):
+                        if self.rotate < 90: self.rotate += 1
+                        else: self.auto_land = True
+                else:
+                    if self.rect.width > 1 and self.rect.height > 1:
+                        self.rect.width  -= 1
+                        self.rect.height -= 1
+
+                    if self.rotate < 180: self.rotate += 1
+                    else:
+                        self.auto_init = False
+                        self.auto_land = False
+                        return True
 
     def shoot(self, *args):
         if self.shoot_cooldown == 0 and self.ammo > 0:
@@ -234,11 +231,11 @@ class Player(Sprite_sheet):
     # Check if the collision with the enemy or obstacles
     def check_collision(self):
         if self.freeze:
-            if self.timer_list[0].counter(5, True):
+            if self.timer_list[0].time(4, True):
                 self.freeze = False
 
         if self.atomic:
-            if self.timer_list[1].counter(2, True):
+            if self.timer_list[1].time(1, True):
                 self.atomic = False
             # Check if there is any threat inside the screen
             for enemy in self.enemy_group:

@@ -23,14 +23,15 @@ class Controller():
     def launch_manager(self):
         i = SCENE
         level = LEVEL
-        username = ''
+        username = 'empty'
+        play = False
 
         # Main loop
         while True:
             # Manage each scene
             self.scene_caption(i)
             self.scene_tuple[i].music(i)
-            username, scene_browser = self.scene_tuple[i].main_loop(username)
+            username, play, scene_browser = self.scene_tuple[i].main_loop(username, play)
 
             # Cycle through each scene until reset to 0
             i = (i + scene_browser) % len(self.scene_tuple)

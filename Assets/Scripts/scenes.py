@@ -29,10 +29,17 @@ class Scene():
         for _ in range(2): # Create timer list
             self.timer_list.append(Timer(FPS))
 
-    def load_username(self):
+    def load_username(self, username):
         read_data_list = self.db.read_data()
+
+        # Read the new table if it was deleted
         if read_data_list == []:
             read_data_list = self.db.read_data()
+
+            # Create the default data if it was deleted
+            if read_data_list == []:
+                self.db.create_data(username)
+                read_data_list = self.db.read_data()
 
         username_list  = ["New User"]
         for user in read_data_list:
@@ -141,8 +148,8 @@ class Main(Scene):
         self.config_buttons(SCREEN_W, SCREEN_H)
         self.keyboard_buttons(SCREEN_W, SCREEN_H)
 
-    def main_loop(self, username):
-        username_list = self.load_username()
+    def main_loop(self, username, play):
+        username_list = self.load_username(username)
         user = -1
         username_data = self.db.read_data(username_list[user])[0]
 
@@ -533,7 +540,7 @@ class Main(Scene):
             # Update screen
             pygame.display.update()
 
-        return username, scene_browser
+        return username, play, scene_browser
 
 
 class Menu(Scene):
@@ -556,7 +563,7 @@ class Menu(Scene):
         self.symbol    = Icon(self.screen, 'symbol', 1.5, center=(self.bg_rect.centerx*1.08, self.bg_rect.centery*1.15))
         self.portal = Portal(self.screen, center=(SCREEN_W//2, SCREEN_H//2.5))
 
-    def main_loop(self, username):
+    def main_loop(self, username, play):
         username_data = self.db.read_data(username)[0]
         style     = username_data[1]
         model     = username_data[2]
@@ -703,7 +710,7 @@ class Menu(Scene):
             pygame.display.update()
 
         self.load_select(username, style, model, level)
-        return username, scene_browser
+        return username, play, scene_browser
 
 
 class Game(Scene):
@@ -766,8 +773,8 @@ class Game(Scene):
         self.ui_bar.add(self.ammo_load_view, self.username_view, self.level_view, self.timer_view, self.highscore_view, self.score_view)
         self.settings.add(self.paused)
 
-    # Function to reset level
-    def reset_level(self):
+    # Function to empty level
+    def empty_level(self):
         self.bullet_group.empty()
         self.missile_group.empty()
         self.explosion_group.empty()
@@ -811,18 +818,19 @@ class Game(Scene):
             self.meteor_list.append(temp_list)
 
     def process_data(self, username, level, score, lives, init_planet):
+        self.empty_level()
         self.load_data(username, level, score)
         username_data = self.db.read_data(username)[0]
         style = username_data[1]
         model = username_data[2]
         level = username_data[3]
 
-        SCREEN_W  = username_data[9]
-        SCREEN_H  = username_data[10]
+        SCREEN_W = username_data[9]
+        SCREEN_H = username_data[10]
         self.reset(SCREEN_W, SCREEN_H)
 
         # Create sprites
-        self.player = Player(self.screen, style, model, score, level*100, level, lives, SCREEN_W, SCREEN_H, self.group_list)
+        self.player = Player(self.screen, style, model, level*100, level, lives, SCREEN_W, SCREEN_H, self.group_list)
         # self.item_create(self.player)
         self.environment_create(init_planet, SCREEN_W, SCREEN_H)
         self.lives_view = pygame.image.load(lives_img).convert_alpha()
@@ -830,6 +838,7 @@ class Game(Scene):
         self.enemy_create(level, SCREEN_W, SCREEN_H)
         self.meteor_surge(level, SURGE_NUM, SCREEN_W, SCREEN_H)
         self.meteor_list_copy = self.meteor_list.copy()
+        self.timer_list[0].frame_num = 0
 
         return username_data
 
@@ -842,21 +851,22 @@ class Game(Scene):
 
         self.config_list[0].gage.active_effect(True)
 
-    def main_loop(self, username):
-        self.reset_level()
-        level = 1
-        score = 0
-        lives = LIVES
-        init_planet = random.randint(1, 9)
-
-        username_data = self.process_data(username, level, score, lives, init_planet)
+    def main_loop(self, username, play):
+        username_data = self.db.read_data(username)[0]
         username  = username_data[0]
+        level     = username_data[3]
+        score     = username_data[5]
         highscore = username_data[6]
-
         music     = username_data[7]
         sound     = username_data[8]
         SCREEN_W  = username_data[9]
         SCREEN_H  = username_data[10]
+
+        lives = LIVES
+        init_planet = random.randint(1, 9)
+
+        self.process_data(username, level, score, lives, init_planet)
+
         pygame.mixer.music.set_volume(music)
         for sfx in self.sfx_list:
             sfx.set_volume(sound)
@@ -875,6 +885,7 @@ class Game(Scene):
         throw_missiles = False
 
         scene_browser = 1
+        play = True
         run = True
         while run:
             # Limit frames per second
@@ -1037,11 +1048,11 @@ class Game(Scene):
                             self.surge_index += 1
                             self.surge_start = False
                             self.enemy.retired = True
-                            self.music(4, 0.5)
+                            self.music(4)
                         else:
                             self.surge_end = True
                             self.enemy.retired = False
-                            self.music(2, 0.5)
+                            self.music(2)
 
                 for self.environment in self.environment_list:
                     self.environment.update(self.player)
@@ -1106,11 +1117,10 @@ class Game(Scene):
                     elif self.player.win:
                         if self.player.auto_movement() or self.player.auto_land and restart:
                             level += 1
-                            self.reset_level()
                             init_planet = self.environment.destiny_planet
                             username_data = self.process_data(username, level, self.player.score, lives, init_planet)
+                            highscore = username_data[6]
                             restart = False
-                            # highscore = username_data[6]
                 else:
                     if not death:
                         death = True
@@ -1120,13 +1130,11 @@ class Game(Scene):
                     elif death and self.death_fade.fade():
                         if restart:
                             self.death_fade.fade_counter = 0
+                            lives -= 1
                             if lives > 0:
-                                lives -= 1
-                                self.reset_level()
                                 init_planet = self.environment.origin_planet
                                 username_data = self.process_data(username, level, self.player.score, lives, init_planet)
                                 highscore = username_data[6]
-                                self.player.score = 0
                                 self.player.alive = True
                                 death = False
                                 restart = False
@@ -1167,7 +1175,7 @@ class Game(Scene):
 
         # *After* exiting the while loop, return data
         self.load_data(username, level, self.player.score)
-        return username, scene_browser
+        return username, play, scene_browser
 
 
 class Record(Scene):
@@ -1196,36 +1204,47 @@ class Record(Scene):
 
     def reset(self, SCREEN_W, SCREEN_H):
         self.game_over_logo = Logo(self.screen, midtop=(SCREEN_W//2, SCREEN_H*0.01))
-        self.ranking_view = Canvas(center=(SCREEN_W//2, SCREEN_H//8), letter=0, size=30)
-
-        self.command_buttons(SCREEN_W, SCREEN_H)
-
+        self.ranking_view   = Canvas(center=(SCREEN_W//2, SCREEN_H//8), letter=0, size=30)
         self.idle_time_view = Canvas(midbottom=(SCREEN_W//2, SCREEN_H-SCREEN_H*0.02), letter=2, size=20)
 
-    def reset_ranking(self, SCREEN_W, SCREEN_H):
-        top_ranking = self.db.read_data('HIGHSCORE', -1)
+        self.update_ranking(SCREEN_W, SCREEN_H)
+        self.command_buttons(SCREEN_W, SCREEN_H)
+
+    def update_ranking(self, SCREEN_W, SCREEN_H):
+        ranking_data = self.db.read_data('HIGHSCORE', -1)
 
         self.ranking_list = []
         margin_y = SCREEN_H//5
 
-        for user in range(len(top_ranking)):
-            temp_var = Canvas(midbottom=(SCREEN_W//2, user * -SCREEN_H//16 + margin_y), letter=3, size=30, color=COLOR('BLACK'))
-            temp_var.text = f"Ranking {len(top_ranking)-user}: {top_ranking[user][0]} -> {top_ranking[user][6]}"
-            self.ranking_list.append(temp_var)
+        if ranking_data[0][0] != 'empty':
+            # Update the top ranking list of the users highscore
+            for user in range(len(ranking_data)):
+                temp_var = Canvas(midbottom=(SCREEN_W//2, user * -SCREEN_H//16 + margin_y), letter=3, size=30, color=COLOR('BLACK'))
+                temp_var.text = f"Ranking {len(ranking_data)-user}: {ranking_data[user][0]} -> {ranking_data[user][6]}"
+                self.ranking_list.append(temp_var)
 
-    def main_loop(self, username):
-        if username != 'empty':
-            username_data = self.db.read_data(username)[0]
-            new_highscore = self.load_data(username, username_data[3], username_data[5])
-            SCREEN_W = username_data[9]
-            SCREEN_H = username_data[10]
-            self.reset(SCREEN_W, SCREEN_H)
+    def main_loop(self, username, play):
+        if not play or self.db.read_data() == []:
+            username_data = self.db.read_data(self.load_username('empty')[-1])[0]
         else:
-            new_highscore = False
-            self.reset(SCREEN_W, SCREEN_H)
-            self.text_continue.text = ''
+            username_data = self.db.read_data(username)[0]
 
-        self.reset_ranking(SCREEN_W, SCREEN_H)
+        username = username_data[0]
+        level    = username_data[3]
+        score    = username_data[5]
+        music    = username_data[7]
+        sound    = username_data[8]
+        SCREEN_W = username_data[9]
+        SCREEN_H = username_data[10]
+
+        pygame.mixer.music.set_volume(music)
+        for sfx in self.sfx_list:
+            sfx.set_volume(sound)
+        vol_scan = [music, sound]
+
+        new_highscore = self.load_data(username, level, score)
+        self.reset(SCREEN_W, SCREEN_H)
+
         record_show = False
         cursor = 0
 
@@ -1288,7 +1307,7 @@ class Record(Scene):
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_RETURN: # Confirm
                         if self.command_list[0].trigger:
-                            if username != '':
+                            if play:
                                 scene_browser = -1
                             run = False
 
@@ -1310,7 +1329,7 @@ class Record(Scene):
 
             ''' --- AREA TO UPDATE AND DRAW --- '''
 
-            if record_show:
+            if record_show or not play:
 
                 for ranking in self.ranking_list:
                     if self.ranking_list[-1].rect.y < SCREEN_H//5.5:
@@ -1355,4 +1374,4 @@ class Record(Scene):
             # Update screen
             pygame.display.update()
 
-        return username, scene_browser
+        return username, play, scene_browser

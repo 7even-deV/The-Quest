@@ -3,7 +3,7 @@ import pygame, sys, random
 from .settings    import FPS, MUSIC_VOL, SOUND_VOL, LOGO, COLOR, STARS, LIVES, SURGE_NUM, enemy_select, enemy_position
 from .documents   import CREDITS, HISTORY, GUIDE
 from .manager     import msg_dict, button_list, bar_list, keyboard_list, statue_img, bg_img, lives_img, load_music, load_sound, record_btn_list
-from .tools       import Timer, Logo, Button, Bar, Keyboard, Board, Canvas, Icon, HealthBar, Screen_fade
+from .tools       import Timer, Logo, Button, Bar, Keyboard, Board, View, Canvas, Icon, HealthBar, Screen_fade
 from .environment import Foreground, Background, Farground, Planet, Portal
 from .players     import Player
 from .enemies     import Enemy
@@ -52,6 +52,14 @@ class Scene():
         self.db.update_data(username, MODEL=model)
         self.db.update_data(username, LEVEL=level)
 
+    def load_size(self, username, screen_w, screen_h):
+        self.db.update_data(username, SCREEN_W=screen_w)
+        self.db.update_data(username, SCREEN_H=screen_h)
+
+    def load_volume(self, username, music, sound):
+        self.db.update_data(username, MUSIC=music)
+        self.db.update_data(username, SOUND=sound)
+
     def load_data(self, username, level, score):
         username_data = self.db.read_data(username)
 
@@ -71,14 +79,6 @@ class Scene():
         self.db.update_data(username, HIGHSCORE=highscore)
 
         return new_highscore
-
-    def load_size(self, username, screen_w, screen_h):
-        self.db.update_data(username, SCREEN_W=screen_w)
-        self.db.update_data(username, SCREEN_H=screen_h)
-
-    def load_volume(self, username, music, sound):
-        self.db.update_data(username, MUSIC=music)
-        self.db.update_data(username, SOUND=sound)
 
     def music(self, index, volume=MUSIC_VOL):
         pygame.mixer.music.load(load_music(index))
@@ -141,7 +141,7 @@ class Main(Scene):
         self.keyboard_list[0][0].select_effect(True)
 
     def reset(self, SCREEN_W, SCREEN_H):
-        self.message = Canvas(center=(SCREEN_W//2, SCREEN_H//2.5), letter=2, size=20)
+        self.message = View(self.screen, center=(SCREEN_W//2, SCREEN_H//2.5), letter=2, size=20)
         self.board   = Board(midbottom=(SCREEN_W//2, 0))
 
         self.command_buttons(SCREEN_W, SCREEN_H)
@@ -159,10 +159,10 @@ class Main(Scene):
         SCREEN_W = username_data[9]
         SCREEN_H = username_data[10]
 
+        vol_scan = [music, sound]
         pygame.mixer.music.set_volume(music)
         for sfx in self.sfx_list:
             sfx.set_volume(sound)
-        vol_scan = [music, sound]
 
         self.reset(SCREEN_W, SCREEN_H)
 
@@ -462,7 +462,7 @@ class Main(Scene):
 
             self.message.text = msg_dict[msg]
             self.message.update()
-            self.message.draw(self.screen)
+            self.message.draw()
 
             if  confirm: select = 3
             elif create: select = 2
@@ -724,7 +724,7 @@ class Game(Scene):
         self.explosion_group = pygame.sprite.Group()
         self.item_group      = pygame.sprite.Group()
 
-        self.ui_bar          = pygame.sprite.Group()
+        self.canvas_group    = pygame.sprite.Group()
         self.settings        = pygame.sprite.Group()
 
         self.meteor_list_copy = []
@@ -758,19 +758,26 @@ class Game(Scene):
         self.intro_fade = Screen_fade(self.screen, 'intro', COLOR('BLACK'), 4, SCREEN_W, SCREEN_H)
         self.death_fade = Screen_fade(self.screen, 'death', COLOR('BLACK'), 4, SCREEN_W, SCREEN_H)
 
-        self.ammo_load_view = Canvas(topleft =(SCREEN_W//30, SCREEN_H*0.065), color=COLOR('YELLOW'))
-        self.username_view  = Canvas(center  =(SCREEN_W//2,  SCREEN_H*0.02),  color=COLOR('LIME'))
-        self.level_view     = Canvas(center  =(SCREEN_W//2,  SCREEN_H*0.05),  color=COLOR('PINK'))
-        self.timer_view     = Canvas(center  =(SCREEN_W//2,  SCREEN_H*0.08),  letter=1, size=20)
-        self.highscore_view = Canvas(topright=(SCREEN_W-SCREEN_W//30, SCREEN_H*0.015), color=COLOR('ORANGE'))
-        self.score_view     = Canvas(topright=(SCREEN_W-SCREEN_W//30, SCREEN_H*0.055), color=COLOR('CYAN'))
+        self.lives_canvas   = Canvas(self.screen, 'lives',  1, 9, topleft=(SCREEN_W*0.01, SCREEN_H*0.04))
+        self.load_canvas    = Canvas(self.screen, 'load',   4, 9, topleft=(SCREEN_W*0.07, SCREEN_H*0.04))
+        self.ammo_canvas    = Canvas(self.screen, 'ammo',   1, 1, topleft=(SCREEN_W*0.13, SCREEN_H*0.05))
+        self.weapon_canvas  = Canvas(self.screen, 'weapon', 1, 5, topleft=(SCREEN_W*0.19, SCREEN_H*0.047))
+        self.turbo_canvas   = Canvas(self.screen, 'turbo',  8, 9, topleft=(SCREEN_W*0.24, SCREEN_H*0.04))
+        self.speed_canvas   = Canvas(self.screen, 'speed',  4, 5, topleft=(SCREEN_W*0.30, SCREEN_H*0.045))
+        self.username_view  = View(self.screen, center  =(SCREEN_W//2,  SCREEN_H*0.02),  color=COLOR('LIME'))
+        self.level_view     = View(self.screen, center  =(SCREEN_W//2,  SCREEN_H*0.05),  color=COLOR('PINK'))
+        self.timer_view     = View(self.screen, center  =(SCREEN_W//2,  SCREEN_H*0.08),  letter=1, size=20)
+        self.highscore_view = View(self.screen, topright=(SCREEN_W-SCREEN_W//30, SCREEN_H*0.015), color=COLOR('ORANGE'))
+        self.score_view     = View(self.screen, topright=(SCREEN_W-SCREEN_W//30, SCREEN_H*0.055), color=COLOR('CYAN'))
 
-        self.paused         = Canvas(center  =(SCREEN_W//2, SCREEN_H//3), letter=0, size=60, color=COLOR('RED'))
-        self.space          = Canvas(center  =(SCREEN_W//2, SCREEN_H//2), letter=0, size=20, color=COLOR('LIME'))
+        self.paused         = View(self.screen, center  =(SCREEN_W//2, SCREEN_H//3), letter=0, size=60, color=COLOR('RED'))
+        self.space          = View(self.screen, center  =(SCREEN_W//2, SCREEN_H//2), letter=0, size=20, color=COLOR('LIME'))
 
-        self.ui_bar.empty()
+        self.canvas_group.empty()
+        self.canvas_group.add(self.lives_canvas, self.load_canvas, self.ammo_canvas, self.weapon_canvas, self.turbo_canvas,\
+        self.speed_canvas, self.username_view, self.level_view, self.timer_view, self.highscore_view, self.score_view)
+
         self.settings.empty()
-        self.ui_bar.add(self.ammo_load_view, self.username_view, self.level_view, self.timer_view, self.highscore_view, self.score_view)
         self.settings.add(self.paused)
 
     # Function to empty level
@@ -796,13 +803,16 @@ class Game(Scene):
         self.item_group.add(self.item)
 
     def enemy_create(self, level, SCREEN_W, SCREEN_H):
-        enemy_select = random.randint(0, 2)
+        self.enemy_index = 0
+
         self.enemy_list = []
-        temp_list = []
-        for i in range(level):
-            temp_list.append(Enemy(self.screen, enemy_select, level+1, self.player, SCREEN_W, SCREEN_H, [self.group_list, self.enemy_sfx_list], center=(enemy_position(enemy_select, i))))
-        self.enemy_list.append(temp_list)
-        self.enemy_group.add(self.enemy_list[0])
+        for group in range(level*10//2):
+            select = random.randint(0, 2)
+            temp_list = []
+            for num in range(random.randint(1, level)):
+                temp_list.append(Enemy(self.screen, select, 2+level*0.1, self.player, SCREEN_W, SCREEN_H, [self.group_list, self.enemy_sfx_list], center=(enemy_position(select, num))))
+
+            self.enemy_list.append(temp_list)
 
     def meteor_surge(self, level, surge_num, SCREEN_W, SCREEN_H):
         self.surge_start = self.surge_end = False
@@ -830,11 +840,11 @@ class Game(Scene):
         self.reset(SCREEN_W, SCREEN_H)
 
         # Create sprites
-        self.player = Player(self.screen, style, model, level*100, level, lives, SCREEN_W, SCREEN_H, self.group_list)
+        self.player = Player(self.screen, style, model, level*100, level, lives, score, SCREEN_W, SCREEN_H, self.group_list)
         # self.item_create(self.player)
         self.environment_create(init_planet, SCREEN_W, SCREEN_H)
         self.lives_view = pygame.image.load(lives_img).convert_alpha()
-        self.health_bar = HealthBar(self.screen, self.player.health, self.player.max_health, SCREEN_W, SCREEN_H)
+        self.health_bar = HealthBar(self.screen, self.player.max_health, SCREEN_W, SCREEN_H)
         self.enemy_create(level, SCREEN_W, SCREEN_H)
         self.meteor_surge(level, SURGE_NUM, SCREEN_W, SCREEN_H)
         self.meteor_list_copy = self.meteor_list.copy()
@@ -855,17 +865,15 @@ class Game(Scene):
         username_data = self.db.read_data(username)[0]
         username  = username_data[0]
         level     = username_data[3]
-        score     = username_data[5]
         highscore = username_data[6]
         music     = username_data[7]
         sound     = username_data[8]
         SCREEN_W  = username_data[9]
         SCREEN_H  = username_data[10]
 
-        lives = LIVES
         init_planet = random.randint(1, 9)
 
-        self.process_data(username, level, score, lives, init_planet)
+        self.process_data(username, level, 0, LIVES, init_planet)
 
         pygame.mixer.music.set_volume(music)
         for sfx in self.sfx_list:
@@ -977,11 +985,12 @@ class Game(Scene):
                         if not self.player.win: throw = True
 
                     if event.key == pygame.K_RETURN: # Pause and Settings
-                        if not pause:
-                            pause = True
-                        else:
+                        pause = not pause
+                        if pause:
+                            pygame.mixer.music.pause()
                             self.load_volume(username, vol_scan[0], vol_scan[1])
-                            pause = False
+                        else:
+                            pygame.mixer.music.unpause()
 
                         self.pause_fx.play()
 
@@ -1048,11 +1057,11 @@ class Game(Scene):
                             self.surge_index += 1
                             self.surge_start = False
                             self.enemy.retired = True
-                            self.music(4)
+                            self.music(4, vol_scan[0])
                         else:
                             self.surge_end = True
                             self.enemy.retired = False
-                            self.music(2)
+                            self.music(2, vol_scan[0])
 
                 for self.environment in self.environment_list:
                     self.environment.update(self.player)
@@ -1066,11 +1075,16 @@ class Game(Scene):
                     self.meteor.update(self.player.turbo)
                     self.meteor.draw()
 
+                if not self.player.spawn and not self.player.win and len(self.meteor_group) == 0:
+                    if self.timer_list[0].counter(10, True):
+                        if self.enemy_index < len(self.enemy_list):
+                            self.enemy_group.add(self.enemy_list[self.enemy_index])
+                            self.enemy_index += 1
+
                 for self.enemy in self.enemy_group:
-                    if not self.player.spawn:
-                        self.enemy.check_collision(self.explosion_fx)
-                        self.enemy.update()
-                        self.enemy.draw()
+                    self.enemy.check_collision(self.explosion_fx)
+                    self.enemy.update()
+                    self.enemy.draw()
 
                 for bullet in self.bullet_group:
                     bullet.update()
@@ -1093,7 +1107,7 @@ class Game(Scene):
 
                     # self.item_create(self.player)
 
-                    if self.player.collide and self.timer_list[0].counter(1, True):
+                    if self.player.collide and self.timer_list[0].time(1, True):
                         self.player.collide = False
 
                     # Shoot bullets
@@ -1118,7 +1132,7 @@ class Game(Scene):
                         if self.player.auto_movement() or self.player.auto_land and restart:
                             level += 1
                             init_planet = self.environment.destiny_planet
-                            username_data = self.process_data(username, level, self.player.score, lives, init_planet)
+                            username_data = self.process_data(username, level, self.player.score, self.player.lives, init_planet)
                             highscore = username_data[6]
                             restart = False
                 else:
@@ -1130,11 +1144,12 @@ class Game(Scene):
                     elif death and self.death_fade.fade():
                         if restart:
                             self.death_fade.fade_counter = 0
-                            lives -= 1
-                            if lives > 0:
+                            self.player.lives -= 1
+                            if self.player.lives > 0:
                                 init_planet = self.environment.origin_planet
-                                username_data = self.process_data(username, level, self.player.score, lives, init_planet)
+                                username_data = self.process_data(username, level, self.player.score, self.player.lives, init_planet)
                                 highscore = username_data[6]
+                                self.player.score = 0
                                 self.player.alive = True
                                 death = False
                                 restart = False
@@ -1145,13 +1160,18 @@ class Game(Scene):
                 pygame.draw.line(self.screen, COLOR('SILVER'), (0, SCREEN_H//10), (SCREEN_W, SCREEN_H//10), 4)
 
                 # Show player health
+                self.health_bar.view.text = str(username)
                 self.health_bar.draw(self.player.health)
-                # Show player lives
-                for x in range(self.player.lives):
-                    self.screen.blit(self.lives_view, (x * SCREEN_W * 0.05, 0))
+                # # Show player lives
+                # for x in range(self.player.lives):
+                #     self.screen.blit(self.lives_view, (x * SCREEN_W * 0.05, 0))
 
-                self.ammo_load_view.text = f"ammo: {self.player.ammo} | load: {self.player.load}"
-                self.username_view.text  = f"- {username} -"
+                self.lives_canvas.view.text  = str(self.player.lives)
+                self.load_canvas.view.text   = str(self.player.load)
+                self.ammo_canvas.view.text   = str(self.player.ammo)
+                self.weapon_canvas.view.text = str(self.player.weapon_up)
+                self.turbo_canvas.view.text  = str(self.player.turbo_up)
+                self.speed_canvas.view.text  = str(self.player.max_speed)
                 self.level_view.text     = f"Level - {level} -"
                 self.timer_view.text     = f"Time: {self.timer_list[0].text_time}"
                 self.score_view.text     = f"Score: {self.player.score}"
@@ -1165,10 +1185,11 @@ class Game(Scene):
                 if death and not restart:
                     self.space.text = "press <SPACE> to continue"
                     self.space.update()
-                    self.space.draw(self.screen)
+                    self.space.draw()
 
-                self.ui_bar.update()
-                self.ui_bar.draw(self.screen)
+                for canvas in self.canvas_group:
+                    canvas.update()
+                    canvas.draw()
 
             # Update screen
             pygame.display.update()
@@ -1204,8 +1225,8 @@ class Record(Scene):
 
     def reset(self, SCREEN_W, SCREEN_H):
         self.game_over_logo = Logo(self.screen, midtop=(SCREEN_W//2, SCREEN_H*0.01))
-        self.ranking_view   = Canvas(center=(SCREEN_W//2, SCREEN_H//8), letter=0, size=30)
-        self.idle_time_view = Canvas(midbottom=(SCREEN_W//2, SCREEN_H-SCREEN_H*0.02), letter=2, size=20)
+        self.ranking_view   = View(self.screen, center=(SCREEN_W//2, SCREEN_H//8), letter=0, size=30)
+        self.idle_time_view = View(self.screen, midbottom=(SCREEN_W//2, SCREEN_H-SCREEN_H*0.02), letter=2, size=20)
 
         self.update_ranking(SCREEN_W, SCREEN_H)
         self.command_buttons(SCREEN_W, SCREEN_H)
@@ -1219,7 +1240,7 @@ class Record(Scene):
         if ranking_data[0][0] != 'empty':
             # Update the top ranking list of the users highscore
             for user in range(len(ranking_data)):
-                temp_var = Canvas(midbottom=(SCREEN_W//2, user * -SCREEN_H//16 + margin_y), letter=3, size=30, color=COLOR('BLACK'))
+                temp_var = View(self.screen, midbottom=(SCREEN_W//2, user * -SCREEN_H//16 + margin_y), letter=3, size=30, color=COLOR('BLACK'))
                 temp_var.text = f"Ranking {len(ranking_data)-user}: {ranking_data[user][0]} -> {ranking_data[user][6]}"
                 self.ranking_list.append(temp_var)
 
@@ -1340,14 +1361,14 @@ class Record(Scene):
 
                     ranking.color = ([ranking.fade]*3)
                     ranking.update()
-                    ranking.draw(self.screen)
+                    ranking.draw()
 
                 if new_highscore:
                     self.ranking_view.text   = "NEW  HIGH  SCORE"
                 else: self.ranking_view.text = "TOP  HIGH  SCORE"
 
                 self.ranking_view.update()
-                self.ranking_view.draw(self.screen)
+                self.ranking_view.draw()
 
             else:
                 self.game_over_logo.update()
@@ -1369,7 +1390,7 @@ class Record(Scene):
             if self.timer_list[0].frame_num > 3000:
                 self.idle_time_view.text = f"The game will close in {self.timer_list[0].text_time[-2:]} seconds"
                 self.idle_time_view.update()
-                self.idle_time_view.draw(self.screen)
+                self.idle_time_view.draw()
 
             # Update screen
             pygame.display.update()

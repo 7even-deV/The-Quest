@@ -1,7 +1,7 @@
 import pygame, random
 
 from .settings import FPS, COLOR
-from .manager  import icon_type_function, game_over_img, button_img, button_dict, bar_img, bar_dict, key_img, key_dict, board_img, board_dict, font_function
+from .manager  import icon_type_function, game_over_img, button_img, button_dict, bar_img, bar_dict, key_img, key_dict, board_img, board_dict, font_function, item_function
 
 
 class Timer():
@@ -433,9 +433,11 @@ class Board(Sprite_sheet):
             screen.blit(font, (rect.x, rect.top + rect.height * index + self.rect.height//7.5))
 
 
-class Canvas(pygame.sprite.Sprite):
-    def __init__(self, text='', letter=3, size=18, color=COLOR('WHITE'), **kwargs):
+class View(pygame.sprite.Sprite):
+
+    def __init__(self, screen, text='', letter=3, size=14, color=COLOR('WHITE'), **kwargs):
         super().__init__()
+        self.screen = screen
         self.text   = text
         self.letter = letter
         self.size   = size
@@ -453,13 +455,39 @@ class Canvas(pygame.sprite.Sprite):
 
     def update(self):
         self.image = self.font.render(self.text, True, self.color)
-        self.rect = self.image.get_rect(**self.kwargs)
+        self.rect  = self.image.get_rect(**self.kwargs)
 
         self.rect.x += self.delta_x
         self.rect.y += self.delta_y
 
-    def draw(self, screen):
-        screen.blit(self.image, self.rect)
+    def draw(self):
+        self.screen.blit(self.image, self.rect)
+
+
+class Canvas(Sprite_sheet):
+
+    def __init__(self, screen, icon, x=0, y=0, **kwargs):
+        item_img, item_type_dict, item_get_img = item_function()
+        super().__init__(item_img)
+        self.screen = screen
+        self.icon   = icon
+
+        # Create image and rect
+        self.create_animation(50, 50, item_type_dict, scale=0.75)
+        self.image = self.animation_dict[self.action][self.frame_index]
+        self.rect  = self.image.get_rect(**kwargs)
+
+        self.view = View(self.screen, color=COLOR('YELLOW'), bottomleft=(self.rect.centerx + x, self.rect.bottom + y))
+
+    def update(self):
+        self.update_action(self.icon)
+        self.update_animation()
+        self.view.update()
+
+    def draw(self):
+        self.image.set_colorkey(False)
+        self.screen.blit(self.image, self.rect)
+        self.view.draw()
 
 
 class Icon(Sprite_sheet):
@@ -506,21 +534,25 @@ class Icon(Sprite_sheet):
 
 
 class HealthBar():
-    def __init__(self, screen, health, max_health, SCREEN_W, SCREEN_H):
+    def __init__(self, screen, max_health, SCREEN_W, SCREEN_H):
         self.screen = screen
-        self.health = health
         self.max_health = max_health
         self.x = SCREEN_W
         self.y = SCREEN_H
+
+        self.view = View(self.screen, color=COLOR('YELLOW'), midleft=(self.x*0.015, self.y*0.015))
 
     def draw(self, health):
         # Update with new health
         self.health = health
         # Calculate health ratio
         ratio = self.health / self.max_health
-        pygame.draw.rect(self.screen, COLOR('MAROON'), (self.x*0.04-2, self.y*0.04-2, self.x*0.208,     self.y*0.025))
-        pygame.draw.rect(self.screen, COLOR('RED'),    (self.x*0.04,   self.y*0.04,   self.x*0.2,       self.y*0.02))
-        pygame.draw.rect(self.screen, COLOR('GREEN'),  (self.x*0.04,   self.y*0.04,   self.x*0.2*ratio, self.y*0.02))
+        pygame.draw.rect(self.screen, COLOR('MAROON'), (self.x*0.015-2, self.y*0.015-2, self.x*0.208,     self.y*0.025))
+        pygame.draw.rect(self.screen, COLOR('RED'),    (self.x*0.015,   self.y*0.015,   self.x*0.2,       self.y*0.02))
+        pygame.draw.rect(self.screen, COLOR('GREEN'),  (self.x*0.015,   self.y*0.015,   self.x*0.2*ratio, self.y*0.02))
+
+        self.view.update()
+        self.view.draw()
 
 
 class Screen_fade():

@@ -1,12 +1,13 @@
 import pygame, random
 
-from .manager  import item_img, item_type_dict, item_get_img
-from .tools    import Sprite_sheet, Particles, Timer
+from .manager import item_function
+from .tools   import Sprite_sheet, Particles, Timer
 
 
 class Item(Sprite_sheet):
 
     def __init__(self, screen, player, SCREEN_W, SCREEN_H, *args, **kwargs):
+        item_img, item_type_dict, item_get_img = item_function()
         super().__init__(item_img)
         self.screen = screen
         self.player = player
@@ -36,7 +37,6 @@ class Item(Sprite_sheet):
 
     def update(self):
         self.update_animation(10)
-        # print(self.player.freeze)
 
         if not self.collide:
             self.check_collision()
@@ -91,7 +91,7 @@ class Item(Sprite_sheet):
                 self.player.shield = True
 
             elif self.item_type == 'speed':
-                self.player.max_speed += 1.0
+                self.player.max_speed += 0.25
 
             elif self.item_type == 'turbo':
                 self.player.turbo_up += 1
@@ -103,7 +103,7 @@ class Item(Sprite_sheet):
                 self.player.freeze = True
 
             elif self.item_type == 'ammo':
-                self.player.ammo += 20
+                self.player.ammo += self.player.start_ammo // 4
 
             elif self.item_type == 'load':
                 self.player.load += 1

@@ -73,8 +73,9 @@ bar_dict = {
     'displace' : (1, 1, 1, 1),
 }
 bar_list = [
-    "Music  vol.",
-    "Sound  vol.",
+    "Music vol.",
+    "Sound vol.",
+    "Window size",
 ]
 
 

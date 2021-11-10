@@ -268,7 +268,7 @@ class Bar(Sprite_sheet):
         self.font_render = self.font.render(self.text, True, self.color)
         self.text_rect   = self.font_render.get_rect(midright=(self.rect.left - self.rect.width//12, self.rect.centery))
 
-        self.gage = Keyboard("", letter=0, size=size, center=(self.rect.centerx, self.rect.centery))
+        self.gage = Keyboard('', letter=0, size=size, center=(self.rect.centerx, self.rect.centery))
 
         self.show = False
 
@@ -302,7 +302,7 @@ class Bar(Sprite_sheet):
             self.gage.text = "max"
             self.gage.color = COLOR('ORANGE')
         else:
-            self.gage.text = str(vol_scan)[-1]
+            self.gage.text = str(vol_scan)
 
     def draw(self, screen):
         image = pygame.transform.scale(self.image, (self.rect.w * self.scale, self.rect.h * self.scale))
@@ -460,29 +460,46 @@ class View(pygame.sprite.Sprite):
         self.rect.x += self.delta_x
         self.rect.y += self.delta_y
 
+    def compare(self, *args):
+        if args[0] > args[1]:
+            self.text = args[2]
+            self.color = COLOR('RED')
+        else:
+            self.text = args[3]
+            self.color = COLOR('ORANGE')
+
     def draw(self):
         self.screen.blit(self.image, self.rect)
 
 
 class Canvas(Sprite_sheet):
 
-    def __init__(self, screen, icon, x=0, y=0, **kwargs):
+    def __init__(self, screen, icon, color, x=0, y=0, **kwargs):
         item_img, item_type_dict, item_get_img = item_function()
         super().__init__(item_img)
         self.screen = screen
-        self.icon   = icon
 
         # Create image and rect
-        self.create_animation(50, 50, item_type_dict, scale=0.75)
+        self.create_animation(100, 100, item_type_dict, scale=0.4)
         self.image = self.animation_dict[self.action][self.frame_index]
         self.rect  = self.image.get_rect(**kwargs)
 
-        self.view = View(self.screen, color=COLOR('YELLOW'), bottomleft=(self.rect.centerx + x, self.rect.bottom + y))
+        self.update_action(icon)
+
+        color_list = [COLOR('YELLOW'), COLOR('TEAL')]
+        self.view  = View(self.screen, color=color_list[color], midtop=(self.rect.centerx + x, self.rect.bottom + y))
 
     def update(self):
-        self.update_action(self.icon)
         self.update_animation()
         self.view.update()
+
+    def switch(self, get_player_item):
+        if get_player_item:
+            self.view.text = 'on'
+            self.view.color = COLOR('LIME')
+        else:
+            self.view.text = 'off'
+            self.view.color = COLOR('RED')
 
     def draw(self):
         self.image.set_colorkey(False)
@@ -540,14 +557,14 @@ class HealthBar():
         self.x = SCREEN_W
         self.y = SCREEN_H
 
-        self.view = View(self.screen, color=COLOR('YELLOW'), midleft=(self.x*0.015, self.y*0.015))
+        self.view = View(self.screen, color=COLOR('BLACK'), midleft=(self.x*0.02, self.y*0.024))
 
     def draw(self, health):
         # Update with new health
         self.health = health
         # Calculate health ratio
         ratio = self.health / self.max_health
-        pygame.draw.rect(self.screen, COLOR('MAROON'), (self.x*0.015-2, self.y*0.015-2, self.x*0.208,     self.y*0.025))
+        pygame.draw.rect(self.screen, COLOR('SILVER'), (self.x*0.015-2, self.y*0.015-2, self.x*0.208,     self.y*0.025))
         pygame.draw.rect(self.screen, COLOR('RED'),    (self.x*0.015,   self.y*0.015,   self.x*0.2,       self.y*0.02))
         pygame.draw.rect(self.screen, COLOR('GREEN'),  (self.x*0.015,   self.y*0.015,   self.x*0.2*ratio, self.y*0.02))
 

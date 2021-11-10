@@ -20,6 +20,9 @@ class Player(Sprite_sheet):
         self.start_load = load
         self.throw_cooldown = 0
         self.score = score
+        self.dead_enemy  = 0
+        self.dead_meteor = 0
+        self.weapon = 1
         self.SCREEN_W = SCREEN_W
         self.SCREEN_H = SCREEN_H
 
@@ -69,7 +72,6 @@ class Player(Sprite_sheet):
         self.freeze    = False
         self.atomic    = False
         self.turbo_up  = 0
-        self.weapon_up = 0
         self.vision = pygame.Rect(self.SCREEN_W//20, self.SCREEN_H//7, self.SCREEN_W-self.SCREEN_W//10, self.SCREEN_H-self.SCREEN_H//5.5)
         self.particles = Particles('fire', self.screen, 10, self.image)
         self.timer_list = []
@@ -206,7 +208,7 @@ class Player(Sprite_sheet):
         if self.shoot_cooldown == 0 and self.ammo > 0:
             self.shoot_cooldown = 10
             # create bullet ammo
-            bullet = Bullet('player', self.screen, self.select, self.rect.centerx, self.rect.top, self.rect.width, self.direction_y,\
+            bullet = Bullet('player', self.screen, self.weapon, self.select, self.rect.centerx, self.rect.top, self.rect.width, self.direction_y,\
                             self.flip_x, self.flip_y, self, self.bullet_group, self.enemy_group, self.meteor_group)
             self.bullet_group.add(bullet)
             # Reduce ammo
@@ -231,20 +233,22 @@ class Player(Sprite_sheet):
     # Check if the collision with the enemy or obstacles
     def check_collision(self):
         if self.freeze:
-            if self.timer_list[0].time(4, True):
+            if self.timer_list[0].time(5, True):
                 self.freeze = False
 
         if self.atomic:
-            if self.timer_list[1].time(1, True):
+            if self.timer_list[1].time(5, True):
                 self.atomic = False
             # Check if there is any threat inside the screen
             for enemy in self.enemy_group:
                 if self.vision.colliderect(enemy.rect):
                     enemy.health = 0
+                    self.atomic = False
 
             for meteor in self.meteor_group:
                 if self.vision.colliderect(meteor.rect):
                     meteor.health = 0
+                    self.atomic = False
 
             # pygame.draw.rect(self.screen, (255, 0, 0), self.vision)
 

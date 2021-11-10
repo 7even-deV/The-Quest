@@ -33,9 +33,10 @@ class Enemy(Sprite_sheet):
         self.missile_fx      = args[0][1][3]
         self.missile_cd_fx   = args[0][1][4]
         self.missile_exp_fx  = args[0][1][5]
+        self.explosion_fx    = args[0][1][6]
 
-        self.item_standby_fx = args[0][1][6]
-        self.item_get_fx     = args[0][1][7]
+        self.item_standby_fx = args[0][1][7]
+        self.item_get_fx     = args[0][1][8]
 
         self.ammo = enemy_dict['ammo'][self.select]
         self.load = enemy_dict['load'][self.select]
@@ -44,6 +45,7 @@ class Enemy(Sprite_sheet):
         self.start_load = self.load
         self.shoot_cooldown = 0
         self.throw_cooldown = 0
+        self.weapon = 1
 
         self.alive  = True
         self.health = 100
@@ -97,6 +99,7 @@ class Enemy(Sprite_sheet):
         # Update enemy events
         self.ai_select()
         self.move()
+        self.check_collision()
         self.check_alive()
         self.update_animation(self.animation_cooldown)
         # Update cooldown
@@ -165,7 +168,7 @@ class Enemy(Sprite_sheet):
         if self.shoot_cooldown == 0 and self.ammo > 0:
             self.shoot_cooldown = 50
             # create bullet ammo
-            self.bullet = Bullet('enemy', self.screen, self.select, self.rect.centerx, self.rect.bottom, self.rect.width, self.direction_y,\
+            self.bullet = Bullet('enemy', self.screen, self.weapon, self.select, self.rect.centerx, self.rect.bottom, self.rect.width, self.direction_y,\
                             self.flip_x, self.flip_y, self.player, self.bullet_group, self.enemy_group, self.meteor_group)
             self.bullet_group.add(self.bullet)
             # Reduce ammo
@@ -374,11 +377,11 @@ class Enemy(Sprite_sheet):
     def item_chance(self, spawn):
         chance = random.randint(0, 100)
         if chance <= spawn:
-            item = Item(self.screen, self.player, self.SCREEN_W, self.SCREEN_H, [self.item_standby_fx, self.item_get_fx], center=(self.rect.centerx, self.rect.centery))
+            item = Item('random', self.screen, self.player, self.SCREEN_W, self.SCREEN_H, [self.item_standby_fx, self.item_get_fx], center=(self.rect.centerx, self.rect.centery))
             self.item_group.add(item)
 
     # Check if the collision with the player
-    def check_collision(self, sfx):
+    def check_collision(self):
         if self.alive and self.player.alive and not self.collide and not self.player.win:
             if abs(self.rect.centerx - self.player.rect.centerx) < self.rect.width  * self.scale and\
                abs(self.rect.centery - self.player.rect.centery) < self.rect.height * self.scale:
@@ -396,7 +399,6 @@ class Enemy(Sprite_sheet):
                     self.player.weapon_up = 0
 
                 self.health = 0
-                sfx.play()
 
     def check_alive(self):
         if self.health <= 0:
@@ -404,7 +406,9 @@ class Enemy(Sprite_sheet):
                 self.alive  = False
                 self.health = 0
                 self.speed  = 0
+                self.player.dead_enemy += 1
                 self.item_chance(self.rect.w//2)
+                self.explosion_fx.play()
 
             if self.player.score < self.player.score + self.exp:
                 self.player.score += 1

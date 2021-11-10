@@ -7,10 +7,11 @@ from .tools    import Sprite_sheet, Timer, Particles
 
 class Bullet(Sprite_sheet):
 
-    def __init__(self, origin, screen, select, x, y, w, direction, flip_x, flip_y, *args, **kwargs):
+    def __init__(self, origin, screen, weapon, select, x, y, w, direction, flip_x, flip_y, *args, **kwargs):
         bullet_img, weapon_dict = weapon_select_function(select)
         super().__init__(bullet_img)
         self.origin = origin
+        self.weapon = weapon
         self.screen = screen
         self.select = select
         self.speed  = 15
@@ -19,11 +20,11 @@ class Bullet(Sprite_sheet):
         self.create_animation(50, 50, weapon_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
         self.rect_list = []
-        for i in range(2):
-            self.rect = self.image.get_rect(center=(x - w//4 * (i-0.5), y))
+        for i in range(self.weapon):
+            self.rect = self.image.get_rect(center=(x - w//4 * (i-(self.weapon-1)/2), y))
             self.rect_list.append(self.rect)
 
-        self.direction   = direction
+        self.direction = direction
         self.flip_x  = flip_x
         self.flip_y  = flip_y
         self.collide = False
@@ -68,13 +69,13 @@ class Bullet(Sprite_sheet):
             if pygame.sprite.spritecollide(enemy, self.bullet_group, False):
                 if enemy.alive:
                     self.collide = True
-                    enemy.health -= 25
+                    enemy.health -= 25 * self.weapon
 
         # Check for collision with meteors
         for obstacle in self.obstacle_group:
             if pygame.sprite.spritecollide(obstacle, self.bullet_group, False):
                 self.collide = True
-                obstacle.health -= 10
+                obstacle.health -= 10 * self.weapon
 
     def enemy_shoot(self):
         # Check collision with player
@@ -83,7 +84,7 @@ class Bullet(Sprite_sheet):
                 self.collide = True
                 if self.player.shield: self.player.shield = False
                 else:
-                    self.player.health -= 10
+                    self.player.health -= 10 * self.weapon
                     self.player.max_speed = SPEED
                     self.player.less_time = False
                     self.player.freeze    = False

@@ -15,8 +15,9 @@ class Meteor(Sprite_sheet):
         self.item_group = item_group
         self.SCREEN_W = SCREEN_W
         self.SCREEN_H = SCREEN_H
-        self.item_standby_fx = args[0][0]
-        self.item_get_fx     = args[0][1]
+        self.explosion_fx    = args[0][0]
+        self.item_standby_fx = args[0][1]
+        self.item_get_fx     = args[0][2]
 
         # Load meteor and explosion image
         self.create_animation(100, 100, meteor_action_dict)
@@ -46,6 +47,7 @@ class Meteor(Sprite_sheet):
 
     def update(self, speed_y):
         # Update meteor events
+        self.check_collision()
         self.check_alive()
         self.update_animation(self.animation_cooldown, 1)
 
@@ -66,10 +68,10 @@ class Meteor(Sprite_sheet):
     def item_chance(self, spawn):
         chance = random.randint(0, 100)
         if chance <= spawn:
-            item = Item(self.screen, self.player, self.SCREEN_W, self.SCREEN_H, [self.item_standby_fx, self.item_get_fx], center=(self.rect.centerx, self.rect.centery))
+            item = Item('random', self.screen, self.player, self.SCREEN_W, self.SCREEN_H, [self.item_standby_fx, self.item_get_fx], center=(self.rect.centerx, self.rect.centery))
             self.item_group.add(item)
 
-    def check_collision(self, sfx):
+    def check_collision(self):
         if self.alive and self.player.alive and not self.collide and not self.player.win:
             if abs(self.rect.centerx - self.player.rect.centerx) < self.rect.width  * self.scale and\
                abs(self.rect.centery - self.player.rect.centery) < self.rect.height * self.scale:
@@ -87,7 +89,6 @@ class Meteor(Sprite_sheet):
                     self.player.weapon_up = 0
 
                 self.health = 0
-                sfx.play()
 
     def check_alive(self):
         if self.health <= 0:
@@ -95,7 +96,9 @@ class Meteor(Sprite_sheet):
                 self.alive  = False
                 self.health = 0
                 self.speed  = 0
+                self.player.dead_meteor += 1
                 self.item_chance(self.scale * 10)
+                self.explosion_fx.play()
 
             if self.player.score < self.player.score + self.exp:
                 self.player.score += 1

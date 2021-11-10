@@ -6,7 +6,7 @@ from .tools   import Sprite_sheet, Particles, Timer
 
 class Item(Sprite_sheet):
 
-    def __init__(self, screen, player, SCREEN_W, SCREEN_H, *args, **kwargs):
+    def __init__(self, item, screen, player, SCREEN_W, SCREEN_H, *args, **kwargs):
         item_img, item_type_dict, item_get_img = item_function()
         super().__init__(item_img)
         self.screen = screen
@@ -17,23 +17,59 @@ class Item(Sprite_sheet):
         self.item_get_fx     = args[0][1]
 
         # Create image and rect
-        self.create_animation(50, 50, item_type_dict)
+        self.create_animation(100, 100, item_type_dict, scale=0.5)
         self.sheet = pygame.image.load(item_get_img).convert_alpha()
-        self.create_animation(50, 50, {'destroy': (8, 8, 1, 1)})
+        self.create_animation(100, 100, {'destroy': (8, 8, 1, 1)}, scale=0.5)
         self.image  = self.animation_dict[self.action][self.frame_index]
         self.width  = self.image.get_width()
         self.height = self.image.get_height()
         self.rect   = self.image.get_rect(**kwargs)
 
-        self.item_type = random.choice(list(item_type_dict)[:-1])
+        self.item_list = list(item_type_dict)[:-1]
+        self.chance = False
+
+        if item == 'random':
+            self.item_type = 'atomic'
+            self.validation_loop()
+
+        elif item == 'chance':
+            self.item_type = random.choice(self.item_list)
+            self.validation_loop()
+            self.chance = True
+        else:
+            self.item_type = item
+
         self.update_action(self.item_type)
+
         self.speed   = 1
         self.collide = False
         self.zoom    = True
 
         self.particles = Particles('glow', self.screen, 10, self.image)
         self.timer = [Timer(), Timer()]
-        self.item_standby_fx.play()
+
+    def validation_loop(self):
+        validate = True
+        while validate:
+            if   self.item_type == 'health' and self.player.health >= self.player.max_health:
+                self.item_type = random.choice(self.item_list)
+
+            elif self.item_type == 'weapon' and self.player.weapon >= 4:
+                self.item_type = random.choice(self.item_list)
+
+            elif self.item_type == 'time' and self.player.less_time:
+                self.item_type = random.choice(self.item_list)
+
+            elif self.item_type == 'shield' and self.player.shield:
+                self.item_type = random.choice(self.item_list)
+
+            elif self.item_type == 'freeze' and self.player.freeze:
+                self.item_type = random.choice(self.item_list)
+
+            elif self.item_type == 'atomic' and self.player.atomic:
+                self.item_type = random.choice(self.item_list)
+
+            else: validate = False
 
     def update(self):
         self.update_animation(10)
@@ -43,10 +79,15 @@ class Item(Sprite_sheet):
             self.particles.add_glow(self.rect.centerx, self.rect.centery, 1, 1)
 
             if self.timer[0].counter(0.05, True):
-                self.effect(5)
+                self.visual_effect(5)
 
             if self.timer[1].counter(1, True):
                 self.item_standby_fx.play()
+
+                if self.chance:
+                    self.item_type = random.choice(self.item_list)
+                    self.validation_loop()
+                    self.update_action(self.item_type)
 
             # kill if it moves off the bottom of the screen
             if self.rect.top > self.SCREEN_H:
@@ -57,7 +98,7 @@ class Item(Sprite_sheet):
         else: # Delete the item
             self.update_action('destroy')
 
-    def effect(self, value):
+    def visual_effect(self, value):
         if self.zoom:
             if self.rect.w < self.width + value and self.rect.h < self.height + value:
                 self.rect.x -= 1
@@ -77,8 +118,8 @@ class Item(Sprite_sheet):
     def check_collision(self):
         # Check if the player has picked up the box
         if pygame.sprite.collide_rect(self, self.player):
-            # Check what type of item it was
 
+            # Check what type of item it was
             if self.item_type == 'lives':
                 self.player.lives += 1
 
@@ -86,9 +127,6 @@ class Item(Sprite_sheet):
                 self.player.health += self.player.max_health // 2
                 if self.player.health > self.player.max_health:
                     self.player.health = self.player.max_health
-
-            elif self.item_type == 'shield':
-                self.player.shield = True
 
             elif self.item_type == 'speed':
                 self.player.max_speed += 0.25
@@ -99,9 +137,6 @@ class Item(Sprite_sheet):
             elif self.item_type == 'time':
                 self.player.less_time = True
 
-            elif self.item_type == 'freeze':
-                self.player.freeze = True
-
             elif self.item_type == 'ammo':
                 self.player.ammo += self.player.start_ammo // 4
 
@@ -109,8 +144,14 @@ class Item(Sprite_sheet):
                 self.player.load += 1
 
             elif self.item_type == 'weapon':
-                if self.player.weapon_up < 4:
-                    self.player.weapon_up += 1
+                if self.player.weapon < 4:
+                    self.player.weapon += 1
+
+            elif self.item_type == 'shield':
+                self.player.shield = True
+
+            elif self.item_type == 'freeze':
+                self.player.freeze = True
 
             elif self.item_type == 'atomic':
                 self.player.atomic = True

@@ -100,9 +100,9 @@ class Template():
             #     item.update()
             #     item.draw()
 
-            # for bullet in self.game.bullet_group:
-            #     bullet.update()
-            #     bullet.draw()
+            for bullet in self.game.bullet_group:
+                bullet.update()
+                bullet.draw()
 
             # for meteor in self.meteor_list:
             #     meteor.check_collision(self.game.explosion_fx)

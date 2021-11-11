@@ -40,18 +40,13 @@ button_dict = {
 button_list = [
     [
     "Account",
-    "Configs",
-    "Credits",
+    "History",
+    "Records",
     "Exit",
     ],[
     "Login",
-    "History",
+    "Configs",
     "Guide",
-    "Back",
-    ],[
-    "Play",
-    "Edit",
-    "Delete",
     "Back",
     ],[
     "Play",
@@ -63,8 +58,8 @@ button_list = [
 
 record_btn_list = [
     "Continue",
-    "Main menu",
-    "Records",
+    "Main-menu",
+    "Credits",
     "Exit",
 ]
 

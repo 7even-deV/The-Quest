@@ -29,7 +29,7 @@ class Item(Sprite_sheet):
         self.chance = False
 
         if item == 'random':
-            self.item_type = 'atomic'
+            self.item_type = random.choice(self.item_list)
             self.validation_loop()
 
         elif item == 'chance':

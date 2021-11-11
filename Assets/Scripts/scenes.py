@@ -110,7 +110,7 @@ class Main(Scene):
         self.command_list = []
         margin_y = SCREEN_H//2
 
-        for btn in range(len(button_list)):
+        for btn in range(len(button_list[0])):
             temp_var = Button(button_list[0][btn], center=(SCREEN_W//2, btn * SCREEN_H//8 + margin_y))
             if btn % 2 == 0:
                 temp_var.flip_x = True
@@ -120,10 +120,10 @@ class Main(Scene):
 
     def config_buttons(self, SCREEN_W, SCREEN_H):
         self.config_list = []
-        margin_y = SCREEN_H//5
+        margin_y = SCREEN_H//8
 
         for bar in range(len(bar_list)):
-            self.config_list.append(Bar(bar_list[bar], center=(SCREEN_W//1.8, bar * SCREEN_H//10 + margin_y)))
+            self.config_list.append(Bar(bar_list[bar], center=(SCREEN_W//2, bar * SCREEN_H//10 + margin_y)))
 
         self.config_list[0].gage.active_effect(True)
 
@@ -159,11 +159,12 @@ class Main(Scene):
         SCREEN_W = username_data[9]
         SCREEN_H = username_data[10]
 
-        resize = 0
-        vol_scan = [music, sound, resize]
         pygame.mixer.music.set_volume(music)
         for sfx in self.sfx_list:
             sfx.set_volume(sound)
+
+        resize = 0
+        scan_list = [music, sound, resize]
 
         self.reset(SCREEN_W, SCREEN_H)
 
@@ -202,115 +203,108 @@ class Main(Scene):
 
                 # Keyboard presses
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_f:
-                        self.fullscreen = not self.fullscreen
-                        if self.fullscreen:
-                            self.screen = pygame.display.set_mode(self.monitor_size, pygame.FULLSCREEN)
-                        else:
-                            self.screen = pygame.display.set_mode((self.screen.get_width(), self.screen.get_height()), pygame.RESIZABLE)
-
                     if event.key == pygame.K_LEFT: # Back select
-                        if not create:
-                            if login: # Account select
-                                if user > 0:
-                                    user -= 1
-                                else: user = len(username_list) - 1
-
-                            elif self.command_list[1].trigger:
-                                if self.config_list[bar].gage == self.config_list[0].gage:
-                                    if self.volume(pygame.mixer.music) > 0.0: # Turn down the volume
-                                        vol_scan[0] = self.volume(pygame.mixer.music, - 0.1)
-                                        pygame.mixer.music.set_volume(vol_scan[0])
-
-                                elif self.config_list[bar].gage == self.config_list[1].gage:
-                                    if self.volume(self.sfx_list[0]) > 0.0: # Turn down the sound
-                                        for sfx in self.sfx_list:
-                                            vol_scan[1] = self.volume(sfx, - 0.1)
-                                            sfx.set_volume(vol_scan[1])
-
-                                elif self.config_list[bar].gage == self.config_list[2].gage:
-                                    if resize > 0:
-                                        resize -= 1
-
-                                    vol_scan[2] = resize
-
-                        else:
+                        if create:
                             if column_key > 0:
                                 column_key -= 1
                             else: column_key = len(self.keyboard_list[row_key]) - 1
 
+                        elif login: # Account select
+                            if self.command_list[1].trigger:
+                                if self.config_list[0].gage.trigger:
+                                    if self.volume(pygame.mixer.music) > 0.0: # Turn down the volume
+                                        scan_list[0] = self.volume(pygame.mixer.music, - 0.1)
+                                        pygame.mixer.music.set_volume(scan_list[0])
+
+                                elif self.config_list[1].gage.trigger:
+                                    if self.volume(self.sfx_list[0]) > 0.0: # Turn down the sound
+                                        for sfx in self.sfx_list:
+                                            scan_list[1] = self.volume(sfx, - 0.1)
+                                            sfx.set_volume(scan_list[1])
+
+                                elif self.config_list[2].gage.trigger:
+                                    if resize > 0:
+                                        resize -= 1
+                                    scan_list[2] = resize * 0.25
+
+                            elif not confirm:
+                                if user > 0:
+                                    user -= 1
+                                else: user = len(username_list) - 1
+                                username = username_list[user]
+
                         self.select_fx.play()
 
                     if event.key == pygame.K_RIGHT: # Next select
-                        if not create:
-                            if login: # Account select
-                                if user < len(username_list) - 1:
-                                    user += 1
-                                else: user = 0
-
-                            elif self.command_list[1].trigger:
-                                if self.config_list[bar].gage == self.config_list[0].gage:
-                                    if self.volume(pygame.mixer.music) < 1.0: # Turn up the volume
-                                        vol_scan[0] = self.volume(pygame.mixer.music, + 0.1)
-                                        pygame.mixer.music.set_volume(vol_scan[0])
-
-                                elif self.config_list[bar].gage == self.config_list[1].gage:
-                                    if self.volume(self.sfx_list[0]) < 1.0: # Turn up the sound
-                                        for sfx in self.sfx_list:
-                                            vol_scan[1] = self.volume(sfx, + 0.1)
-                                            sfx.set_volume(vol_scan[1])
-
-                                elif self.config_list[bar].gage == self.config_list[2].gage:
-                                    if resize < len(list(SCREEN_SIZE)):
-                                        resize += 1
-
-                                    vol_scan[2] = resize
-
-                        else:
+                        if create:
                             if column_key < len(self.keyboard_list[row_key]) - 1:
                                 column_key += 1
                             else: column_key = 0
 
+                        elif login: # Account select
+                            if self.command_list[1].trigger:
+                                if self.config_list[0].gage.trigger:
+                                    if self.volume(pygame.mixer.music) < 1.0: # Turn up the volume
+                                        scan_list[0] = self.volume(pygame.mixer.music, + 0.1)
+                                        pygame.mixer.music.set_volume(scan_list[0])
+
+                                elif self.config_list[1].gage.trigger:
+                                    if self.volume(self.sfx_list[0]) < 1.0: # Turn up the sound
+                                        for sfx in self.sfx_list:
+                                            scan_list[1] = self.volume(sfx, + 0.1)
+                                            sfx.set_volume(scan_list[1])
+
+                                elif self.config_list[2].gage.trigger:
+                                    if resize < len(SCREEN_SIZE) - 1:
+                                        resize += 1
+                                    scan_list[2] = resize * 0.25
+
+                            elif not confirm:
+                                if user < len(username_list) - 1:
+                                    user += 1
+                                else: user = 0
+                                username = username_list[user]
+
                         self.select_fx.play()
 
                     if event.key == pygame.K_UP: # Up select
-                        if not create:
-                            if not login and self.command_list[1].trigger:
-                                if bar > 0:
-                                    bar -= 1
-                                else: bar = len(self.config_list) - 1
-                                self.config_list[bar].gage.active_effect(True)
-
-                            else:
-                                if cursor > 0:
-                                    cursor -= 1
-                                else: cursor = len(self.command_list) - 1
-                                self.command_list[cursor].select_effect(True)
-                        else:
+                        if create:
                             if row_key > 0:
                                 row_key -= 1
                             else: row_key = len(self.keyboard_list) - 1
+
+                        elif login and self.command_list[1].trigger:
+                            if bar > 0:
+                                bar -= 1
+                            else: bar = len(self.config_list) - 1
+                            self.config_list[bar].gage.active_effect(True)
+
+                        else:
+                            if cursor > 0:
+                                cursor -= 1
+                            else: cursor = len(self.command_list) - 1
+                            self.command_list[cursor].select_effect(True)
 
                         self.board.show = False
                         self.select_fx.play()
 
                     if event.key == pygame.K_DOWN: # Down select
-                        if not create:
-                            if not login and self.command_list[1].trigger:
-                                if bar < len(self.config_list) - 1:
-                                    bar += 1
-                                else: bar = 0
-                                self.config_list[bar].gage.active_effect(True)
-
-                            else:
-                                if cursor < len(self.command_list) - 1:
-                                    cursor += 1
-                                else: cursor = 0
-                                self.command_list[cursor].select_effect(True)
-                        else:
+                        if create:
                             if row_key < len(self.keyboard_list) - 1:
                                 row_key += 1
                             else: row_key = 0
+
+                        elif login and self.command_list[1].trigger:
+                            if bar < len(self.config_list) - 1:
+                                bar += 1
+                            else: bar = 0
+                            self.config_list[bar].gage.active_effect(True)
+
+                        else:
+                            if cursor < len(self.command_list) - 1:
+                                cursor += 1
+                            else: cursor = 0
+                            self.command_list[cursor].select_effect(True)
 
                         self.board.show = False
                         self.select_fx.play()
@@ -325,7 +319,6 @@ class Main(Scene):
                                 if  self.keyboard_list[row_key][column_key] != self.keyboard_list[-1][-1]\
                                 and self.keyboard_list[row_key][column_key] != self.keyboard_list[-1][-2]:
                                     username += self.keyboard_list[row_key][column_key].text
-                                    button_list[2][0] = username
                             else: msg = 2
 
                             # Delete characters from username if Delete key is pressed
@@ -342,10 +335,6 @@ class Main(Scene):
                             else:
                                 self.keyboard_list[row_key][column_key].trigger = True
                                 self.keyboard_list[row_key][column_key].active_effect(True)
-
-                        else:
-                            scene_browser = -1
-                            run = False
 
                         self.confirm_fx.play()
 
@@ -364,6 +353,7 @@ class Main(Scene):
                         pygame.quit()
                         sys.exit()
 
+                    # Reset the inactivity timer by pressing any key
                     self.timer_list[0].frame_num = 0
 
                 # keyboard text input
@@ -375,7 +365,6 @@ class Main(Scene):
                     if str(event)[31] != ' ':
                         if len(username) < 10:
                             username += str_key
-                            button_list[2][0] = username
                         else: msg = 2
                         self.confirm_fx.play()
 
@@ -388,92 +377,103 @@ class Main(Scene):
                         self.keyboard_list[row_key][column_key].trigger = False
                         self.keyboard_list[row_key][column_key].active_effect(False)
 
+                    if event.key == pygame.K_SPACE: # Turnback select
+                        if not create:
+                            msg = 0
+                            if confirm: confirm = False
+                            elif login:   login = False
+
                     if event.key == pygame.K_RETURN: # Confirm
                         # Warning with this area of nested tabulated conditions as their order is very important
                         if self.command_list[0].trigger:
-                            if not confirm:
-                                if login:
-                                    if username_list[user] == username_list[0]:
-                                        if create:
-                                            msg = 6
-                                            if username == '': create = False
-                                            elif username in username_list[1:]: msg = 1
-                                            else:
-                                                if empty: self.db.delete_data('empty')
-                                                self.db.create_data(username)
-                                                username_list.append(username)
-                                                user = -1
-                                                row_key = column_key = 0
-                                                self.keyboard_list[0][0].select_effect(True)
-                                                self.keyboard_list[-1][-1].trigger = False
-                                                create = False
-                                                msg = 3
-                                        else:
-                                            username = ''
-                                            msg = 7
-                                            create = True
-                                    else: confirm = True
-                                else: login = True
-                            else:
-                                username = username_list[user]
+                            if confirm:
                                 scene_browser = 2
                                 run = False
 
-                        if self.command_list[1].trigger:
-                            if not create and not confirm:
-                                if not login:
-                                    if not self.config.show:
-                                        self.config.show = True
-                                    else:
-                                        self.load_volume(username_list[user], vol_scan[0], vol_scan[1])
-                                        self.config.show = False
-                                        self.command_list[1].trigger = False
+                            elif login:
+                                if username_list[user] == username_list[0]:
+                                    create = not create
+                                    msg = 0
+                                    if create:
+                                        username = ''
+                                        msg = 7
+                                    elif username != '':
+                                        if username in username_list[1:]:
+                                            create = not create
+                                            msg = 1
+                                        else:
+                                            # Create a new username in the database
+                                            if empty: self.db.delete_data('empty')
+                                            self.db.create_data(username)
+                                            username_list.append(username)
+                                            user = -1
+                                            row_key = column_key = 0
+                                            self.keyboard_list[0][0].select_effect(True)
+                                            self.keyboard_list[-1][-1].trigger = False
+                                            msg = 3
 
-                                        if not self.fullscreen:
-                                            width  = SCREEN_SIZE[list(SCREEN_SIZE)[resize]][0]
-                                            height = SCREEN_SIZE[list(SCREEN_SIZE)[resize]][1]
+                                else: confirm = True
+
+                            else: login = True
+
+                        if self.command_list[1].trigger:
+                            if confirm:
+                                scene_browser = 1
+                                run = False
+
+                            elif login:
+                                self.config.show = not self.config.show
+                                if not self.config.show:
+                                    self.command_list[1].trigger = False
+                                    self.load_volume(username_list[user], scan_list[0], scan_list[1])
+
+                                    if resize == len(SCREEN_SIZE) - 1:
+                                        self.fullscreen = not self.fullscreen
+                                        if self.fullscreen:
+                                            self.screen = pygame.display.set_mode(self.monitor_size, pygame.FULLSCREEN)
+                                        else:
+                                            self.screen = pygame.display.set_mode((self.screen.get_width(), self.screen.get_height()), pygame.RESIZABLE)
+
+                                    elif not self.fullscreen:
+                                        width  = SCREEN_SIZE[list(SCREEN_SIZE)[resize]][0]
+                                        height = SCREEN_SIZE[list(SCREEN_SIZE)[resize]][0]
+                                        if width != SCREEN_W or height != SCREEN_H:
                                             self.screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
                                             self.load_size(username, width, height)
                                             scene_browser = 0
                                             run = False
-                                else:
-                                    if not self.board.show:
-                                        self.board.show = True
-                                        self.board.create_textline(HISTORY, center=(self.board.rect.centerx, self.board.rect.top))
-                                    else: self.board.show = False
-
                             else:
-                                username = username_list[user]
-                                scene_browser = 1
-                                run = False
+                                self.board.show = not self.board.show
+                                if self.board.show:
+                                    self.board.create_textline(HISTORY, center=(self.board.rect.centerx, self.board.rect.top))
 
                         if self.command_list[2].trigger:
-                            if not create and not confirm:
-                                if not login:
-                                    if not self.board.show:
-                                        self.board.show = True
-                                        self.board.create_textline(CREDITS, center=(self.board.rect.centerx, self.board.rect.top))
-                                    else: self.board.show = False
-                                else:
-                                    if not self.board.show:
-                                        self.board.show = True
-                                        self.board.create_textline(GUIDE, midleft=(self.board.rect.width//3, self.board.rect.top))
-                                    else: self.board.show = False
-                            elif username_list[user] != username_list[0]:
-                                self.db.delete_data(username_list.pop(user))
-                                user = -1
-                                msg  = 4
-                                confirm = False
-                            elif len(username_list) > 1: msg = 0
-                            else: msg = 5
+                            if confirm:
+                                if username_list[user] != username_list[0]:
+                                    self.db.delete_data(username_list.pop(user))
+                                    user = -1
+                                    username = username_list[user]
+                                    msg  = 4
+                                    confirm = False
+                                elif len(username_list) > 1: msg = 0
+                                else: msg = 5
+
+                            elif login:
+                                self.board.show = not self.board.show
+                                if self.board.show:
+                                    self.board.create_textline(GUIDE, midleft=(self.board.rect.width//3, self.board.rect.top))
+                            else:
+                                scene_browser = -1
+                                run = False
 
                         if self.command_list[3].trigger:
+                            msg = 0
                             if  confirm: confirm = False
                             elif create:  create = False
                             elif  login:   login = False
                             else:
-                                scene_browser = -1
-                                run = False
+                                pygame.quit()
+                                sys.exit()
 
                         self.command_list[cursor].active_effect(False)
 
@@ -487,40 +487,27 @@ class Main(Scene):
             self.message.update()
             self.message.draw()
 
-            if  confirm: select = 3
+            # Select which text to assign to buttons
+            if  confirm: select = 2
             elif create: select = 2
             elif  login: select = 1
             else:        select = 0
 
             for self.command, index in zip(self.command_list, range(len(self.command_list))):
-                if self.command != self.command_list[cursor]:
+                if  self.command != self.command_list[cursor]:
                     self.command.select_effect(False)
                     self.command.trigger = False
 
-                if not self.command_list[index] == self.command_list[0]:
+                if  self.command_list[index] != self.command_list[0]:
                     self.command_list[index].text = button_list[select][index]
                 else:
-                    if  confirm: self.command_list[0].text = "Play"
+                    if  confirm: self.command_list[0].text = button_list[select][index]
                     elif create: self.command_list[0].text = username
                     elif  login: self.command_list[0].text = button_list[select][index][user]
+                    else:        self.command_list[0].text = button_list[select][index]
 
                 self.command.update()
                 self.command.draw(self.screen)
-
-            if not login and self.command_list[1].trigger:
-                for self.config in self.config_list:
-                    self.config_list[bar].gage.trigger = True
-                    if self.config != self.config_list[bar] and self.config.gage.trigger:
-                        self.config.gage.active_effect(False)
-                        self.config.gage.trigger = False
-
-                    self.config_list[0].displace_effect(vol_scan[0])
-                    self.config_list[1].displace_effect(vol_scan[1])
-                    self.config_list[2].displace_effect(vol_scan[2])
-                    self.config_list[2].gage.text = str(SCREEN_SIZE[list(SCREEN_SIZE)[resize]])
-
-                    self.config.update()
-                    self.config.draw(self.screen)
 
             if create:
                 for row in range(len(self.keyboard_list)):
@@ -553,6 +540,21 @@ class Main(Scene):
 
                         self.keyboard.update()
                         self.keyboard.draw(self.screen)
+
+            elif login and not confirm and self.command_list[1].trigger:
+                for self.config in self.config_list:
+                    self.config_list[bar].gage.trigger = True
+                    if self.config != self.config_list[bar] and self.config.gage.trigger:
+                        self.config.gage.active_effect(False)
+                        self.config.gage.trigger = False
+
+                    self.config_list[0].displace_effect(scan_list[0])
+                    self.config_list[1].displace_effect(scan_list[1])
+                    self.config_list[2].displace_effect(scan_list[2])
+                    self.config_list[2].gage.text = str(SCREEN_SIZE[list(SCREEN_SIZE)[resize]])
+
+                    self.config.update()
+                    self.config.draw(self.screen)
 
             self.board.update()
             self.board.draw(self.screen)
@@ -881,8 +883,8 @@ class Game(Scene):
         self.config_list = []
         margin_y = SCREEN_H//2
 
-        for bar in range(len(bar_list)):
-            self.config_list.append(Bar(bar_list[bar], center=(SCREEN_W//1.8, bar * SCREEN_H//10 + margin_y)))
+        for bar in range(len(bar_list[:-1])):
+            self.config_list.append(Bar(bar_list[bar], center=(SCREEN_W//2, bar * SCREEN_H//10 + margin_y)))
 
         self.config_list[0].gage.active_effect(True)
 
@@ -905,7 +907,7 @@ class Game(Scene):
             sfx.set_volume(sound)
 
         bar = 0
-        vol_scan = [music, sound]
+        scan_list = [music, sound]
         self.config_buttons(SCREEN_W, SCREEN_H)
 
         pause = False
@@ -946,14 +948,16 @@ class Game(Scene):
                         if pause:
                             if self.config_list[bar].gage == self.config_list[0].gage:
                                 if self.volume(pygame.mixer.music) > 0.0: # Turn down the volume
-                                    vol_scan[0] = self.volume(pygame.mixer.music, - 0.1)
-                                    pygame.mixer.music.set_volume(vol_scan[0])
+                                    scan_list[0] = self.volume(pygame.mixer.music, - 0.1)
+                                    pygame.mixer.music.set_volume(scan_list[0])
 
                             elif self.config_list[bar].gage == self.config_list[1].gage:
                                 if self.volume(self.sfx_list[0]) > 0.0: # Turn down the sound
                                     for sfx in self.sfx_list:
-                                        vol_scan[1] = self.volume(sfx, - 0.1)
-                                        sfx.set_volume(vol_scan[1])
+                                        scan_list[1] = self.volume(sfx, - 0.1)
+                                        sfx.set_volume(scan_list[1])
+
+                            self.select_fx.play()
 
                         elif not self.player.win:
                             self.player.moving_left = True # Moving left
@@ -963,14 +967,16 @@ class Game(Scene):
                         if pause:
                             if self.config_list[bar].gage == self.config_list[0].gage:
                                 if self.volume(pygame.mixer.music) < 1.0: # Turn up the volume
-                                    vol_scan[0] = self.volume(pygame.mixer.music, + 0.1)
-                                    pygame.mixer.music.set_volume(vol_scan[0])
+                                    scan_list[0] = self.volume(pygame.mixer.music, + 0.1)
+                                    pygame.mixer.music.set_volume(scan_list[0])
 
                             elif self.config_list[bar].gage == self.config_list[1].gage:
                                 if self.volume(self.sfx_list[0]) < 1.0: # Turn up the sound
                                     for sfx in self.sfx_list:
-                                        vol_scan[1] = self.volume(sfx, + 0.1)
-                                        sfx.set_volume(vol_scan[1])
+                                        scan_list[1] = self.volume(sfx, + 0.1)
+                                        sfx.set_volume(scan_list[1])
+
+                            self.select_fx.play()
 
                         elif not self.player.win:
                             self.player.moving_right = True # Moving right
@@ -1015,7 +1021,7 @@ class Game(Scene):
                         pause = not pause
                         if pause:
                             pygame.mixer.music.pause()
-                            self.load_volume(username, vol_scan[0], vol_scan[1])
+                            self.load_volume(username, scan_list[0], scan_list[1])
                         else:
                             pygame.mixer.music.unpause()
 
@@ -1065,8 +1071,8 @@ class Game(Scene):
                         self.config.gage.active_effect(False)
                         self.config.gage.trigger = False
 
-                    self.config_list[0].displace_effect(vol_scan[0])
-                    self.config_list[1].displace_effect(vol_scan[1])
+                    self.config_list[0].displace_effect(scan_list[0])
+                    self.config_list[1].displace_effect(scan_list[1])
 
                     self.config.update()
                     self.config.draw(self.screen)
@@ -1085,12 +1091,12 @@ class Game(Scene):
                             self.surge_start = False
                             self.enemy.retired = True
                             self.item_create('chance', self.player, SCREEN_W, SCREEN_H)
-                            self.music(4, vol_scan[0])
+                            self.music(4, scan_list[0])
                         else:
                             self.surge_end = True
                             self.enemy.retired = False
                             self.item_create('chance', self.player, SCREEN_W, SCREEN_H)
-                            self.music(2, vol_scan[0])
+                            self.music(2, scan_list[0])
 
                 for self.environment in self.environment_list:
                     self.environment.update(self.player)
@@ -1261,6 +1267,7 @@ class Record(Scene):
         self.game_over_logo = Logo(self.screen, midtop=(SCREEN_W//2, SCREEN_H*0.01))
         self.ranking_view   = View(self.screen, center=(SCREEN_W//2, SCREEN_H//8), letter=0, size=30)
         self.idle_time_view = View(self.screen, midbottom=(SCREEN_W//2, SCREEN_H-SCREEN_H*0.02), letter=2, size=20)
+        self.board = Board(midbottom=(SCREEN_W//2, 0))
 
         self.update_ranking(SCREEN_W, SCREEN_H)
         self.command_buttons(SCREEN_W, SCREEN_H)
@@ -1295,7 +1302,7 @@ class Record(Scene):
         pygame.mixer.music.set_volume(music)
         for sfx in self.sfx_list:
             sfx.set_volume(sound)
-        vol_scan = [music, sound]
+        scan_list = [music, sound]
 
         new_highscore = self.load_data(username, level, score)
         self.reset(SCREEN_W, SCREEN_H)
@@ -1332,6 +1339,7 @@ class Record(Scene):
                         else: cursor = len(self.command_list) - 1
                         self.command_list[cursor].select_effect(True)
 
+                        self.board.show = False
                         self.select_fx.play()
 
                     if event.key == pygame.K_DOWN: # Down select
@@ -1340,6 +1348,7 @@ class Record(Scene):
                         else: cursor = 0
                         self.command_list[cursor].select_effect(True)
 
+                        self.board.show = False
                         self.select_fx.play()
 
                     if event.key == pygame.K_SPACE: # Restart game
@@ -1356,6 +1365,7 @@ class Record(Scene):
                         pygame.quit()
                         sys.exit()
 
+                    # Reset the inactivity timer by pressing any key
                     self.timer_list[0].frame_num = 0
 
                 # keyboard release
@@ -1371,7 +1381,10 @@ class Record(Scene):
                             run = False
 
                         if self.command_list[2].trigger:
-                            record_show = not record_show
+                            # record_show = not record_show
+                            self.board.show = not self.board.show
+                            if self.board.show:
+                                self.board.create_textline(CREDITS, center=(self.board.rect.centerx, self.board.rect.top))
 
                         if self.command_list[3].trigger:
                             pygame.quit()
@@ -1415,6 +1428,9 @@ class Record(Scene):
 
                 self.command.update()
                 self.command.draw(self.screen)
+
+            self.board.update()
+            self.board.draw(self.screen)
 
             # Limit delay without event activity
             if self.timer_list[0].countdown(1, True):

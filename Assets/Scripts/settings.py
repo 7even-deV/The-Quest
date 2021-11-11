@@ -6,6 +6,7 @@ SCREEN_SIZE = {
     'SVGA' : (800, 600),
     'XGA'  : (1024, 768),
     'XVGA' : (1280, 1024),
+    'FULL' : 'Fullscreen',
 }
 # Game window
 resize = 1

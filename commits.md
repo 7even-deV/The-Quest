@@ -46,3 +46,4 @@
 44. Fix errors if database gammer table is empty or was deleted
 45. Increase UI (Canvas) and the spawn of enemies for each level
 46. Improve the functionality of UI, items and menu bar
+47. Corrections in the main menu commands (class Main)

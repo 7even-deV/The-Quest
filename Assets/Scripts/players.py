@@ -1,6 +1,6 @@
 import pygame
 
-from .settings import FPS, SPEED, player_dict
+from .settings import FPS, player_dict
 from .manager  import player_select_function, explosion_3_img, explosion_dict
 from .tools    import Sprite_sheet, Timer, Particles
 from .weapons  import Bullet, Missile
@@ -41,9 +41,10 @@ class Player(Sprite_sheet):
         self.rect = self.image.get_rect(center=(self.SCREEN_W//2, self.SCREEN_H+self.SCREEN_H//10))
 
         self.vector = pygame.math.Vector2
-        self.delta     = self.vector(0, 0)
-        self.speed     = self.vector(0, 0)
-        self.max_speed = player_dict['speed'][self.select]
+        self.delta      = self.vector(0, 0)
+        self.speed      = self.vector(0, 0)
+        self.max_speed  = player_dict['speed'][self.select]
+        self.init_speed = self.max_speed
 
         self.direction_x = 1
         self.direction_y = -1

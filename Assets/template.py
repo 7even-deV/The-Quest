@@ -11,7 +11,7 @@ class Template():
         pygame.display.set_caption("Template")
 
         # Create Test
-        self.game = Game(self.screen)
+        self.game = Game()
         self.item_group = pygame.sprite.Group()
 
     def restart(self):
@@ -23,7 +23,7 @@ class Template():
 
         self.meteor_list = []
         for _ in range(10):
-            self.meteor_list.append(Meteor(self.screen, self.player, self.item_group, 800, 800, [self.game.item_standby_fx, self.game.item_get_fx]))
+            self.meteor_list.append(Meteor(self.screen, self.player, self.item_group, 800, 800, [self.game.explosion_fx, self.game.item_standby_fx, self.game.item_get_fx]))
 
     def main_loop(self):
         self.restart()
@@ -87,7 +87,7 @@ class Template():
                         self.player.turbo = False
 
             # Clear screen and set background color
-            self.screen.fill(COLOR('ARCADE'))
+            self.screen.fill((0, 0, 0))
 
             ''' --- AREA TO UPDATE AND DRAW --- '''
 

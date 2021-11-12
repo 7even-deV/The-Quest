@@ -1,7 +1,7 @@
 import pygame
 
 from .         import __author__
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, CAPTION, SCENE, LEVEL
+from .settings import CAPTION, SCENE
 from .manager  import logo_icon
 from .scenes   import Main, Menu, Game, Record
 
@@ -13,17 +13,14 @@ class Controller():
     pygame.mixer.init()
 
     def __init__(self):
-        # Create window
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
+        # Load logo icon
         pygame.display.set_icon(pygame.image.load(logo_icon))
 
         # Tuple of all scenes
-        self.scene_tuple = (Main(self.screen), Menu(self.screen), Game(self.screen), Record(self.screen))
+        self.scene_tuple = (Main(), Menu(), Game(), Record())
 
     def launch_manager(self):
         i = SCENE
-        level = LEVEL
-        username = 'empty'
         play = False
 
         # Main loop
@@ -31,10 +28,10 @@ class Controller():
             # Manage each scene
             self.scene_caption(i)
             self.scene_tuple[i].music(i)
-            username, play, scene_browser = self.scene_tuple[i].main_loop(username, play)
+            browser, play = self.scene_tuple[i].main_loop(play)
 
             # Cycle through each scene until reset to 0
-            i = (i + scene_browser) % len(self.scene_tuple)
+            i = (i + browser) % len(self.scene_tuple)
 
     def scene_caption(self, index):
         pygame.display.set_caption(CAPTION[0] + CAPTION[1][index])

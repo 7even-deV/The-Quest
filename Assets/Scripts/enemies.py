@@ -1,6 +1,6 @@
 import pygame, random
 
-from .settings import FPS, SPEED, ENEMY_SCALE, enemy_dict
+from .settings import FPS, ENEMY_SCALE, enemy_dict
 from .manager  import enemy_select_function, explosion_2_img, explosion_dict
 from .tools    import Sprite_sheet, Timer
 from .weapons  import Bullet, Missile
@@ -392,7 +392,7 @@ class Enemy(Sprite_sheet):
                 if self.player.shield: self.player.shield = False
                 else:
                     self.player.health -= 50
-                    self.player.max_speed = SPEED
+                    self.player.max_speed = self.player.init_speed
                     self.player.less_time = False
                     self.player.freeze    = False
                     self.player.turbo_up  = 0

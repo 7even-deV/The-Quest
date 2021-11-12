@@ -11,13 +11,14 @@ SQL = '''(
     MUSIC float,
     SOUND float,
     SCREEN_W integer,
-    SCREEN_H integer
+    SCREEN_H integer,
+    PLAY integer
 )'''
 
-MEMORY_LIST = [('empty', 0, 0, 1, 1, 0, 0, 0.5, 0.5, 800, 800)]
+MEMORY_LIST = [('empty', 0, 0, 1, 1, 0, 0, 0.5, 0.5, 800, 800, 1)]
 # MEMORY_LIST = []
 # for num in range(10):
-#     MEMORY_LIST.append((f"empty-{num}", 0, 0, 1, 1, 0, 0, 0.5, 0.5, 800, 800))
+#     MEMORY_LIST.append((f"empty-{num}", 0, 0, 1, 1, 0, 0, 0.5, 0.5, 800, 800, ))
 
 
 msg_dict = {
@@ -40,27 +41,34 @@ button_dict = {
 button_list = [
     [
     "Account",
-    "History",
     "Records",
+    "History",
     "Exit",
     ],[
     "Login",
-    "Configs",
+    "Delete",
     "Guide",
     "Back",
     ],[
     "Play",
     "Edit",
-    "Delete",
+    "Configs",
     "Back",
     ]
 ]
 
 record_btn_list = [
-    "Continue",
+    [
+    "Top-ranking",
     "Main-menu",
     "Credits",
     "Exit",
+    ],[
+    "Continue",
+    "Main-menu",
+    "Credits",
+    "Back",
+    ]
 ]
 
 bar_img = 'Assets/Images/bar.png'

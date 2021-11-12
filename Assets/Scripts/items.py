@@ -162,7 +162,7 @@ class Item(Sprite_sheet):
             elif self.item_type == 'super':
                 self.player.health = self.player.max_health
                 self.player.shield = True
-                self.player.max_speed += 1.0
+                self.player.max_speed += 0.25
                 self.player.turbo_up += 1
                 self.player.ammo = self.player.start_ammo
                 self.player.load = self.player.start_load

@@ -47,3 +47,4 @@
 45. Increase UI (Canvas) and the spawn of enemies for each level
 46. Improve the functionality of UI, items and menu bar
 47. Corrections in the main menu commands (class Main)
+48. Scale screen width and height dimensions in User database

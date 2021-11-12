@@ -1,6 +1,6 @@
 import pygame
 
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, SPEED
+from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
 from .manager  import weapon_select_function, missile_img, missile_dict, missile_exp_img, missile_exp_dict
 from .tools    import Sprite_sheet, Timer, Particles
 
@@ -85,7 +85,7 @@ class Bullet(Sprite_sheet):
                 if self.player.shield: self.player.shield = False
                 else:
                     self.player.health -= 10 * self.weapon
-                    self.player.max_speed = SPEED
+                    self.player.max_speed = self.player.init_speed
                     self.player.less_time = False
                     self.player.freeze    = False
                     self.player.turbo_up  = 0
@@ -184,7 +184,7 @@ class Missile(Sprite_sheet):
             if self.player.shield: self.player.shield = False
             else:
                 self.player.health -= 50
-                self.player.max_speed = SPEED
+                self.player.max_speed = self.player.init_speed
                 self.player.less_time = False
                 self.player.freeze    = False
                 self.player.turbo_up  = 0

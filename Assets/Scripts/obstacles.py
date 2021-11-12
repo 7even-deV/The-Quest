@@ -1,6 +1,6 @@
 import pygame, random
 
-from .settings import SPEED, METEOR_SCALE
+from .settings import METEOR_SCALE
 from .manager  import meteor_img, meteor_action_dict, explosion_1_img, explosion_dict
 from .tools    import Sprite_sheet
 from .items    import Item
@@ -82,7 +82,7 @@ class Meteor(Sprite_sheet):
                 if self.player.shield: self.player.shield = False
                 else:
                     self.player.health -= self.scale * 10
-                    self.player.max_speed = SPEED
+                    self.player.max_speed = self.player.init_speed
                     self.player.less_time = False
                     self.player.freeze    = False
                     self.player.turbo_up  = 0

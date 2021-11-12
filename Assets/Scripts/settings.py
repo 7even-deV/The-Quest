@@ -2,11 +2,18 @@ import random
 
 # Standard screen resolutions
 SCREEN_SIZE = {
-    'VGA'  : (640, 480),
-    'SVGA' : (800, 600),
-    'XGA'  : (1024, 768),
-    'XVGA' : (1280, 1024),
-    'FULL' : 'Fullscreen',
+    'VGA-h'   : (640, 480),
+    'VGA-v'   : (480, 640),
+    'VGA-x2'  : (640, 640),
+
+    'SVGA-h'  : (800, 600),
+    'SVGA-v'  : (600, 800),
+    'SVGA-x2' : (800, 800),
+
+    'XGA'     : (1024, 768),
+    'XVGA'    : (1280, 1024),
+
+    'FULL'    : 'Fullscreen',
 }
 # Game window
 resize = 1
@@ -29,7 +36,6 @@ FPS = 60
 # Define game variables
 SCENE = 0
 LIVES = 3
-SPEED = 3.0
 LEVEL = 1
 ENEMY_SCALE = 1
 METEOR_SCALE = 3

@@ -48,3 +48,4 @@
 46. Improve the functionality of UI, items and menu bar
 47. Corrections in the main menu commands (class Main)
 48. Scale screen width and height dimensions in User database
+49. Update sprites, reduce memory load size, and fix bugs

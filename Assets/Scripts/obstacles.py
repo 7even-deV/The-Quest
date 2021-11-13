@@ -1,14 +1,15 @@
 import pygame, random
 
 from .settings import METEOR_SCALE
-from .manager  import meteor_img, meteor_action_dict, explosion_1_img, explosion_dict
+from .manager  import meteor_def, explosion_type_def
 from .tools    import Sprite_sheet
-from .items    import Item
+from .items    import Item, Freeze
 
 
 class Meteor(Sprite_sheet):
 
     def __init__(self, screen, player, item_group, SCREEN_W, SCREEN_H, *args):
+        meteor_img, meteor_action_dict = meteor_def()
         super().__init__(meteor_img)
         self.screen = screen
         self.player = player
@@ -21,7 +22,8 @@ class Meteor(Sprite_sheet):
 
         # Load meteor and explosion image
         self.create_animation(100, 100, meteor_action_dict)
-        self.sheet = pygame.image.load(explosion_1_img).convert_alpha()
+        explosion_img, explosion_dict = explosion_type_def(1)
+        self.sheet = pygame.image.load(explosion_img).convert_alpha()
         self.create_animation(100, 100, {'destroy': (6, 8, 2)})
         self.image = self.animation_dict[self.action][self.frame_index]
         # Get random meteor rect
@@ -45,6 +47,8 @@ class Meteor(Sprite_sheet):
         self.max_health = self.health
         self.exp = self.scale * 10
 
+        self.freeze = Freeze(self.screen)
+
     def update(self, speed_y):
         # Update meteor events
         self.check_collision()
@@ -63,12 +67,14 @@ class Meteor(Sprite_sheet):
         if not self.player.freeze:
             self.rect.x += self.delta_x
             self.rect.y += self.delta_y + speed_y
+        else:
+            self.freeze.update(center=(self.rect.centerx, self.rect.centery))
 
     # Create item
     def item_chance(self, spawn):
         chance = random.randint(0, 100)
         if chance <= spawn:
-            item = Item('random', self.screen, self.player, self.SCREEN_W, self.SCREEN_H, [self.item_standby_fx, self.item_get_fx], center=(self.rect.centerx, self.rect.centery))
+            item = Item('chance', self.screen, self.player, self.SCREEN_W, self.SCREEN_H, [self.item_standby_fx, self.item_get_fx], center=(self.rect.centerx, self.rect.centery))
             self.item_group.add(item)
 
     def check_collision(self):
@@ -85,8 +91,6 @@ class Meteor(Sprite_sheet):
                     self.player.max_speed = self.player.init_speed
                     self.player.less_time = False
                     self.player.freeze    = False
-                    self.player.turbo_up  = 0
-                    self.player.weapon_up = 0
 
                 self.health = 0
 

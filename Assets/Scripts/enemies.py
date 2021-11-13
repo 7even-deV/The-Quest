@@ -1,19 +1,19 @@
 import pygame, random
 
-from .settings import FPS, ENEMY_SCALE, enemy_dict
-from .manager  import enemy_select_function, explosion_2_img, explosion_dict
-from .tools    import Sprite_sheet, Timer
+from .settings import ENEMY_SCALE, enemy_dict
+from .manager  import enemy_select_def, explosion_type_def
+from .tools    import Sprite_sheet, Timer, Particles
 from .weapons  import Bullet, Missile
-from .items    import Item
+from .items    import Item, Freeze
 
 
 class Enemy(Sprite_sheet):
 
-    def __init__(self, screen, style, speed, player, SCREEN_W, SCREEN_H, *args, **kwargs):
-        enemy_img, enemy_action_dict = enemy_select_function(style)
+    def __init__(self, screen, number, select, speed, player, SCREEN_W, SCREEN_H, *args):
+        enemy_img, enemy_action_dict = enemy_select_def(select)
         super().__init__(enemy_img)
         self.screen = screen
-        self.select = style
+        self.select = select
         self.speed  = speed
         self.player = player
         self.win    = self.player.win
@@ -53,12 +53,13 @@ class Enemy(Sprite_sheet):
 
         # Load enemy image
         self.create_animation(100, 100, enemy_action_dict)
-        self.sheet = pygame.image.load(explosion_2_img).convert_alpha()
+        explosion_img, explosion_dict = explosion_type_def(2)
+        self.sheet = pygame.image.load(explosion_img).convert_alpha()
         self.create_animation(100, 100, explosion_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
 
         # Get enemy rect
-        self.rect = self.image.get_rect(**kwargs)
+        self.rect = self.image.get_rect(center=(self.init_position(number, select, SCREEN_W, SCREEN_H)))
 
         self.scale = enemy_dict['scale'][self.select]
         self.rect.width  = self.image.get_width()  // ENEMY_SCALE
@@ -92,8 +93,19 @@ class Enemy(Sprite_sheet):
         self.move_counter   = 0
         self.rep_total      = 6
         self.rep_count      = 0
-        self.vision = pygame.Rect(0, 0, self.rect.width//2, self.SCREEN_H)
-        self.timer  = Timer(FPS)
+        self.vision    = pygame.Rect(0, 0, self.rect.width//2, self.SCREEN_H)
+        # self.particles = Particles('fire', self.screen, self.image, self.select)
+        self.timer     = Timer()
+
+        self.freeze = Freeze(self.screen)
+
+    def init_position(self, number, select, screen_w, screen_h):
+        if   select == 0:
+            return (random.randint(100, screen_w-screen_w//10), -100)
+        elif select == 1:
+            return (-100*number, screen_h//5)
+        elif select == 2:
+            return (random.randint(100, screen_w-screen_w//10), -100)
 
     def update(self):
         # Update enemy events
@@ -102,6 +114,11 @@ class Enemy(Sprite_sheet):
         self.check_collision()
         self.check_alive()
         self.update_animation(self.animation_cooldown)
+
+        # if self.alive:
+        #     self.particles.add_circle(self.rect.centerx-self.rect.width//4, self.rect.top+self.rect.height//10, self.direction_x, self.direction_y)
+        #     self.particles.add_circle(self.rect.centerx+self.rect.width//4, self.rect.top+self.rect.height//10, self.direction_x, self.direction_y)
+
         # Update cooldown
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
@@ -163,13 +180,15 @@ class Enemy(Sprite_sheet):
         if not self.player.freeze:
             self.rect.x += self.delta_x
             self.rect.y += self.delta_y
+        else:
+            self.freeze.update(center=(self.rect.centerx, self.rect.centery))
 
     def shoot(self, *args):
         if self.shoot_cooldown == 0 and self.ammo > 0:
             self.shoot_cooldown = 50
             # create bullet ammo
-            self.bullet = Bullet('enemy', self.screen, self.weapon, self.select, self.rect.centerx, self.rect.bottom, self.rect.width, self.direction_y,\
-                            self.flip_x, self.flip_y, self.player, self.bullet_group, self.enemy_group, self.meteor_group)
+            self.bullet = Bullet('enemy', self.screen, self.weapon, self.select, self.rect.centerx, self.rect.centery+self.rect.height//2, self.rect.width, self.direction_y,\
+                                self.flip_x, self.flip_y, self.player, self.bullet_group, self.enemy_group, self.meteor_group, self.SCREEN_W, self.SCREEN_H)
             self.bullet_group.add(self.bullet)
             # Reduce ammo
             self.ammo -= 1
@@ -181,7 +200,7 @@ class Enemy(Sprite_sheet):
         if self.throw_cooldown == 0 and self.load > 0:
             self.throw_cooldown = 400
             # Create missile load
-            missile = Missile('enemy', self.screen, self.rect.centerx, self.rect.bottom, self.direction_y, self.flip_x, self.flip_y,\
+            missile = Missile('enemy', self.screen, self.select, self.rect.centerx, self.rect.bottom, self.direction_y, self.flip_x, self.flip_y,\
                                 self.player, self.enemy_group, self.meteor_group, self.explosion_group, args[1], args[2], args[3])
             self.missile_group.add(missile)
             # Reduce load
@@ -377,7 +396,7 @@ class Enemy(Sprite_sheet):
     def item_chance(self, spawn):
         chance = random.randint(0, 100)
         if chance <= spawn:
-            item = Item('random', self.screen, self.player, self.SCREEN_W, self.SCREEN_H, [self.item_standby_fx, self.item_get_fx], center=(self.rect.centerx, self.rect.centery))
+            item = Item('chance', self.screen, self.player, self.SCREEN_W, self.SCREEN_H, [self.item_standby_fx, self.item_get_fx], center=(self.rect.centerx, self.rect.centery))
             self.item_group.add(item)
 
     # Check if the collision with the player
@@ -395,8 +414,6 @@ class Enemy(Sprite_sheet):
                     self.player.max_speed = self.player.init_speed
                     self.player.less_time = False
                     self.player.freeze    = False
-                    self.player.turbo_up  = 0
-                    self.player.weapon_up = 0
 
                 self.health = 0
 
@@ -430,3 +447,10 @@ class Enemy(Sprite_sheet):
 
     def limit_down(self, value=0):
         return self.rect.bottom + self.delta_y > self.SCREEN_H - (self.rect.height//10 + value)
+
+    def draw(self):
+        image = pygame.transform.scale(self.image, (self.rect.width * self.scale, self.rect.height * self.scale))
+        image = pygame.transform.flip(image, self.flip_x, self.flip_y)
+        image = pygame.transform.rotate(image, self.rotate)
+        image.set_colorkey(False)
+        self.screen.blit(image, self.rect)

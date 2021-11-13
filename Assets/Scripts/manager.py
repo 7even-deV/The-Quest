@@ -4,10 +4,15 @@ SQL = '''(
     USERNAME text PRIMARY KEY,
     STYLE integer,
     MODEL integer,
+    WEAPON integer,
     LEVEL integer,
     HIGHLEVEL integer,
     SCORE integer,
     HIGHSCORE integer,
+    ENEMY integer,
+    T_ENEMY integer,
+    METEOR integer,
+    T_METEOR integer,
     MUSIC float,
     SOUND float,
     SCREEN_W integer,
@@ -15,10 +20,10 @@ SQL = '''(
     PLAY integer
 )'''
 
-MEMORY_LIST = [('empty', 0, 0, 1, 1, 0, 0, 0.5, 0.5, 800, 800, 1)]
+MEMORY_LIST = [('empty', 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0.5, 0.5, 800, 800, 1)]
 # MEMORY_LIST = []
 # for num in range(10):
-#     MEMORY_LIST.append((f"empty-{num}", 0, 0, 1, 1, 0, 0, 0.5, 0.5, 800, 800, ))
+#     MEMORY_LIST.append((f"empty-{num}", 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0.5, 0.5, 800, 800, ))
 
 
 msg_dict = {
@@ -32,12 +37,20 @@ msg_dict = {
     7 : "Press <Space> to write and <Enter> to confirm",
 }
 
+logo_icon     = 'Assets/Images/logo_7z.ico'
 
-button_img = 'Assets/Images/button.png'
-button_dict = {
-    'off' : (1, 1, 1, 1),
-    'on'  : (1, 1, 2, 1),
-}
+statue_img    = 'Assets/Images/statue.png'
+bg_img        = 'Assets/Images/background.jpg'
+
+
+def button_def():
+    button_img = 'Assets/Images/button.png'
+    button_dict = {
+        'off' : (1, 1, 1, 1),
+        'on'  : (1, 1, 2, 1),
+    }
+    return button_img, button_dict
+
 button_list = [
     [
     "Account",
@@ -71,10 +84,14 @@ record_btn_list = [
     ]
 ]
 
-bar_img = 'Assets/Images/bar.png'
-bar_dict = {
-    'displace' : (1, 1, 1, 1),
-}
+
+def bar_def():
+    bar_img = 'Assets/Images/bar.png'
+    bar_dict = {
+        'displace' : (1, 1, 1, 1),
+    }
+    return bar_img, bar_dict
+
 bar_list = [
     "Music vol.",
     "Sound vol.",
@@ -82,11 +99,14 @@ bar_list = [
 ]
 
 
-key_img = 'Assets/Images/key.png'
-key_dict = {
-    'off' : (1, 1, 1, 1),
-    'on'  : (1, 1, 2, 1),
-}
+def key_def():
+    key_img = 'Assets/Images/key.png'
+    key_dict = {
+        'off' : (1, 1, 1, 1),
+        'on'  : (1, 1, 2, 1),
+    }
+    return key_img, key_dict
+
 keyboard_list = [
     ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
     ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
@@ -95,31 +115,39 @@ keyboard_list = [
 ]
 
 
-board_img = 'Assets/Images/board.png'
-board_dict = {
-    'off' : (1, 1, 1, 1),
-    'on'  : (1, 1, 2, 1),
-}
+def board_def():
+    board_img = 'Assets/Images/board.png'
+    board_dict = {
+        'off' : (1, 1, 1, 1),
+        'on'  : (1, 1, 2, 1),
+    }
+    return board_img, board_dict
+
+
+def logo_type_def(logo):
+    logo_img = f'Assets/Images/{logo}.png'
+
+    if   logo == 'loading':
+        logo_dict = {logo: (2, 4, 1, 1)}
+        logo_size = (800, 400)
+
+    elif logo == 'game_over':
+        logo_dict = {logo: (1, 3, 1, 1)}
+        logo_size = (600, 350)
+
+    return logo_img, logo_dict, logo_size
 
 
 # Define fonts
-font_tuple = ("GameCube", "Fixedsys500c", "LibreFranklin", "PoetsenOne")
-
-def font_function(i_font):
-    return f'Assets/Fonts/{font_tuple[i_font]}.ttf'
-
-
-logo_icon = 'Assets/Images/logo_7z.ico'
-
-statue_img = 'Assets/Images/statue.png'
-
-lives_img = 'Assets/Images/lives.png'
+def font_type_def(font):
+    font_tuple = ("GameCube", "Fixedsys500c", "LibreFranklin", "PoetsenOne")
+    return f'Assets/Fonts/{font_tuple[font]}.ttf'
 
 
-def icon_type_function(i_type):
-    icon_img = f'Assets/Images/{i_type}.png'
+def icon_type_def(icon):
+    icon_img = f'Assets/Images/{icon}.png'
 
-    if i_type == 'symbol':
+    if icon == 'symbol':
         icon_type_dict = {
             'dps_1'  : (1, 1, 1, 1), # Circle
             'dps_2'  : (1, 1, 1, 1), # Circle
@@ -142,7 +170,7 @@ def icon_type_function(i_type):
             'heal_5' : (1, 1, 1, 3), # Triangle
             'heal_6' : (1, 1, 1, 3), # Triangle
         }
-    if i_type == 'spaceships':
+    elif icon == 'spaceships':
         icon_type_dict = {
             'dps_1'  : (2, 1, 1, 1), # Dps
             'dps_2'  : (2, 1, 2, 1), # Dps
@@ -165,62 +193,77 @@ def icon_type_function(i_type):
             'heal_5' : (2, 1, 5, 5), # Heal
             'heal_6' : (2, 1, 6, 5), # Heal
         }
-
     return icon_img, icon_type_dict
 
 
-def player_select_function(p_select, p_model):
+def player_select_def(select, model):
     player_img = 'Assets/Images/spaceships.png'
 
-    if p_select == 1:
-        p_select = 2
-    elif p_select == 2:
-        p_select = 4
+    if select   == 1: select = 2
+    elif select == 2: select = 4
 
     player_action_dict = {
-        'idle' : (2, 1, p_model+1, p_select+1),
-        'left' : (1, 1, p_model+1, p_select+1),
-        'right': (1, 1, p_model+1, p_select+2),
+        'idle' : (2, 1, model+1, select+1),
+        'left' : (1, 1, model+1, select+1),
+        'right': (1, 1, model+1, select+2),
     }
-
     return player_img, player_action_dict
 
 
-def enemy_select_function(e_select):
+def enemy_select_def(select):
     enemy_img = 'Assets/Images/enemies.png'
 
     enemy_action_dict = {
-        'idle' : (2, 1, e_select+1, 1),
-        'left' : (1, 1, e_select+1, 1),
-        'right': (1, 1, e_select+1, 2),
+        'idle' : (2, 1, select+1, 1),
+        'left' : (1, 1, select+1, 1),
+        'right': (1, 1, select+1, 2),
     }
-
     return enemy_img, enemy_action_dict
 
 
-def weapon_select_function(w_select):
-    bullet_img = f'Assets/Images/bullet_{w_select+1}.png'
-
-    if w_select+1 == 1: # Bullet dps
-        bullet_dict = {'bullet': (5, 3, 2, 1),  'destroy': (5, 4, 5, 1)}
-
-    if w_select+1 == 2: # Bullet tank
-        bullet_dict = {'bullet': (5, 11, 1, 1), 'destroy': (5, 4, 12, 1)}
-
-    if w_select+1 == 3: # Bullet heal
-        bullet_dict = {'bullet': (8, 3, 2, 1),  'destroy': (8, 4, 5, 1)}
-
-    return bullet_img, bullet_dict
-
-missile_img = f'Assets/Images/missile.png'
-missile_dict = {'missile': (5, 11, 1, 1), 'destroy': (5, 4, 12, 1)}
-missile_exp_img = f'Assets/Images/missile_exp_2.png'
-missile_exp_dict = {'destroy': (5, 6)}
+def meteor_def():
+    meteor_img = 'Assets/Images/meteor.png'
+    meteor_action_dict = {
+        'turn_l' : (8, 4, 1, 1),
+        'turn_r' : (8, 4, 5, 1),
+    }
+    return meteor_img, meteor_action_dict
 
 
-def item_function():
+def bullet_select_def(select):
+    bullet_img  = 'Assets/Images/bullet.png'
+    destroy_img = 'Assets/Images/bullet_destroy.png'
+
+    if select+1 == 1: # Bullet dps
+        bullet_dict = {'bullet': (6, 4, 1, 1)}
+
+    elif select+1 == 2: # Bullet tank
+        bullet_dict = {'bullet': (6, 4, 5, 7)}
+
+    elif select+1 == 3: # Bullet heal
+        bullet_dict = {'bullet': (6, 4, 5, 1)}
+
+    else: # Bullet enemy
+        bullet_dict = {'bullet': (6, 4, 1, 7)}
+
+    return bullet_img, bullet_dict, destroy_img
+
+
+def missile_select_def(select, explosion):
+    if not explosion:
+        missile_img  = f'Assets/Images/missile.png'
+        missile_dict = {'missile': (5, 11, 1, 1), 'destroy': (5, 4, 12, 1)}
+        return missile_img, missile_dict
+
+    else:
+        missile_exp_img  = f'Assets/Images/missile_exp_{select+1}.png'
+        missile_exp_dict = {'destroy': (5, 6, 1, 1)}
+        return missile_exp_img, missile_exp_dict
+
+
+def item_def():
     item_img       = 'Assets/Images/items.png'
-    item_get_img   = 'Assets/Images/bullet_2.png'
+    item_get_img   = 'Assets/Images/item_get.png'
     item_type_dict = {
         'lives'  : (1, 1, 1, 5),
         'health' : (1, 1, 5, 1),
@@ -238,74 +281,65 @@ def item_function():
     }
     return item_img, item_type_dict, item_get_img
 
+freeze_img = 'Assets/Images/freeze.png'
 
 
-bg_img = 'Assets/Images/background.jpg'
+def planet_def():
+    planet_img = 'Assets/Images/planets.png'
+    planet_dict = {
+        'planet_1' : (1, 1, 1, 1),
+        'planet_2' : (1, 1, 1, 2),
+        'planet_3' : (1, 1, 1, 3),
+        'planet_4' : (1, 1, 2, 1),
+        'planet_5' : (1, 1, 2, 2),
+        'planet_6' : (1, 1, 2, 3),
+        'planet_7' : (1, 1, 3, 1),
+        'planet_8' : (1, 1, 3, 2),
+        'planet_9' : (1, 1, 3, 3),
+    }
+    return planet_img, planet_dict
 
 
-meteor_img = 'Assets/Images/meteor.png'
-meteor_action_dict = {
-    'turn_l' : (8, 4, 1, 1),
-    'turn_r' : (8, 4, 5, 1),
-}
-
-
-planet_img = 'Assets/Images/planets.png'
-planet_dict = {
-    'planet_1' : (1, 1, 1, 1),
-    'planet_2' : (1, 1, 1, 2),
-    'planet_3' : (1, 1, 1, 3),
-    'planet_4' : (1, 1, 2, 1),
-    'planet_5' : (1, 1, 2, 2),
-    'planet_6' : (1, 1, 2, 3),
-    'planet_7' : (1, 1, 3, 1),
-    'planet_8' : (1, 1, 3, 2),
-    'planet_9' : (1, 1, 3, 3),
-}
-
-
-explosion_0_img = 'Assets/Images/explosion_0.png'
-explosion_1_img = 'Assets/Images/explosion_1.png'
-explosion_2_img = 'Assets/Images/explosion_2.png'
-explosion_3_img = 'Assets/Images/explosion_3.png'
-explosion_dict = {
-    'death'   : (8, 8, 1, 1),
-    'destroy' : (8, 8, 1, 1),
-}
-
-
-game_over_img = 'Assets/Images/game_over.png'
+def explosion_type_def(num):
+    explosion_img = f'Assets/Images/explosion_{num}.png'
+    explosion_dict = {
+        'death'   : (8, 8, 1, 1),
+        'destroy' : (8, 8, 1, 1),
+    }
+    return explosion_img, explosion_dict
 
 
 # Load music and sounds
-scene_music_list = ['main', 'menu', 'game', 'record', 'danger']
-def load_music(scene_music):
-    return f'Assets/Audio/_music_{scene_music_list[scene_music]}.ogg'
+def load_music(music):
+    scene_music_list = ['main', 'menu', 'game', 'record', 'danger']
+    return f'Assets/Audio/_music_{scene_music_list[music]}.ogg'
 
-sound_list = [
-    'select',
-    'select_loop',
-    'portal_loop',
-    'confirm',
-    'start',
-    'pause',
-    'bullet',
-    'empty_ammo',
-    'missile',
-    'missile_countdown',
-    'missile_explosion',
-    'empty_load',
-    'move',
-    'backmove',
-    'turbo',
-    'explosion',
-    'item_standby',
-    'item_get',
-    'win',
-    'death',
-    'game_over',
-]
+
 def load_sound(sfx):
+    sound_list = [
+        'select',
+        'select_loop',
+        'portal_loop',
+        'confirm',
+        'start',
+        'pause',
+        'bullet',
+        'empty_ammo',
+        'missile',
+        'missile_countdown',
+        'missile_explosion',
+        'empty_load',
+        'move',
+        'backmove',
+        'turbo',
+        'explosion',
+        'item_standby',
+        'item_get',
+        'win',
+        'death',
+        'game_over',
+    ]
     if sfx in sound_list:
         return f'Assets/Audio/{sfx}.ogg'
-    else: pass
+    else:
+        return f'Assets/Audio/game_over.ogg'

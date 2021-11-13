@@ -1,7 +1,7 @@
 import pygame, random
 
 from .settings import FPS, COLOR
-from .manager  import icon_type_function, game_over_img, button_img, button_dict, bar_img, bar_dict, key_img, key_dict, board_img, board_dict, font_function, item_function
+from .manager  import button_def, bar_def, key_def, board_def, item_def, logo_type_def, font_type_def, icon_type_def
 
 
 class Timer():
@@ -178,18 +178,20 @@ class Sprite_sheet(pygame.sprite.Sprite):
 
 
 class Logo(Sprite_sheet):
-    def __init__(self, screen, **kwargs):
-        super().__init__(game_over_img)
-        self.create_animation(600, 350, {'game_over': (1, 3, 1, 1)})
-
+    def __init__(self, screen, logo, **kwargs):
+        logo_img, logo_dict, logo_size = logo_type_def(logo)
+        super().__init__(logo_img)
         self.screen = screen
 
+        # Create image and rect
+        self.create_animation(logo_size[0], logo_size[1], logo_dict)
         self.image  = self.animation_dict[self.action][self.frame_index]
         self.rect   = self.image.get_rect(**kwargs)
 
 
 class Button(Sprite_sheet):
     def __init__(self, screen, text, letter=3, size=24, color=COLOR('BLACK'), **kwargs):
+        button_img, button_dict = button_def()
         super().__init__(button_img)
         self.create_animation(250, 75, button_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
@@ -201,7 +203,7 @@ class Button(Sprite_sheet):
         self.size   = size
         self.color  = color
 
-        self.font = pygame.font.Font(font_function(self.letter), self.size)
+        self.font = pygame.font.Font(font_type_def(self.letter), self.size)
         self.font_render = self.font.render(self.text, True, self.color)
         self.text_rect   = self.font_render.get_rect(center=(self.rect.centerx, self.rect.centery))
 
@@ -213,7 +215,7 @@ class Button(Sprite_sheet):
 
     def update(self):
         self.update_animation()
-        self.font = pygame.font.Font(font_function(self.letter), self.size)
+        self.font = pygame.font.Font(font_type_def(self.letter), self.size)
         self.font_render = self.font.render(self.text, True, self.color)
         self.text_rect   = self.font_render.get_rect(center=(self.rect.centerx, self.rect.centery))
         if self.many:
@@ -265,6 +267,7 @@ class Button(Sprite_sheet):
 
 class Bar(Sprite_sheet):
     def __init__(self, screen, text, letter=3, size=20, color=COLOR('WHITE'), **kwargs):
+        bar_img, bar_dict = bar_def()
         super().__init__(bar_img)
         self.create_animation(300, 50, bar_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
@@ -276,7 +279,7 @@ class Bar(Sprite_sheet):
         self.size   = size
         self.color  = color
 
-        self.font = pygame.font.Font(font_function(self.letter), self.size)
+        self.font = pygame.font.Font(font_type_def(self.letter), self.size)
         self.font_render = self.font.render(self.text, True, self.color)
         self.text_rect   = self.font_render.get_rect(midright=(self.rect.left - self.rect.width//12, self.rect.centery))
 
@@ -288,7 +291,7 @@ class Bar(Sprite_sheet):
 
     def update(self):
         self.update_animation()
-        self.font = pygame.font.Font(font_function(self.letter), self.size)
+        self.font = pygame.font.Font(font_type_def(self.letter), self.size)
         self.font_render = self.font.render(self.text, True, self.color)
 
         self.gage.update()
@@ -326,6 +329,7 @@ class Bar(Sprite_sheet):
 
 class Keyboard(Sprite_sheet):
     def __init__(self, screen, text, letter=3, size=24, color=COLOR('BLACK'), **kwargs):
+        key_img, key_dict = key_def()
         super().__init__(key_img)
         self.create_animation(50, 50, key_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
@@ -337,14 +341,14 @@ class Keyboard(Sprite_sheet):
         self.size   = size
         self.color  = color
 
-        self.font = pygame.font.Font(font_function(self.letter), self.size)
+        self.font = pygame.font.Font(font_type_def(self.letter), self.size)
         self.font_render = self.font.render(self.text, True, self.color)
         self.text_rect   = self.font_render.get_rect(center=(self.rect.centerx, self.rect.centery))
         self.trigger = False
 
     def update(self):
         self.update_animation()
-        self.font = pygame.font.Font(font_function(self.letter), self.size)
+        self.font = pygame.font.Font(font_type_def(self.letter), self.size)
         self.font_render = self.font.render(self.text, True, self.color)
         self.text_rect   = self.font_render.get_rect(center=(self.rect.centerx, self.rect.centery))
 
@@ -389,6 +393,7 @@ class Keyboard(Sprite_sheet):
 
 class Board(Sprite_sheet):
     def __init__(self, screen, document='', letter=3, size=16, color=COLOR('BLACK'), **kwargs):
+        board_img, board_dict = board_def()
         super().__init__(board_img)
         self.create_animation(600, 300, board_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
@@ -434,7 +439,7 @@ class Board(Sprite_sheet):
         self.font_list = []
         self.rect_list = []
         for line, index in zip(self.text_list, range(len(self.text_list))):
-            font = pygame.font.Font(font_function(self.letter), self.size)
+            font = pygame.font.Font(font_type_def(self.letter), self.size)
             self.font_list.append(font.render(line, True, self.color))
             rect = self.font_list[index].get_rect(**kwargs)
             self.rect_list.append(rect)
@@ -459,7 +464,7 @@ class View(pygame.sprite.Sprite):
 
         self.kwargs = kwargs
 
-        self.font  = pygame.font.Font(font_function(self.letter), self.size)
+        self.font  = pygame.font.Font(font_type_def(self.letter), self.size)
         self.image = self.font.render(self.text, True, self.color)
         self.rect  = self.image.get_rect(**self.kwargs)
 
@@ -489,12 +494,12 @@ class View(pygame.sprite.Sprite):
 class Canvas(Sprite_sheet):
 
     def __init__(self, screen, icon, color, x=0, y=0, **kwargs):
-        item_img, item_type_dict, item_get_img = item_function()
+        item_img, item_dict, item_get_img = item_def()
         super().__init__(item_img)
         self.screen = screen
 
         # Create image and rect
-        self.create_animation(100, 100, item_type_dict, scale=0.4)
+        self.create_animation(100, 100, item_dict, scale=0.4)
         self.image = self.animation_dict[self.action][self.frame_index]
         self.rect  = self.image.get_rect(**kwargs)
 
@@ -524,12 +529,12 @@ class Canvas(Sprite_sheet):
 class Icon(Sprite_sheet):
 
     def __init__(self, screen, icon_type, scale=4, **kwargs):
-        icon_img, icon_type_dict = icon_type_function(icon_type)
+        icon_img, icon_dict = icon_type_def(icon_type)
         super().__init__(icon_img)
         self.screen = screen
 
         # Load icon image
-        self.create_animation(100, 100, icon_type_dict)
+        self.create_animation(100, 100, icon_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
         # Get icon rect
         self.rect = self.image.get_rect(**kwargs)
@@ -564,7 +569,7 @@ class Icon(Sprite_sheet):
             self.rect.height -= 4
 
 
-class HealthBar():
+class Health_bar():
     def __init__(self, screen, max_health, SCREEN_W, SCREEN_H):
         self.screen = screen
         self.max_health = max_health
@@ -616,19 +621,22 @@ class Screen_fade():
 
 class Particles():
 
-    def __init__(self, particle_type, screen, size=10, image=None):
+    def __init__(self, particle_type, screen, image, select=-1):
         self.particle_type = particle_type
         self.screen = screen
-        self.size   = size
         self.image  = image
         self.width  = self.image.get_rect().width
         self.height = self.image.get_rect().height
+        self.size   = 10
 
         if   self.particle_type == 'glow':
             self.color_list = [pygame.Color('Gray'), pygame.Color('White')]
 
         elif self.particle_type == 'shoot':
-            self.color_list = [pygame.Color('White'), pygame.Color('Yellow'), pygame.Color('Orange')]
+            if   select == 0: self.color_list = [pygame.Color('Red')]
+            elif select == 1: self.color_list = [pygame.Color('Blue')]
+            elif select == 2: self.color_list = [pygame.Color('Green')]
+            else:             self.color_list = [pygame.Color('Yellow')]
 
         elif self.particle_type == 'fire':
             self.color_list = [pygame.Color('Orange'), pygame.Color('Yellow'), pygame.Color('Cyan'), pygame.Color('Gray')]
@@ -651,6 +659,23 @@ class Particles():
             if particle[3] <= 0:
                 self.particle_list.remove(particle)
 
+    def add_shoot(self, pos_x, pos_y, direction_x, direction_y):
+        colour = random.randint(0, len(self.color_list) -1)
+        move_x = 0
+        move_y = random.randint(0, 1)
+        radius = random.randint(2, 6)
+
+        self.particle_list.append([self.color_list[colour], [pos_x, pos_y], [move_x, move_y], radius])
+
+        for particle in self.particle_list:
+            particle[1][0] += particle[2][0] * direction_x * -1
+            particle[1][1] += particle[2][1] * direction_y * -1
+            particle[2][1] += 0.1
+            particle[3] -= 1
+            pygame.draw.circle(self.screen, particle[0], particle[1], int(particle[3]))
+            if particle[3] <= 0:
+                self.particle_list.remove(particle)
+
     def add_circle(self, pos_x, pos_y, direction_x, direction_y):
         colour = random.randint(0, len(self.color_list) -1)
         # move_x = random.randint(0, 8) / 4 -1
@@ -664,7 +689,7 @@ class Particles():
             particle[1][0] += particle[2][0] * direction_x * -1
             particle[1][1] += particle[2][1] * direction_y * -1
             particle[2][1] += 0.1
-            particle[3] -= 0.1
+            particle[3] -= 0.3
             pygame.draw.circle(self.screen, particle[0], particle[1], int(particle[3]))
             if particle[3] <= 0:
                 self.particle_list.remove(particle)

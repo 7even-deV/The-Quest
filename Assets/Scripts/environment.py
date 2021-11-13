@@ -1,7 +1,7 @@
 import pygame, random
 
-from .manager  import planet_img, planet_dict
-from .tools    import Sprite_sheet
+from .manager import planet_def
+from .tools   import Sprite_sheet
 
 
 class Foreground():
@@ -112,6 +112,7 @@ class Farground():
 class Planet(Sprite_sheet):
 
     def __init__(self, screen, planet, init_planet, SCREEN_W, SCREEN_H, **kwargs):
+        planet_img, planet_dict = planet_def()
         super().__init__(planet_img)
         self.create_animation(700, 400, planet_dict)
         self.image = self.animation_dict[self.action][self.frame_index]

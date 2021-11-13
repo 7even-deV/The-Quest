@@ -1,9 +1,9 @@
 import pygame, sys, random
 
-from .settings    import SCREEN_SIZE, FPS, MUSIC_VOL, SOUND_VOL, LOGO, STARS, LIVES, SURGE_NUM, enemy_select, enemy_position
+from .settings    import SCREEN_SIZE, FPS, MUSIC_VOL, SOUND_VOL, LOGO, STARS, LIVES, SURGE_NUM
 from .documents   import CREDITS, HISTORY, GUIDE
-from .manager     import msg_dict, button_list, bar_list, keyboard_list, statue_img, bg_img, lives_img, load_music, load_sound, record_btn_list
-from .tools       import Timer, Logo, Button, Bar, Keyboard, Board, View, Canvas, Icon, HealthBar, Screen_fade
+from .manager     import msg_dict, button_list, record_btn_list, bar_list, keyboard_list, statue_img, bg_img, load_music, load_sound
+from .tools       import Timer, Logo, Button, Bar, Keyboard, Board, View, Canvas, Icon, Health_bar, Screen_fade
 from .environment import Foreground, Background, Farground, Planet, Portal
 from .players     import Player
 from .enemies     import Enemy
@@ -21,7 +21,7 @@ class Scene():
         self.monitor_size = [pygame.display.Info().current_w, pygame.display.Info().current_h]
 
         user_data = self.load_username()
-        width, height   = user_data[9], user_data[10]
+        width, height   = user_data[14], user_data[15]
         self.screen     = pygame.display.set_mode((width, height), pygame.RESIZABLE)
         self.fullscreen = False
 
@@ -73,23 +73,34 @@ class Scene():
         self.db.update_data(username, MUSIC=music)
         self.db.update_data(username, SOUND=sound)
 
-    def load_data(self, username, level, score):
-        user_data = self.db.read_data(username)
+    def load_data(self, username, weapon, level, score, enemy=0, meteor=0):
+        user_data = self.db.read_data(username)[0]
 
-        highlevel = user_data[0][3]
+        highlevel = user_data[5]
+        highscore = user_data[7]
+        T_enemy   = user_data[9]
+        T_meteor  = user_data[11]
+
         if level > highlevel:
             highlevel = level
 
-        highscore = user_data[0][6]
         if score > highscore:
             highscore = score
             new_highscore = True
         else: new_highscore = False
 
+        T_enemy  += enemy
+        T_meteor += meteor
+
+        self.db.update_data(username, WEAPON=weapon)
         self.db.update_data(username, LEVEL=level)
         self.db.update_data(username, HIGHLEVEL=highlevel)
         self.db.update_data(username, SCORE=score)
         self.db.update_data(username, HIGHSCORE=highscore)
+        self.db.update_data(username, ENEMY=enemy)
+        self.db.update_data(username, T_ENEMY=T_enemy)
+        self.db.update_data(username, METEOR=meteor)
+        self.db.update_data(username, T_METEOR=T_meteor)
 
         return new_highscore
 
@@ -170,14 +181,19 @@ class Main(Scene):
         username  = user_data[0]
         style     = user_data[1]
         model     = user_data[2]
-        level     = user_data[3]
-        highlevel = user_data[4]
-        score     = user_data[5]
-        highscore = user_data[6]
-        music     = user_data[7]
-        sound     = user_data[8]
-        SCREEN_W  = user_data[9]
-        SCREEN_H  = user_data[10]
+        weapon    = user_data[3]
+        level     = user_data[4]
+        highlevel = user_data[5]
+        score     = user_data[6]
+        highscore = user_data[7]
+        enemy     = user_data[8]
+        T_enemy   = user_data[9]
+        meteor    = user_data[10]
+        T_meteor  = user_data[11]
+        music     = user_data[12]
+        sound     = user_data[13]
+        SCREEN_W  = user_data[14]
+        SCREEN_H  = user_data[15]
 
         pygame.mixer.music.set_volume(music)
         for sfx in self.sfx_list:
@@ -647,14 +663,19 @@ class Menu(Scene):
         username  = user_data[0]
         style     = user_data[1]
         model     = user_data[2]
-        level     = user_data[3]
-        highlevel = user_data[4]
-        score     = user_data[5]
-        highscore = user_data[6]
-        music     = user_data[7]
-        sound     = user_data[8]
-        SCREEN_W  = user_data[9]
-        SCREEN_H  = user_data[10]
+        weapon    = user_data[3]
+        level     = user_data[4]
+        highlevel = user_data[5]
+        score     = user_data[6]
+        highscore = user_data[7]
+        enemy     = user_data[8]
+        T_enemy   = user_data[9]
+        meteor    = user_data[10]
+        T_meteor  = user_data[11]
+        music     = user_data[12]
+        sound     = user_data[13]
+        SCREEN_W  = user_data[14]
+        SCREEN_H  = user_data[15]
 
         pygame.mixer.music.set_volume(music)
         for sfx in self.sfx_list:
@@ -854,8 +875,8 @@ class Game(Scene):
         self.highscore_view = View(self.screen, topright=(SCREEN_W-SCREEN_W//30, SCREEN_H*0.015), size=20, color=pygame.Color('Orange'))
         self.score_view     = View(self.screen, topright=(SCREEN_W-SCREEN_W//30, SCREEN_H*0.055), size=20, color=pygame.Color('Cyan'))
 
-        self.paused         = View(self.screen, center  =(SCREEN_W//2, SCREEN_H//3), letter=0, size=60, color=pygame.Color('Red'))
-        self.space          = View(self.screen, center  =(SCREEN_W//2, SCREEN_H//2), letter=0, size=20, color=pygame.Color('Green'))
+        self.paused  = View(self.screen, center=(SCREEN_W//2, SCREEN_H//3), letter=0, size=60, color=pygame.Color('Red'))
+        self.loading = Logo(self.screen, 'loading', center=(SCREEN_W//2, SCREEN_H//2))
 
         self.canvas_group.empty()
         self.canvas_group.add(self.lives_canvas, self.ammo_canvas, self.load_canvas, self.weapon_canvas, self.speed_canvas, self.turbo_canvas,\
@@ -893,8 +914,8 @@ class Game(Scene):
         for group in range(level*10//2):
             select = random.randint(0, 2)
             temp_list = []
-            for num in range(random.randint(1, level)):
-                temp_list.append(Enemy(self.screen, select, 2+level*0.1, self.player, SCREEN_W, SCREEN_H, [self.group_list, self.enemy_sfx_list], center=(enemy_position(select, num))))
+            for number in range(random.randint(1, level)):
+                temp_list.append(Enemy(self.screen, number, select, 2+level*0.1, self.player, SCREEN_W, SCREEN_H, [self.group_list, self.enemy_sfx_list]))
 
             self.enemy_list.append(temp_list)
 
@@ -911,22 +932,28 @@ class Game(Scene):
 
             self.meteor_list.append(temp_list)
 
-    def process_data(self, username, level, score, lives, init_planet):
+    def process_data(self, username, weapon, level, score, enemy, meteor, lives, init_planet):
         self.empty_level()
-        self.load_data(username, level, score)
+        self.load_data(username, weapon, level, score, enemy, meteor)
         user_data = self.db.read_data(username)[0]
-        style = user_data[1]
-        model = user_data[2]
-        level = user_data[3]
 
-        SCREEN_W = user_data[9]
-        SCREEN_H = user_data[10]
+        style    = user_data[1]
+        model    = user_data[2]
+        weapon   = user_data[3]
+        level    = user_data[4]
+        score    = user_data[6]
+        enemy    = user_data[8]
+        meteor   = user_data[10]
+        SCREEN_W = user_data[14]
+        SCREEN_H = user_data[15]
+
         self.reset(SCREEN_W, SCREEN_H)
+        temp_list = [weapon, level, score, enemy, meteor, SCREEN_W, SCREEN_H]
 
         # Create sprites
-        self.player = Player(self.screen, style, model, level*100, level, lives, score, SCREEN_W, SCREEN_H, self.group_list)
+        self.player = Player(self.screen, style, model, lives, [temp_list, self.group_list])
         self.environment_create(init_planet, SCREEN_W, SCREEN_H)
-        self.health_bar = HealthBar(self.screen, self.player.max_health, SCREEN_W, SCREEN_H)
+        self.health_bar = Health_bar(self.screen, self.player.max_health, SCREEN_W, SCREEN_H)
         self.enemy_create(level, SCREEN_W, SCREEN_H)
         self.meteor_surge(level, SURGE_NUM, SCREEN_W, SCREEN_H)
         self.meteor_list_copy = self.meteor_list.copy()
@@ -949,18 +976,23 @@ class Game(Scene):
         username  = user_data[0]
         style     = user_data[1]
         model     = user_data[2]
-        level     = user_data[3]
-        highlevel = user_data[4]
-        score     = user_data[5]
-        highscore = user_data[6]
-        music     = user_data[7]
-        sound     = user_data[8]
-        SCREEN_W  = user_data[9]
-        SCREEN_H  = user_data[10]
+        weapon    = user_data[3]
+        level     = user_data[4]
+        highlevel = user_data[5]
+        score     = user_data[6]
+        highscore = user_data[7]
+        enemy     = user_data[8]
+        T_enemy   = user_data[9]
+        meteor    = user_data[10]
+        T_meteor  = user_data[11]
+        music     = user_data[12]
+        sound     = user_data[13]
+        SCREEN_W  = user_data[14]
+        SCREEN_H  = user_data[15]
 
         init_planet = random.randint(1, 9)
 
-        self.process_data(username, level, 0, LIVES, init_planet)
+        self.process_data(username, 1, level, 0, 0, 0, LIVES, init_planet)
 
         pygame.mixer.music.set_volume(music)
         for sfx in self.sfx_list:
@@ -1150,17 +1182,24 @@ class Game(Scene):
                             self.surge_index += 1
                             self.surge_start = False
                             self.enemy.retired = True
-                            self.item_create('chance', self.player, SCREEN_W, SCREEN_H)
+                            self.item_create('random', self.player, SCREEN_W, SCREEN_H)
                             self.music(4, scan_list[0])
                         else:
                             self.surge_end = True
                             self.enemy.retired = False
-                            self.item_create('chance', self.player, SCREEN_W, SCREEN_H)
+                            self.item_create('random', self.player, SCREEN_W, SCREEN_H)
                             self.music(2, scan_list[0])
 
                 for self.environment in self.environment_list:
                     self.environment.update(self.player)
                     self.environment.draw()
+
+                for bullet in self.bullet_group:
+                    bullet.update()
+                    bullet.draw()
+
+                self.missile_group.update()
+                self.missile_group.draw(self.screen)
 
                 self.player.update()
                 self.player.draw()
@@ -1178,13 +1217,6 @@ class Game(Scene):
                 for self.enemy in self.enemy_group:
                     self.enemy.update()
                     self.enemy.draw()
-
-                for bullet in self.bullet_group:
-                    bullet.update()
-                    bullet.draw()
-
-                self.missile_group.update()
-                self.missile_group.draw(self.screen)
 
                 self.explosion_group.update()
                 self.explosion_group.draw(self.screen)
@@ -1236,8 +1268,8 @@ class Game(Scene):
                         if self.player.auto_movement() or self.player.auto_land and restart:
                             level += 1
                             init_planet = self.environment.destiny_planet
-                            user_data = self.process_data(username, level, self.player.score, self.player.lives, init_planet)
-                            highscore = user_data[6]
+                            user_data = self.process_data(username, self.player.weapon, level, self.player.score, self.player.dead_enemy, self.player.dead_meteor, self.player.lives, init_planet)
+                            highscore = user_data[7]
                             restart = False
                 else:
                     if not death:
@@ -1251,8 +1283,8 @@ class Game(Scene):
                             self.player.lives -= 1
                             if self.player.lives > 0:
                                 init_planet = self.environment.origin_planet
-                                user_data = self.process_data(username, level, self.player.score, self.player.lives, init_planet)
-                                highscore = user_data[6]
+                                user_data = self.process_data(username, 1, level, self.player.score, 0, 0, self.player.lives, init_planet)
+                                highscore = user_data[7]
                                 self.player.score = 0
                                 self.player.alive = True
                                 death   = False
@@ -1283,9 +1315,8 @@ class Game(Scene):
             self.highscore_view.compare(self.player.score, highscore, "New Highscore", f"Highscore: {highscore}")
 
             if death and not restart:
-                self.space.text = "press <SPACE> to continue"
-                self.space.update()
-                self.space.draw()
+                self.loading.update()
+                self.loading.draw()
 
             for canvas in self.canvas_group:
                 canvas.update()
@@ -1295,7 +1326,7 @@ class Game(Scene):
             pygame.display.update()
 
         # *After* exiting the while loop, return data
-        self.load_data(username, level, self.player.score)
+        self.load_data(username, self.player.weapon, self.player.level, self.player.score)
 
         return browser, play
 
@@ -1327,7 +1358,7 @@ class Record(Scene):
         self.command_list[0].select_effect(True)
 
     def reset(self, play, SCREEN_W, SCREEN_H):
-        self.game_over_logo = Logo(self.screen, midtop=(SCREEN_W//2, SCREEN_H*0.01))
+        self.game_over_logo = Logo(self.screen, 'game_over', midtop=(SCREEN_W//2, SCREEN_H*0.01))
         self.ranking_view   = View(self.screen, center=(SCREEN_W//2, SCREEN_H//8), letter=0, size=30)
         self.idle_time_view = View(self.screen, midbottom=(SCREEN_W//2, SCREEN_H-SCREEN_H*0.02), letter=2, size=20)
         self.board = Board(self.screen, midbottom=(SCREEN_W//2, 0))
@@ -1354,21 +1385,26 @@ class Record(Scene):
         username  = user_data[0]
         style     = user_data[1]
         model     = user_data[2]
-        level     = user_data[3]
-        highlevel = user_data[4]
-        score     = user_data[5]
-        highscore = user_data[6]
-        music     = user_data[7]
-        sound     = user_data[8]
-        SCREEN_W  = user_data[9]
-        SCREEN_H  = user_data[10]
+        weapon    = user_data[3]
+        level     = user_data[4]
+        highlevel = user_data[5]
+        score     = user_data[6]
+        highscore = user_data[7]
+        enemy     = user_data[8]
+        T_enemy   = user_data[9]
+        meteor    = user_data[10]
+        T_meteor  = user_data[11]
+        music     = user_data[12]
+        sound     = user_data[13]
+        SCREEN_W  = user_data[14]
+        SCREEN_H  = user_data[15]
 
         pygame.mixer.music.set_volume(music)
         for sfx in self.sfx_list:
             sfx.set_volume(sound)
         scan_list = [music, sound]
 
-        new_highscore = self.load_data(username, level, score)
+        new_highscore = self.load_data(username, weapon, level, score)
         self.reset(play, SCREEN_W, SCREEN_H)
 
         game_over = True
@@ -1453,12 +1489,12 @@ class Record(Scene):
                         # Button - Credits
                         elif self.command_list[2].trigger:
                             if play:
-                                browser = 0
-                                run = False
-                            else:
-                                self.board.show = not self.board.show
-                                if self.board.show:
-                                    self.board.create_textline(CREDITS, center=(self.board.rect.centerx, self.board.rect.top))
+                                self.game_over = not game_over
+                                self.timer_list[0].count = 0
+
+                            self.board.show = not self.board.show
+                            if self.board.show:
+                                self.board.create_textline(CREDITS, center=(self.board.rect.centerx, self.board.rect.top))
 
                         # Button - Exit & Back
                         elif self.command_list[3].trigger:

@@ -1,5 +1,3 @@
-import random
-
 # Standard screen resolutions
 SCREEN_SIZE = {
     'VGA-h'   : (640, 480),
@@ -15,28 +13,27 @@ SCREEN_SIZE = {
 
     'FULL'    : 'Fullscreen',
 }
-# Game window
-resize = 1
-SCREEN_WIDTH  = SCREEN_SIZE[list(SCREEN_SIZE)[resize]][0]
-SCREEN_HEIGHT = SCREEN_SIZE[list(SCREEN_SIZE)[resize]][0]
+# # Game window
+# resize = 1
+# SCREEN_WIDTH  = SCREEN_SIZE[list(SCREEN_SIZE)[resize]][0]
+# SCREEN_HEIGHT = SCREEN_SIZE[list(SCREEN_SIZE)[resize]][0]
 
 # Define caption
 CAPTION = ('T h e   Q u e s t   -   ',
 ('M a i n', 'M e n u', 'G a m e', 'R e c o r d'))
 
+# Set framerate
+FPS = 60
 
 MUSIC_VOL = 0.5
 SOUND_VOL = 0.5
 LOGO = 500
 STARS = 50
 
-# Set framerate
-FPS = 60
-
 # Define game variables
 SCENE = 0
-LIVES = 3
 LEVEL = 1
+LIVES = 3
 ENEMY_SCALE = 1
 METEOR_SCALE = 3
 SURGE_NUM = 1
@@ -47,21 +44,12 @@ player_dict = {
     'speed'  : (2.0, 1.0, 3.0),
 }
 
-enemy_select = 0
 enemy_dict = {
     'scale' : (1, 1, 1),
     'ammo'  : (100, 10, 0),
     'load'  : (0, 0, 1),
     'exp'   : (20, 10, 30),
 }
-def enemy_position(select, for_enemy):
-    if select == 0:
-        return (random.randint(100, SCREEN_WIDTH-100), -100)
-    if select == 1:
-        return (-100*for_enemy, SCREEN_HEIGHT//5)
-    if select == 2:
-        return (random.randint(100, SCREEN_WIDTH-100), -100)
-
 
 # Define colours (R, G, B)
 def COLOR(color_key):

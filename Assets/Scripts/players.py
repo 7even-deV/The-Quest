@@ -1,44 +1,48 @@
 import pygame
 
-from .settings import FPS, player_dict
-from .manager  import player_select_function, explosion_3_img, explosion_dict
+from .settings import player_dict
+from .manager  import player_select_def, explosion_type_def
 from .tools    import Sprite_sheet, Timer, Particles
 from .weapons  import Bullet, Missile
 
 
 class Player(Sprite_sheet):
 
-    def __init__(self, screen, style, model, ammo, load, lives, score, SCREEN_W, SCREEN_H, *args, **kwargs):
-        player_img, player_action_dict = player_select_function(style, model)
+    def __init__(self, screen, style, model, lives, *args, **kwargs):
+        player_img, player_action_dict = player_select_def(style, model)
         super().__init__(player_img)
         self.screen = screen
         self.select = style
-        self.ammo = (ammo + player_dict['ammo'][self.select]) // 2
-        self.start_ammo = ammo
-        self.shoot_cooldown = 0
-        self.load = load
-        self.start_load = load
-        self.throw_cooldown = 0
-        self.score = score
-        self.dead_enemy  = 0
-        self.dead_meteor = 0
-        self.weapon = 1
-        self.SCREEN_W = SCREEN_W
-        self.SCREEN_H = SCREEN_H
+        self.lives  = lives
 
-        self.bullet_group    = args[0][0]
-        self.missile_group   = args[0][1]
-        self.enemy_group     = args[0][2]
-        self.meteor_group    = args[0][3]
-        self.explosion_group = args[0][4]
+        self.weapon          = args[0][0][0]
+        self.level           = args[0][0][1]
+        self.score           = args[0][0][2]
+        self.dead_enemy      = args[0][0][3]
+        self.dead_meteor     = args[0][0][4]
+        self.SCREEN_W        = args[0][0][5]
+        self.SCREEN_H        = args[0][0][6]
 
-        # Load player image
+        self.bullet_group    = args[0][1][0]
+        self.missile_group   = args[0][1][1]
+        self.enemy_group     = args[0][1][2]
+        self.meteor_group    = args[0][1][3]
+        self.explosion_group = args[0][1][4]
+
+        # Load player image and rect
         self.create_animation(100, 100, player_action_dict)
-        self.sheet = pygame.image.load(explosion_3_img).convert_alpha()
+        explosion_img, explosion_dict = explosion_type_def(2)
+        self.sheet = pygame.image.load(explosion_img).convert_alpha()
         self.create_animation(100, 100, explosion_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
-        # Get player rect
-        self.rect = self.image.get_rect(center=(self.SCREEN_W//2, self.SCREEN_H+self.SCREEN_H//10))
+        self.rect  = self.image.get_rect(center=(self.SCREEN_W//2, self.SCREEN_H+self.SCREEN_H//10))
+
+        self.ammo = (self.level*100 + player_dict['ammo'][self.select]) // 2
+        self.start_ammo = self.ammo
+        self.shoot_cooldown = 0
+        self.load = self.level
+        self.start_load = self.load
+        self.throw_cooldown = 0
 
         self.vector = pygame.math.Vector2
         self.delta      = self.vector(0, 0)
@@ -54,14 +58,13 @@ class Player(Sprite_sheet):
         self.alive  = True
         self.health = player_dict['health'][self.select]
         self.max_health = self.health
-        self.lives  = lives
         self.shield = False
         self.win    = False
 
         # Define player action variables
-        self.spawn     = True
-        self.turbo     = False
-        self.collide   = False
+        self.spawn   = True
+        self.turbo   = False
+        self.collide = False
 
         self.moving_left  = False
         self.moving_right = False
@@ -74,10 +77,10 @@ class Player(Sprite_sheet):
         self.atomic    = False
         self.turbo_up  = 0
         self.vision = pygame.Rect(self.SCREEN_W//20, self.SCREEN_H//7, self.SCREEN_W-self.SCREEN_W//10, self.SCREEN_H-self.SCREEN_H//5.5)
-        self.particles = Particles('fire', self.screen, 10, self.image)
+        self.particles = Particles('fire', self.screen, self.image, self.select)
         self.timer_list = []
         for _ in range(2):
-            self.timer_list.append(Timer(FPS))
+            self.timer_list.append(Timer())
 
     def update(self):
         # Update player events
@@ -109,11 +112,13 @@ class Player(Sprite_sheet):
             if self.moving_left:
                 self.speed.x = -0.1
                 if self.rotate < 5: self.rotate += 0.5
+                self.direction_x = -1
                 self.update_action('left')
 
             if self.moving_right:
                 self.speed.x = 0.1
                 if self.rotate > -5: self.rotate -= 0.5
+                self.direction_x = 1
                 self.update_action('right')
 
         if self.moving_up and self.moving_down or not self.moving_up and not self.moving_down:
@@ -209,8 +214,8 @@ class Player(Sprite_sheet):
         if self.shoot_cooldown == 0 and self.ammo > 0:
             self.shoot_cooldown = 10
             # create bullet ammo
-            bullet = Bullet('player', self.screen, self.weapon, self.select, self.rect.centerx, self.rect.top, self.rect.width, self.direction_y,\
-                            self.flip_x, self.flip_y, self, self.bullet_group, self.enemy_group, self.meteor_group)
+            bullet = Bullet('player', self.screen, self.weapon, self.select, self.rect.centerx, self.rect.centery-self.rect.height//2, self.rect.width, self.direction_y,\
+                            self.flip_x, self.flip_y, self, self.bullet_group, self.enemy_group, self.meteor_group, self.SCREEN_W, self.SCREEN_H)
             self.bullet_group.add(bullet)
             # Reduce ammo
             self.ammo -= 1
@@ -222,7 +227,7 @@ class Player(Sprite_sheet):
         if self.throw_cooldown == 0 and self.load > 0:
             self.throw_cooldown = 400
             # Create missile load
-            missile = Missile('player', self.screen, self.rect.centerx, self.rect.top, self.direction_y, self.flip_x, self.flip_y,\
+            missile = Missile('player', self.screen, self.select, self.rect.centerx, self.rect.top, self.direction_y, self.flip_x, self.flip_y,\
                                 self, self.enemy_group, self.meteor_group, self.explosion_group, args[1], args[2], args[3])
             self.missile_group.add(missile)
             # Reduce load

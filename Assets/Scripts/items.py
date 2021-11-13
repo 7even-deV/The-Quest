@@ -1,13 +1,13 @@
 import pygame, random
 
-from .manager import item_function
+from .manager import item_def, freeze_img
 from .tools   import Sprite_sheet, Particles, Timer
 
 
 class Item(Sprite_sheet):
 
     def __init__(self, item, screen, player, SCREEN_W, SCREEN_H, *args, **kwargs):
-        item_img, item_type_dict, item_get_img = item_function()
+        item_img, item_type_dict, item_get_img = item_def()
         super().__init__(item_img)
         self.screen = screen
         self.player = player
@@ -28,11 +28,11 @@ class Item(Sprite_sheet):
         self.item_list = list(item_type_dict)[:-1]
         self.chance = False
 
-        if item == 'random':
+        if item   == 'chance':
             self.item_type = random.choice(self.item_list)
             self.validation_loop()
 
-        elif item == 'chance':
+        elif item == 'random':
             self.item_type = random.choice(self.item_list)
             self.validation_loop()
             self.chance = True
@@ -45,7 +45,7 @@ class Item(Sprite_sheet):
         self.collide = False
         self.zoom    = True
 
-        self.particles = Particles('glow', self.screen, 10, self.image)
+        self.particles = Particles('glow', self.screen, self.image)
         self.timer = [Timer(), Timer()]
 
     def validation_loop(self):
@@ -169,3 +169,22 @@ class Item(Sprite_sheet):
 
             self.collide = True
             self.item_get_fx.play()
+
+
+class Freeze(Sprite_sheet):
+
+    def __init__(self, screen):
+        super().__init__(freeze_img)
+        self.screen = screen
+
+        # Create image and rect
+        self.create_animation(100, 100, {'freeze': (8, 8, 1, 1)})
+        self.image = self.animation_dict[self.action][self.frame_index]
+        self.rect  = self.image.get_rect()
+
+        self.update_action('freeze')
+
+    def update(self, **kwargs):
+        self.rect = self.image.get_rect(**kwargs)
+        self.update_animation(25)
+        self.draw()

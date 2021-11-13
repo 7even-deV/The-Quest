@@ -15,7 +15,7 @@ class Template():
         self.item_group = pygame.sprite.Group()
 
     def restart(self):
-        self.player = Player(self.screen, 0, 5, 0, 10, 10, 3, 800, 800, self.game.group_list)
+        self.player = Player(self.screen, 2, 5, 0, [[3, 10, 0, 0, 0, 800, 800], self.game.group_list])
         self.player.spawn = False
         # item = Item(self.screen, self.player, 800, 800, [self.game.item_standby_fx, self.game.item_get_fx], bottomleft=(random.randint(0, SCREEN_WIDTH-SCREEN_WIDTH//10), 0))
         # self.item_group.empty()
@@ -27,6 +27,8 @@ class Template():
 
     def main_loop(self):
         self.restart()
+        shoot = False
+        throw = False
 
         loop = False
         run  = True
@@ -57,11 +59,11 @@ class Template():
                         self.player.moving_down = True
                         self.game.move_fx.play()
 
-                    if event.key == pygame.K_r:
-                        self.player.shoot(self.game.empty_ammo_fx, self.game.bullet_fx)
+                    if event.key == pygame.K_r: # Shoot True
+                        shoot = True
 
-                    if event.key == pygame.K_e:
-                        self.player.throw(self.game.empty_load_fx, self.game.missile_fx, self.game.missile_cd_fx, self.game.missile_exp_fx)
+                    if event.key == pygame.K_e: # Throw True
+                        throw = True
 
                     if event.key == pygame.K_SPACE: # Turbo
                         self.player.turbo = True
@@ -85,24 +87,38 @@ class Template():
                         self.player.moving_down = False
                     if event.key == pygame.K_SPACE: # Turbo
                         self.player.turbo = False
+                    if event.key == pygame.K_r: # Shoot False
+                        shoot = False
+                    if event.key == pygame.K_r: # Throw False
+                        throw = False
 
             # Clear screen and set background color
             self.screen.fill((0, 0, 0))
 
             ''' --- AREA TO UPDATE AND DRAW --- '''
+            if shoot: self.player.shoot(self.game.empty_ammo_fx, self.game.bullet_fx)
+            if throw: self.player.throw(self.game.empty_load_fx, self.game.missile_fx, self.game.missile_cd_fx, self.game.missile_exp_fx)
+
+            for bullet in self.game.bullet_group:
+                bullet.update()
+                bullet.draw()
+
+            for missile in self.game.missile_group:
+                missile.update()
+                missile.draw()
 
             self.player.auto_movement()
             self.player.update()
             self.player.draw()
             # print(self.player.delta.x, self.player.speed.y, self.player.health, self.player.ammo, self.player.load)
 
+            for explosion in self.game.explosion_group:
+                explosion.update()
+                explosion.draw()
+
             # for item in self.item_group:
             #     item.update()
             #     item.draw()
-
-            for bullet in self.game.bullet_group:
-                bullet.update()
-                bullet.draw()
 
             # for meteor in self.meteor_list:
             #     meteor.check_collision(self.game.explosion_fx)

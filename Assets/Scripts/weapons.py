@@ -1,14 +1,13 @@
 import pygame
 
-from .settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
-from .manager  import weapon_select_function, missile_img, missile_dict, missile_exp_img, missile_exp_dict
-from .tools    import Sprite_sheet, Timer, Particles
+from .manager import bullet_select_def, missile_select_def
+from .tools   import Sprite_sheet, Timer, Particles
 
 
 class Bullet(Sprite_sheet):
 
     def __init__(self, origin, screen, weapon, select, x, y, w, direction, flip_x, flip_y, *args, **kwargs):
-        bullet_img, weapon_dict = weapon_select_function(select)
+        bullet_img, bullet_dict, destroy_img = bullet_select_def(select)
         super().__init__(bullet_img)
         self.origin = origin
         self.weapon = weapon
@@ -17,7 +16,9 @@ class Bullet(Sprite_sheet):
         self.speed  = 15
 
         # Load bullet image
-        self.create_animation(50, 50, weapon_dict)
+        self.create_animation(50, 50, bullet_dict, scale=0.5)
+        self.sheet = pygame.image.load(destroy_img).convert_alpha()
+        self.create_animation(50, 50, {'destroy': (5, 8, 1, 1)}, scale=0.5)
         self.image = self.animation_dict[self.action][self.frame_index]
         self.rect_list = []
         for i in range(self.weapon):
@@ -34,16 +35,19 @@ class Bullet(Sprite_sheet):
         self.enemy_group    = args[2]
         self.obstacle_group = args[3]
 
-        self.particles = Particles('shoot', self.screen, 10, self.image)
+        self.SCREEN_W       = args[4]
+        self.SCREEN_H       = args[5]
+
+        self.particles = Particles('shoot', self.screen, self.image, self.select)
 
         self.update_action('bullet')
 
     def update(self):
         # Update bullet events
-        self.update_animation(10)
+        self.update_animation(50)
 
         for self.rect in self.rect_list:
-            self.particles.add_image(self.rect.centerx, self.rect.bottom, self.direction, self.direction)
+            self.particles.add_shoot(self.rect.centerx, self.rect.centery, self.direction, self.direction)
 
             if not self.collide:
                 if self.origin == 'player':
@@ -52,7 +56,7 @@ class Bullet(Sprite_sheet):
                     self.enemy_shoot()
 
                 # Check if bullet has gone off screen
-                if self.rect.bottom < 0 or self.rect.top > SCREEN_HEIGHT:
+                if self.rect.bottom < 0 or self.rect.top > self.SCREEN_H:
                     self.kill() # Kill the animation
 
             else: # If the bullet collide it stop and destroy
@@ -88,8 +92,6 @@ class Bullet(Sprite_sheet):
                     self.player.max_speed = self.player.init_speed
                     self.player.less_time = False
                     self.player.freeze    = False
-                    self.player.turbo_up  = 0
-                    self.player.weapon_up = 0
 
     def draw(self):
         for self.rect in self.rect_list:
@@ -97,13 +99,15 @@ class Bullet(Sprite_sheet):
 
 class Missile(Sprite_sheet):
 
-    def __init__(self, origin, screen, x, y, direction, flip_x, flip_y, *args):
+    def __init__(self, origin, screen, select, x, y, direction, flip_x, flip_y, *args):
+        missile_img, missile_dict = missile_select_def(select, False)
         super().__init__(missile_img)
         self.origin = origin
         self.screen = screen
+        self.select = select
 
         # Load missile image
-        self.create_animation(50, 50, missile_dict)
+        self.create_animation(100, 100, missile_dict, scale=0.5)
         self.image  = self.animation_dict[self.action][self.frame_index]
         self.rect   = self.image.get_rect()
         self.width  = self.image.get_width()
@@ -126,7 +130,7 @@ class Missile(Sprite_sheet):
         self.delta_x = 0
         self.delta_y = self.direction * self.speed
         self.countdown = 3
-        self.timer = Timer(FPS)
+        self.timer = Timer()
 
     def update(self):
         # Update missile events
@@ -139,7 +143,7 @@ class Missile(Sprite_sheet):
             self.explosion_fx.play()
 
             # Create the explosion
-            explosion = Explosion(self.screen, center=(self.rect.x, self.rect.y))
+            explosion = Explosion(self.screen, self.select, center=(self.rect.x, self.rect.y))
             self.explosion_group.add(explosion)
 
             # Do damage to anyone that is nearby
@@ -187,17 +191,15 @@ class Missile(Sprite_sheet):
                 self.player.max_speed = self.player.init_speed
                 self.player.less_time = False
                 self.player.freeze    = False
-                self.player.turbo_up  = 0
-                self.player.weapon_up = 0
 
 
 class Explosion(Sprite_sheet):
-    def __init__(self, screen, **kwargs):
-        super().__init__(missile_img)
+    def __init__(self, screen, select, **kwargs):
+        missile_exp_img, missile_exp_dict = missile_select_def(select, True)
+        super().__init__(missile_exp_img)
         self.screen = screen
-        # Load explosion image
-        self.create_animation(50, 50, {'explosion': (5, 4, 12, 1)})
-        self.sheet = pygame.image.load(missile_exp_img).convert_alpha()
+
+        # Load image and rect
         self.create_animation(500, 500, missile_exp_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
         self.rect  = self.image.get_rect(**kwargs)

@@ -1,7 +1,7 @@
 import pygame, random
 
-from .settings import FPS, COLOR
-from .manager  import button_def, bar_def, key_def, board_def, item_def, logo_type_def, font_type_def, icon_type_def
+from .settings import FPS
+from .manager  import button_def, key_def, bar_def, board_def, item_def, logo_type_def, font_type_def, icon_type_def
 
 
 class Timer():
@@ -82,6 +82,45 @@ class Timer():
             self.time_left = 0
             self.frame_num = 0
             return events
+
+
+class View(pygame.sprite.Sprite):
+
+    def __init__(self, screen, text='', letter=3, size=14, color=pygame.Color('White'), **kwargs):
+        super().__init__()
+        self.screen = screen
+        self.text   = text
+        self.letter = letter
+        self.size   = size
+        self.color  = color
+
+        self.kwargs = kwargs
+
+        self.font  = pygame.font.Font(font_type_def(self.letter), self.size)
+        self.image = self.font.render(self.text, True, self.color)
+        self.rect  = self.image.get_rect(**self.kwargs)
+
+        self.delta_x = 0
+        self.delta_y = 0
+        self.fade = 0
+
+    def update(self):
+        self.image = self.font.render(self.text, True, self.color)
+        self.rect  = self.image.get_rect(**self.kwargs)
+
+        self.rect.x += self.delta_x
+        self.rect.y += self.delta_y
+
+    def compare(self, *args):
+        if args[0] > args[1]:
+            self.text = args[2]
+            self.color = pygame.Color('Red')
+        else:
+            self.text = args[3]
+            self.color = pygame.Color('Orange')
+
+    def draw(self):
+        self.screen.blit(self.image, self.rect)
 
 
 class Sprite_sheet(pygame.sprite.Sprite):
@@ -190,7 +229,7 @@ class Logo(Sprite_sheet):
 
 
 class Button(Sprite_sheet):
-    def __init__(self, screen, text, letter=3, size=24, color=COLOR('BLACK'), **kwargs):
+    def __init__(self, screen, text, letter=4, size=24, color=pygame.Color('Black'), **kwargs):
         button_img, button_dict = button_def()
         super().__init__(button_img)
         self.create_animation(250, 75, button_dict)
@@ -207,8 +246,8 @@ class Button(Sprite_sheet):
         self.font_render = self.font.render(self.text, True, self.color)
         self.text_rect   = self.font_render.get_rect(center=(self.rect.centerx, self.rect.centery))
 
-        self.arrow_l = View(self.screen, '<=  ', midright=(self.rect.left, self.rect.centery), letter=2, size=20)
-        self.arrow_r = View(self.screen, '  =>', midleft=(self.rect.right, self.rect.centery), letter=2, size=20)
+        self.arrow_l = View(self.screen, '<- ', letter=1, size=24, midright=(self.rect.left, self.rect.centery))
+        self.arrow_r = View(self.screen, ' ->', letter=1, size=24, midleft=(self.rect.right, self.rect.centery))
 
         self.trigger = False
         self.many    = False
@@ -226,10 +265,10 @@ class Button(Sprite_sheet):
         # Make selection effect
         if select:
             self.update_action('on')
-            self.color = COLOR('WHITE')
+            self.color = pygame.Color('White')
         else:
             self.update_action('off')
-            self.color = COLOR('BLACK')
+            self.color = pygame.Color('Black')
 
     def active_effect(self, active):
         # Make activation effect
@@ -239,7 +278,7 @@ class Button(Sprite_sheet):
             self.rect.w -= 4
             self.rect.h -= 4
 
-            self.color = COLOR('YELLOW')
+            self.color = pygame.Color('Yellow')
             self.text_rect.x += 3
             self.text_rect.y += 1
             self.size -= 1
@@ -249,7 +288,7 @@ class Button(Sprite_sheet):
             self.rect.w += 4
             self.rect.h += 4
 
-            self.color = COLOR('WHITE')
+            self.color = pygame.Color('White')
             self.text_rect.x -= 3
             self.text_rect.y -= 1
             self.size += 1
@@ -265,8 +304,72 @@ class Button(Sprite_sheet):
             self.arrow_r.draw()
 
 
+class Keyboard(Sprite_sheet):
+    def __init__(self, screen, text, letter=4, size=24, color=pygame.Color('Black'), **kwargs):
+        key_img, key_dict = key_def()
+        super().__init__(key_img)
+        self.create_animation(50, 50, key_dict)
+        self.image = self.animation_dict[self.action][self.frame_index]
+        self.rect  = self.image.get_rect(**kwargs)
+
+        self.screen = screen
+        self.text   = text
+        self.letter = letter
+        self.size   = size
+        self.color  = color
+
+        self.font = pygame.font.Font(font_type_def(self.letter), self.size)
+        self.font_render = self.font.render(self.text, True, self.color)
+        self.text_rect   = self.font_render.get_rect(center=(self.rect.centerx, self.rect.centery))
+        self.trigger = False
+
+    def update(self):
+        self.update_animation()
+        self.font = pygame.font.Font(font_type_def(self.letter), self.size)
+        self.font_render = self.font.render(self.text, True, self.color)
+        self.text_rect   = self.font_render.get_rect(center=(self.rect.centerx, self.rect.centery))
+
+    def select_effect(self, select):
+        # Make selection effect
+        if select:
+            self.update_action('on')
+            self.color = pygame.Color('White')
+        else:
+            self.update_action('off')
+            self.color = pygame.Color('Black')
+
+    def active_effect(self, active):
+        # Make activation effect
+        if active:
+            self.rect.x += 2
+            self.rect.y += 2
+            self.rect.w -= 4
+            self.rect.h -= 4
+
+            self.color = pygame.Color('Yellow')
+            self.text_rect.x += 3
+            self.text_rect.y += 1
+            self.size -= 1
+        else:
+            self.rect.x -= 2
+            self.rect.y -= 2
+            self.rect.w += 4
+            self.rect.h += 4
+
+            self.color = pygame.Color('White')
+            self.text_rect.x -= 3
+            self.text_rect.y -= 1
+            self.size += 1
+
+    def draw(self):
+        image = pygame.transform.scale(self.image, (self.rect.w * self.scale, self.rect.h * self.scale))
+        image.set_colorkey(False)
+        self.screen.blit(image, self.rect)
+        self.screen.blit(self.font_render, self.text_rect)
+
+
 class Bar(Sprite_sheet):
-    def __init__(self, screen, text, letter=3, size=20, color=COLOR('WHITE'), **kwargs):
+    def __init__(self, screen, text, letter=4, size=20, color=pygame.Color('White'), **kwargs):
         bar_img, bar_dict = bar_def()
         super().__init__(bar_img)
         self.create_animation(300, 50, bar_dict)
@@ -303,19 +406,19 @@ class Bar(Sprite_sheet):
 
         if self.gage.trigger:
             self.gage.select_effect(True)
-            self.gage.color = COLOR('YELLOW')
-            self.color      = COLOR('YELLOW')
+            self.gage.color = pygame.Color('Yellow')
+            self.color      = pygame.Color('Yellow')
         else:
             self.gage.select_effect(False)
-            self.gage.color = COLOR('WHITE')
-            self.color      = COLOR('WHITE')
+            self.gage.color = pygame.Color('White')
+            self.color      = pygame.Color('White')
 
         if vol_scan == 0.0:
             self.gage.text = "min"
-            self.gage.color = COLOR('ORANGE')
+            self.gage.color = pygame.Color('Orange')
         elif vol_scan == 1.0:
             self.gage.text = "max"
-            self.gage.color = COLOR('ORANGE')
+            self.gage.color = pygame.Color('Orange')
         else:
             self.gage.text = str(vol_scan)
 
@@ -327,72 +430,8 @@ class Bar(Sprite_sheet):
         self.gage.draw()
 
 
-class Keyboard(Sprite_sheet):
-    def __init__(self, screen, text, letter=3, size=24, color=COLOR('BLACK'), **kwargs):
-        key_img, key_dict = key_def()
-        super().__init__(key_img)
-        self.create_animation(50, 50, key_dict)
-        self.image = self.animation_dict[self.action][self.frame_index]
-        self.rect  = self.image.get_rect(**kwargs)
-
-        self.screen = screen
-        self.text   = text
-        self.letter = letter
-        self.size   = size
-        self.color  = color
-
-        self.font = pygame.font.Font(font_type_def(self.letter), self.size)
-        self.font_render = self.font.render(self.text, True, self.color)
-        self.text_rect   = self.font_render.get_rect(center=(self.rect.centerx, self.rect.centery))
-        self.trigger = False
-
-    def update(self):
-        self.update_animation()
-        self.font = pygame.font.Font(font_type_def(self.letter), self.size)
-        self.font_render = self.font.render(self.text, True, self.color)
-        self.text_rect   = self.font_render.get_rect(center=(self.rect.centerx, self.rect.centery))
-
-    def select_effect(self, select):
-        # Make selection effect
-        if select:
-            self.update_action('on')
-            self.color = COLOR('WHITE')
-        else:
-            self.update_action('off')
-            self.color = COLOR('BLACK')
-
-    def active_effect(self, active):
-        # Make activation effect
-        if active:
-            self.rect.x += 2
-            self.rect.y += 2
-            self.rect.w -= 4
-            self.rect.h -= 4
-
-            self.color = COLOR('YELLOW')
-            self.text_rect.x += 3
-            self.text_rect.y += 1
-            self.size -= 1
-        else:
-            self.rect.x -= 2
-            self.rect.y -= 2
-            self.rect.w += 4
-            self.rect.h += 4
-
-            self.color = COLOR('WHITE')
-            self.text_rect.x -= 3
-            self.text_rect.y -= 1
-            self.size += 1
-
-    def draw(self):
-        image = pygame.transform.scale(self.image, (self.rect.w * self.scale, self.rect.h * self.scale))
-        image.set_colorkey(False)
-        self.screen.blit(image, self.rect)
-        self.screen.blit(self.font_render, self.text_rect)
-
-
 class Board(Sprite_sheet):
-    def __init__(self, screen, document='', letter=3, size=16, color=COLOR('BLACK'), **kwargs):
+    def __init__(self, screen, document='', letter=4, size=16, color=pygame.Color('Black'), **kwargs):
         board_img, board_dict = board_def()
         super().__init__(board_img)
         self.create_animation(600, 300, board_dict)
@@ -452,45 +491,6 @@ class Board(Sprite_sheet):
             self.screen.blit(font, (rect.x, rect.top + rect.height * index + self.rect.height//7.5))
 
 
-class View(pygame.sprite.Sprite):
-
-    def __init__(self, screen, text='', letter=3, size=14, color=COLOR('WHITE'), **kwargs):
-        super().__init__()
-        self.screen = screen
-        self.text   = text
-        self.letter = letter
-        self.size   = size
-        self.color  = color
-
-        self.kwargs = kwargs
-
-        self.font  = pygame.font.Font(font_type_def(self.letter), self.size)
-        self.image = self.font.render(self.text, True, self.color)
-        self.rect  = self.image.get_rect(**self.kwargs)
-
-        self.delta_x = 0
-        self.delta_y = 0
-        self.fade = 0
-
-    def update(self):
-        self.image = self.font.render(self.text, True, self.color)
-        self.rect  = self.image.get_rect(**self.kwargs)
-
-        self.rect.x += self.delta_x
-        self.rect.y += self.delta_y
-
-    def compare(self, *args):
-        if args[0] > args[1]:
-            self.text = args[2]
-            self.color = COLOR('RED')
-        else:
-            self.text = args[3]
-            self.color = COLOR('ORANGE')
-
-    def draw(self):
-        self.screen.blit(self.image, self.rect)
-
-
 class Canvas(Sprite_sheet):
 
     def __init__(self, screen, icon, color, x=0, y=0, **kwargs):
@@ -505,7 +505,7 @@ class Canvas(Sprite_sheet):
 
         self.update_action(icon)
 
-        color_list = [COLOR('YELLOW'), COLOR('TEAL')]
+        color_list = [pygame.Color('Yellow'), pygame.Color('Cyan')]
         self.view  = View(self.screen, color=color_list[color], midtop=(self.rect.centerx + x, self.rect.bottom + y))
 
     def update(self):
@@ -515,10 +515,10 @@ class Canvas(Sprite_sheet):
     def switch(self, get_player_item):
         if get_player_item:
             self.view.text = 'on'
-            self.view.color = COLOR('LIME')
+            self.view.color = pygame.Color('Green')
         else:
             self.view.text = 'off'
-            self.view.color = COLOR('RED')
+            self.view.color = pygame.Color('Red')
 
     def draw(self):
         self.image.set_colorkey(False)
@@ -528,23 +528,31 @@ class Canvas(Sprite_sheet):
 
 class Icon(Sprite_sheet):
 
-    def __init__(self, screen, icon_type, scale=4, **kwargs):
+    def __init__(self, screen, icon_type, scale, **kwargs):
         icon_img, icon_dict = icon_type_def(icon_type)
         super().__init__(icon_img)
         self.screen = screen
 
-        # Load icon image
-        self.create_animation(100, 100, icon_dict)
+        # Create image and rect
+        self.create_animation(200, 200, icon_dict, scale=scale)
         self.image = self.animation_dict[self.action][self.frame_index]
-        # Get icon rect
-        self.rect = self.image.get_rect(**kwargs)
-        self.rect.width  = self.rect.width  // 4 * scale
-        self.rect.height = self.rect.height // 4 * scale
+        self.rect  = self.image.get_rect(**kwargs)
 
-    def update(self, select, model):
+        self.ratio = 0
+        self.max_ratio = self.rect.width//1.4
+        self.particles = Particles('select', self.screen, self.image)
+
+    def update(self, select, model, confirm=None, **kwargs):
         # Update player events
         self.icon_select(select, model)
         self.update_animation()
+        if not confirm:
+            if self.ratio < self.max_ratio: self.ratio += 1
+            pygame.draw.circle(self.screen, False, (self.rect.centerx, self.rect.centery), self.ratio)
+            self.particles.add_icon(self.rect.centerx, self.rect.centery, select)
+        else:
+            if self.ratio > 0: self.ratio -= 1
+            pygame.draw.circle(self.screen, False, (self.rect.centerx, self.rect.centery), self.ratio)
 
     def icon_select(self, select, model):
         # Select icon type
@@ -558,34 +566,37 @@ class Icon(Sprite_sheet):
     def trigger_effect(self, active):
         # Make activation effect
         if active:
-            self.rect.x -= 2
-            self.rect.y -= 2
-            self.rect.width += 4
-            self.rect.height += 4
-        else:
             self.rect.x += 2
             self.rect.y += 2
             self.rect.width -= 4
             self.rect.height -= 4
+        else:
+            self.rect.x -= 2
+            self.rect.y -= 2
+            self.rect.width += 4
+            self.rect.height += 4
 
 
 class Health_bar():
-    def __init__(self, screen, max_health, SCREEN_W, SCREEN_H):
+    def __init__(self, screen, health, SCREEN_W, SCREEN_H):
         self.screen = screen
-        self.max_health = max_health
-        self.x = SCREEN_W
-        self.y = SCREEN_H
+        self.health = health
+        self.max_health = self.health
+        self.w = SCREEN_W
+        self.h = SCREEN_H
+        self.color_list = [pygame.Color('Gray'), pygame.Color('Red'), pygame.Color('Green')]
 
-        self.view = View(self.screen, color=COLOR('BLACK'), midleft=(self.x*0.02, self.y*0.024))
+        self.view = View(self.screen, color=pygame.Color('Black'), midleft=(self.w*0.02, self.h*0.024))
 
     def draw(self, health):
         # Update with new health
         self.health = health
         # Calculate health ratio
         ratio = self.health / self.max_health
-        pygame.draw.rect(self.screen, COLOR('SILVER'), (self.x*0.015-2, self.y*0.015-2, self.x*0.208,     self.y*0.025))
-        pygame.draw.rect(self.screen, COLOR('RED'),    (self.x*0.015,   self.y*0.015,   self.x*0.2,       self.y*0.02))
-        pygame.draw.rect(self.screen, COLOR('GREEN'),  (self.x*0.015,   self.y*0.015,   self.x*0.2*ratio, self.y*0.02))
+
+        pygame.draw.rect(self.screen, self.color_list[0], (self.w*0.015-2, self.h*0.015-2, self.w*0.208,     self.h*0.025))
+        pygame.draw.rect(self.screen, self.color_list[1], (self.w*0.015,   self.h*0.015,   self.w*0.2,       self.h*0.02))
+        pygame.draw.rect(self.screen, self.color_list[2], (self.w*0.015,   self.h*0.015,   self.w*0.2*ratio, self.h*0.02))
 
         self.view.update()
         self.view.draw()
@@ -594,16 +605,17 @@ class Health_bar():
 class Screen_fade():
 
     def __init__(self, screen, direction, colour, speed, SCREEN_W, SCREEN_H):
-        self.screen = screen
+        self.screen    = screen
         self.direction = direction
-        self.colour = colour
-        self.speed = speed
-        self.fade_counter = 0
+        self.colour    = colour
+        self.speed     = speed
+        self.fade_counter  = 0
+        self.fade_complete = False
         self.SCREEN_W = SCREEN_W
         self.SCREEN_H = SCREEN_H
 
     def fade(self):
-        fade_complete = False
+        self.fade_complete = False
         self.fade_counter += self.speed
         if self.direction == 'intro': # Whole screen fade
             pygame.draw.rect(self.screen, self.colour, (0 - self.fade_counter, 0, self.SCREEN_W // 2, self.SCREEN_H)) # Opening left
@@ -613,10 +625,10 @@ class Screen_fade():
         if self.direction == 'death': # Vertical screen fade down
             pygame.draw.rect(self.screen, self.colour, (0, 0, self.SCREEN_W, 0 + self.fade_counter))
 
-        if self.fade_counter >= self.SCREEN_H:
-            fade_complete = True
+        if self.fade_counter > self.SCREEN_H:
+            self.fade_complete = True
 
-        return fade_complete
+        return self.fade_complete
 
 
 class Particles():
@@ -629,10 +641,10 @@ class Particles():
         self.height = self.image.get_rect().height
         self.size   = 10
 
-        if   self.particle_type == 'glow':
+        if   self.particle_type == 'item':
             self.color_list = [pygame.Color('Gray'), pygame.Color('White')]
 
-        elif self.particle_type == 'shoot':
+        elif self.particle_type == 'select':
             if   select == 0: self.color_list = [pygame.Color('Red')]
             elif select == 1: self.color_list = [pygame.Color('Blue')]
             elif select == 2: self.color_list = [pygame.Color('Green')]
@@ -643,7 +655,29 @@ class Particles():
 
         self.particle_list = []
 
-    def add_glow(self, pos_x, pos_y, direction_x, direction_y):
+    def add_icon(self, pos_x, pos_y, select):
+        if   select == 0: self.color_list = [pygame.Color('Red')]
+        elif select == 1: self.color_list = [pygame.Color('Blue')]
+        elif select == 2: self.color_list = [pygame.Color('Green')]
+        else:             self.color_list = [pygame.Color('Yellow')]
+
+        colour = random.randint(0, len(self.color_list) -1)
+        number = random.randint(1, 10)
+        move_x = random.randint(-number, number)
+        move_y = random.randint(-number, number)
+        radius = random.randint(1, 5)
+
+        self.particle_list.append([self.color_list[colour], [pos_x, pos_y], [move_x, move_y], radius])
+
+        for particle in self.particle_list:
+            particle[1][0] += particle[2][0]
+            particle[1][1] += particle[2][1]
+            particle[3] -= 0.05
+            pygame.draw.circle(self.screen, particle[0], particle[1], int(particle[3]))
+            if particle[3] <= 0:
+                self.particle_list.remove(particle)
+
+    def add_item(self, pos_x, pos_y, direction_x, direction_y):
         colour = random.randint(0, 255)
         move_x = random.randint(-3, 3)
         move_y = random.randint(-3, 3)
@@ -678,8 +712,8 @@ class Particles():
 
     def add_circle(self, pos_x, pos_y, direction_x, direction_y):
         colour = random.randint(0, len(self.color_list) -1)
-        # move_x = random.randint(0, 8) / 4 -1
-        move_x = 0
+        move_x = random.randint(0, 8) / 4 -1
+        # move_x = 0
         move_y = random.randint(0, 1)
         radius = random.randint(2, 6)
 

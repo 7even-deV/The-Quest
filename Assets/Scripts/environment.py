@@ -91,7 +91,7 @@ class Farground():
 
     def update(self, player):
         # Follow the movement with the Player
-        self.delta_x = -(player.delta.x * (self.speed/2))
+        self.delta_x = -(player.delta.x * (self.speed/2)) if player.alive else 0
         if player.turbo: self.delta_y = self.speed * (2 + player.turbo_up)
         else: self.delta_y = self.speed
 
@@ -114,14 +114,15 @@ class Planet(Sprite_sheet):
     def __init__(self, screen, planet, init_planet, SCREEN_W, SCREEN_H, **kwargs):
         planet_img, planet_dict = planet_def()
         super().__init__(planet_img)
-        self.create_animation(700, 400, planet_dict)
+        self.create_animation(800, 800, planet_dict)
         self.image = self.animation_dict[self.action][self.frame_index]
         self.rect  = self.image.get_rect(**kwargs)
 
         self.screen = screen
         self.planet = planet
+        self.total_planet   = len(planet_dict) - 1
         self.origin_planet  = init_planet
-        self.destiny_planet = random.randint(1, 9)
+        self.destiny_planet = random.randint(1, self.total_planet)
         self.SCREEN_W = SCREEN_W
         self.SCREEN_H = SCREEN_H
 
@@ -134,7 +135,7 @@ class Planet(Sprite_sheet):
         self.update_animation()
 
         if self.origin_planet == self.destiny_planet:
-            self.destiny_planet = random.randint(1, 9)
+            self.destiny_planet = random.randint(1, self.total_planet)
 
         if self.planet == 'origin':
             self.update_action(f'planet_{self.origin_planet}')
@@ -157,21 +158,5 @@ class Planet(Sprite_sheet):
 
     def draw(self):
         image = pygame.transform.flip(self.image, self.flip_x, self.flip_y)
-        image.set_colorkey((255, 255, 255))
+        image.set_colorkey(False)
         self.screen.blit(image, (self.relative_x, self.rect.y))
-
-
-class Portal(Sprite_sheet):
-
-    def __init__(self, screen, **kwargs):
-        super().__init__('Assets/Images/portal.png')
-        self.screen = screen
-
-        self.create_animation(200, 200, {'loop': (5, 3, 1, 1)})
-        self.image = self.animation_dict[self.action][self.frame_index]
-        self.rect  = self.image.get_rect(**kwargs)
-
-    def update(self):
-        self.update_action('loop')
-        self.update_animation(50)
-        self.draw()

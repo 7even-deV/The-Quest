@@ -45,7 +45,7 @@ class Item(Sprite_sheet):
         self.collide = False
         self.zoom    = True
 
-        self.particles = Particles('glow', self.screen, self.image)
+        self.particles = Particles('item', self.screen, self.image)
         self.timer = [Timer(), Timer()]
 
     def validation_loop(self):
@@ -55,6 +55,9 @@ class Item(Sprite_sheet):
                 self.item_type = random.choice(self.item_list)
 
             elif self.item_type == 'weapon' and self.player.weapon >= 4:
+                self.item_type = random.choice(self.item_list)
+
+            elif self.item_type == 'speed' and self.player.max_speed >= 4.0:
                 self.item_type = random.choice(self.item_list)
 
             elif self.item_type == 'time' and self.player.less_time:
@@ -76,7 +79,7 @@ class Item(Sprite_sheet):
 
         if not self.collide:
             self.check_collision()
-            self.particles.add_glow(self.rect.centerx, self.rect.centery, 1, 1)
+            self.particles.add_item(self.rect.centerx, self.rect.centery, 1, 1)
 
             if self.timer[0].counter(0.05, True):
                 self.visual_effect(5)
@@ -130,6 +133,8 @@ class Item(Sprite_sheet):
 
             elif self.item_type == 'speed':
                 self.player.max_speed += 0.25
+                if self.player.max_speed > 4.0:
+                    self.player.max_speed == 4.0
 
             elif self.item_type == 'turbo':
                 self.player.turbo_up += 1

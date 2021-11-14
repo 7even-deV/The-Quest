@@ -30,6 +30,7 @@
 28. Create function: config buttons (class Main) and class Bar (script tools)
 29. Create md: README & commits and code fixes
 30. Finished work: The Quest v1.0
+
 31. Design a template for new investigations (template.py)
 32. Add class Particles to objects (tools.py)
 33. Increase more bullets per shoot (weapons.py)
@@ -49,3 +50,4 @@
 47. Corrections in the main menu commands (class Main)
 48. Scale screen width and height dimensions in User database
 49. Update sprites, reduce memory load size, and fix bugs
+50. Finished work: The Quest v2.0

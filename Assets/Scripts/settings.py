@@ -13,14 +13,10 @@ SCREEN_SIZE = {
 
     'FULL'    : 'Fullscreen',
 }
-# # Game window
-# resize = 1
-# SCREEN_WIDTH  = SCREEN_SIZE[list(SCREEN_SIZE)[resize]][0]
-# SCREEN_HEIGHT = SCREEN_SIZE[list(SCREEN_SIZE)[resize]][0]
 
 # Define caption
 CAPTION = ('T h e   Q u e s t   -   ',
-('M a i n', 'M e n u', 'G a m e', 'R e c o r d'))
+('M a i n', 'M e n u', 'L o a d', 'G a m e', 'R e c o r d'))
 
 # Set framerate
 FPS = 60
@@ -32,7 +28,7 @@ STARS = 50
 
 # Define game variables
 SCENE = 0
-LEVEL = 1
+LEVEL = 10
 LIVES = 3
 ENEMY_SCALE = 1
 METEOR_SCALE = 3
@@ -41,14 +37,14 @@ SURGE_NUM = 1
 player_dict = {
     'ammo'   : (200, 100, 50),
     'health' : (100, 200, 150),
-    'speed'  : (2.0, 1.0, 3.0),
+    'speed'  : (2.5, 2.0, 3.0),
 }
 
 enemy_dict = {
     'scale' : (1, 1, 1),
-    'ammo'  : (100, 10, 0),
-    'load'  : (0, 0, 1),
-    'exp'   : (20, 10, 30),
+    'ammo'  : (100, 0, 10),
+    'load'  : (0, 1, 0),
+    'exp'   : (20, 30, 10),
 }
 
 # Define colours (R, G, B)

@@ -38,7 +38,7 @@ class Bullet(Sprite_sheet):
         self.SCREEN_W       = args[4]
         self.SCREEN_H       = args[5]
 
-        self.particles = Particles('shoot', self.screen, self.image, self.select)
+        self.particles = Particles('select', self.screen, self.image, self.select)
 
         self.update_action('bullet')
 
@@ -89,13 +89,13 @@ class Bullet(Sprite_sheet):
                 if self.player.shield: self.player.shield = False
                 else:
                     self.player.health -= 10 * self.weapon
-                    self.player.max_speed = self.player.init_speed
                     self.player.less_time = False
                     self.player.freeze    = False
 
     def draw(self):
         for self.rect in self.rect_list:
             self.screen.blit(self.image, self.rect)
+
 
 class Missile(Sprite_sheet):
 
@@ -188,7 +188,6 @@ class Missile(Sprite_sheet):
             if self.player.shield: self.player.shield = False
             else:
                 self.player.health -= 50
-                self.player.max_speed = self.player.init_speed
                 self.player.less_time = False
                 self.player.freeze    = False
 

@@ -1,5 +1,6 @@
 from Scripts.scenes import *
 
+
 class Template():
     # Initialize pygame and mixer
     pygame.init()
@@ -15,11 +16,8 @@ class Template():
         self.item_group = pygame.sprite.Group()
 
     def restart(self):
-        self.player = Player(self.screen, 2, 5, 0, [[3, 10, 0, 0, 0, 800, 800], self.game.group_list])
+        self.player = Player(self.screen, 0, 2, 0, [[3, 10, 0, 0, 0, 800, 800], self.game.group_list])
         self.player.spawn = False
-        # item = Item(self.screen, self.player, 800, 800, [self.game.item_standby_fx, self.game.item_get_fx], bottomleft=(random.randint(0, SCREEN_WIDTH-SCREEN_WIDTH//10), 0))
-        # self.item_group.empty()
-        # self.item_group.add(item)
 
         self.meteor_list = []
         for _ in range(10):
@@ -93,7 +91,7 @@ class Template():
                         throw = False
 
             # Clear screen and set background color
-            self.screen.fill((0, 0, 0))
+            self.screen.fill(False)
 
             ''' --- AREA TO UPDATE AND DRAW --- '''
             if shoot: self.player.shoot(self.game.empty_ammo_fx, self.game.bullet_fx)
@@ -107,27 +105,27 @@ class Template():
                 missile.update()
                 missile.draw()
 
-            self.player.auto_movement()
+            self.player.check_alive(self.game.explosion_fx)
             self.player.update()
             self.player.draw()
             # print(self.player.delta.x, self.player.speed.y, self.player.health, self.player.ammo, self.player.load)
 
-            for explosion in self.game.explosion_group:
-                explosion.update()
-                explosion.draw()
+            # for explosion in self.game.explosion_group:
+            #     explosion.update()
+            #     explosion.draw()
 
             # for item in self.item_group:
             #     item.update()
             #     item.draw()
 
             # for meteor in self.meteor_list:
-            #     meteor.check_collision(self.game.explosion_fx)
+            #     meteor.check_collision()
             #     meteor.update(self.player.turbo)
             #     meteor.draw()
 
-            # for group in self.game.group_list:
-            #     group.update()
-            #     group.draw(self.screen)
+            for group in self.game.group_list:
+                group.update()
+                group.draw(self.screen)
 
             # Update screen
             pygame.display.update()

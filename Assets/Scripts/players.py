@@ -30,7 +30,7 @@ class Player(Sprite_sheet):
         self.explosion_group = args[0][1][4]
 
         # Load player image and rect
-        self.create_animation(100, 100, player_action_dict)
+        self.create_animation(200, 200, player_action_dict, scale=0.5)
         explosion_img, explosion_dict = explosion_type_def(2)
         self.sheet = pygame.image.load(explosion_img).convert_alpha()
         self.create_animation(100, 100, explosion_dict)
@@ -84,11 +84,10 @@ class Player(Sprite_sheet):
 
     def update(self):
         # Update player events
-        self.move()
+        if self.alive: self.move()
         self.check_collision()
-        self.check_alive()
         self.update_animation(self.animation_cooldown)
-        if self.alive and not self.auto_init:
+        if self.alive and not self.spawn and not self.auto_init:
             self.particles.add_circle(self.rect.centerx-self.rect.width//4, self.rect.bottom-self.rect.height//10, self.direction_x, self.direction_y)
             self.particles.add_circle(self.rect.centerx+self.rect.width//4, self.rect.bottom-self.rect.height//10, self.direction_x, self.direction_y)
         # Update cooldown
@@ -208,6 +207,7 @@ class Player(Sprite_sheet):
                     else:
                         self.auto_init = False
                         self.auto_land = False
+
                         return True
 
     def shoot(self, *args):
@@ -258,14 +258,19 @@ class Player(Sprite_sheet):
 
             # pygame.draw.rect(self.screen, (255, 0, 0), self.vision)
 
-    def check_alive(self):
+    def check_alive(self, *args):
         if self.health <= 0:
-            self.health = 0
-            self.speed  = self.vector(0, 0)
-            self.alive  = False
-            self.animation_cooldown = self.animation_cooldown // 4
+            if self.alive:
+                self.alive  = False
+                self.health = 0
+                # self.score  = 0
+                self.speed  = self.vector(0, 0)
+                # args[0].play()
+
+            self.animation_cooldown = self.animation_cooldown // 2
             self.update_action('death')
-        else: self.update_action('idle')
+        else:
+            self.update_action('idle')
 
     def limit_left(self, value=0):
         return self.rect.left + self.delta.x < self.rect.width//10 + value

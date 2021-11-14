@@ -56,8 +56,11 @@ class Meteor(Sprite_sheet):
         self.update_animation(self.animation_cooldown, 1)
 
         if not self.moving_x and self.rect.bottom > 0:
-            self.moving_x = True
-            self.delta_x = random.randint(-1, 1)
+            if self.player.win:
+                self.delta_x = self.delta_y = 0
+            else:
+                self.moving_x = True
+                self.delta_x = random.randint(-1, 1)
 
         # Check if going off the edges of the screen
         if self.rect.right < 0 or self.rect.left > self.SCREEN_W or self.rect.top > self.SCREEN_H:
@@ -88,7 +91,6 @@ class Meteor(Sprite_sheet):
                 if self.player.shield: self.player.shield = False
                 else:
                     self.player.health -= self.scale * 10
-                    self.player.max_speed = self.player.init_speed
                     self.player.less_time = False
                     self.player.freeze    = False
 
@@ -110,5 +112,5 @@ class Meteor(Sprite_sheet):
 
             self.animation_cooldown = self.animation_cooldown // 2
             self.update_action('destroy')
-
-        else: self.update_action('turn_l')
+        else:
+            self.update_action('turn_l')

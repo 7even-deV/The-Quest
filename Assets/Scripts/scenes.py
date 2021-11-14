@@ -2,9 +2,9 @@ import pygame, sys, random
 
 from .settings    import SCREEN_SIZE, FPS, MUSIC_VOL, SOUND_VOL, LOGO, STARS, LIVES, SURGE_NUM
 from .documents   import CREDITS, HISTORY, GUIDE
-from .manager     import msg_dict, button_list, record_btn_list, bar_list, keyboard_list, statue_img, bg_img, load_music, load_sound
-from .tools       import Timer, Logo, Button, Bar, Keyboard, Board, View, Canvas, Icon, Health_bar, Screen_fade
-from .environment import Foreground, Background, Farground, Planet, Portal
+from .manager     import msg_dict, advice_dict, button_list_def, bar_list, keyboard_list, statue_img, bg_img, load_music, load_sound
+from .tools       import Timer, Logo, Button, Keyboard, Bar, Board, View, Canvas, Icon, Health_bar, Screen_fade
+from .environment import Foreground, Background, Farground, Planet
 from .players     import Player
 from .enemies     import Enemy
 from .obstacles   import Meteor
@@ -134,6 +134,7 @@ class Main(Scene):
         self.command_list = []
         margin_y = SCREEN_H//2
 
+        button_list = button_list_def('main')
         for btn in range(len(button_list[0])):
             temp_var = Button(self.screen, button_list[0][btn], center=(SCREEN_W//2, btn * SCREEN_H//8 + margin_y))
             if btn % 2 == 0:
@@ -141,15 +142,6 @@ class Main(Scene):
             self.command_list.append(temp_var)
 
         self.command_list[0].select_effect(True)
-
-    def config_buttons(self, SCREEN_W, SCREEN_H):
-        self.config_list = []
-        margin_y = SCREEN_H//8
-
-        for bar in range(len(bar_list)):
-            self.config_list.append(Bar(self.screen, bar_list[bar], center=(SCREEN_W//2, bar * SCREEN_H//10 + margin_y)))
-
-        self.config_list[0].gage.active_effect(True)
 
     def keyboard_buttons(self, SCREEN_W, SCREEN_H):
         self.keyboard_list = []
@@ -164,13 +156,23 @@ class Main(Scene):
 
         self.keyboard_list[0][0].select_effect(True)
 
+    def config_buttons(self, SCREEN_W, SCREEN_H):
+        self.config_list = []
+        margin_y = SCREEN_H//8
+
+        for bar in range(len(bar_list)):
+            self.config_list.append(Bar(self.screen, bar_list[bar], center=(SCREEN_W//2, bar * SCREEN_H//10 + margin_y)))
+
+        self.config_list[0].gage.active_effect(True)
+
     def reset(self, SCREEN_W, SCREEN_H):
-        self.message = View(self.screen, center=(SCREEN_W//2, SCREEN_H//2.5), letter=2, size=20)
-        self.board   = Board(self.screen, midbottom=(SCREEN_W//2, 0))
+        self.message    = View(self.screen, center=(SCREEN_W//2, SCREEN_H//2.5), letter=2, size=20)
+        self.intro_logo = View(self.screen, "T H E   Q U E S T", 5, 50, pygame.Color('White'), center=(SCREEN_W//2, SCREEN_H//4))
+        self.board      = Board(self.screen, midbottom=(SCREEN_W//2, 0))
 
         self.command_buttons(SCREEN_W, SCREEN_H)
-        self.config_buttons(SCREEN_W, SCREEN_H)
         self.keyboard_buttons(SCREEN_W, SCREEN_H)
+        self.config_buttons(SCREEN_W, SCREEN_H)
 
     def main_loop(self, play):
         user_data = self.load_username()
@@ -209,7 +211,9 @@ class Main(Scene):
 
         scan_list = [music, sound, resize * 0.125]
 
+        self.screen = pygame.display.set_mode((SCREEN_W, SCREEN_H), pygame.RESIZABLE)
         self.reset(SCREEN_W, SCREEN_H)
+        button_list = button_list_def('main')
 
         empty = False
         if 'empty' in username_list:
@@ -219,14 +223,22 @@ class Main(Scene):
         else: user = username_list.index(username)
 
         cursor = bar = row_key = column_key = select = 0
-        login = create = confirm = False
         str_key   = ''
         press_key = False
         msg = 0
+        shift_key  = self.keyboard_list[-1][-1]
+        delete_key = self.keyboard_list[-1][-2]
+
+        if play:
+            login = confirm = True
+            play  = False
+            msg   = 9
+            msg_dict[msg] = username
+        else: login = confirm = False
+        create = False
 
         self.timer_list[0].frame_num = 0
         browser = 1
-        play = False
         run  = True
         while run:
             # Limit frames per second
@@ -365,22 +377,22 @@ class Main(Scene):
                         if create:
                             if len(username) < 10:
                                 # These 2 conditions are for not typing if the Delete key or the Shift key is pressed.
-                                if  self.keyboard_list[row_key][column_key] != self.keyboard_list[-1][-1]\
-                                and self.keyboard_list[row_key][column_key] != self.keyboard_list[-1][-2]:
+                                if  self.keyboard_list[row_key][column_key] != shift_key\
+                                and self.keyboard_list[row_key][column_key] != delete_key:
                                     username += self.keyboard_list[row_key][column_key].text
                             else: msg = 2
 
                             # Delete characters from username if Delete key is pressed
-                            if self.keyboard_list[row_key][column_key] == self.keyboard_list[-1][-2]:
+                            if self.keyboard_list[row_key][column_key] == delete_key:
                                 if len(username) > 0: username = username[:-1]
 
                             # Turn keyboard capitalization on or off if the Shift key is pressed
-                            if self.keyboard_list[row_key][column_key] == self.keyboard_list[-1][-1]:
-                                if not self.keyboard_list[-1][-1].trigger:
-                                    self.keyboard_list[-1][-1].trigger = True
+                            if self.keyboard_list[row_key][column_key] == shift_key:
+                                if shift_key.trigger:
+                                    shift_key.active_effect(False)
                                 else:
-                                    self.keyboard_list[-1][-1].trigger = False
-                                self.keyboard_list[-1][-1].active_effect(True)
+                                    shift_key.active_effect(True)
+                                shift_key.trigger = not shift_key.trigger
                             else:
                                 self.keyboard_list[row_key][column_key].trigger = True
                                 self.keyboard_list[row_key][column_key].active_effect(True)
@@ -390,8 +402,8 @@ class Main(Scene):
                     if event.key == pygame.K_RETURN: # Confirm DOWN
                         self.command_list[cursor].trigger = True
                         self.command_list[cursor].active_effect(True)
-
                         self.confirm_fx.play()
+                        msg = 0
 
                     if event.key == pygame.K_BACKSPACE: # Delete
                         if create:
@@ -422,9 +434,10 @@ class Main(Scene):
                 # keyboard release
                 if event.type == pygame.KEYUP:
                     # Turns off the effect of the key that is release
-                    if create and self.keyboard_list[row_key][column_key].trigger:
-                        self.keyboard_list[row_key][column_key].trigger = False
-                        self.keyboard_list[row_key][column_key].active_effect(False)
+                    if create and self.keyboard_list[row_key][column_key] != shift_key:
+                        if  self.keyboard_list[row_key][column_key].trigger:
+                            self.keyboard_list[row_key][column_key].trigger = False
+                            self.keyboard_list[row_key][column_key].active_effect(False)
 
                     if event.key == pygame.K_SPACE: # Turnback select
                         if not create:
@@ -436,7 +449,7 @@ class Main(Scene):
                         # Button - Account & Login & Play
                         if self.command_list[0].trigger:
                             if confirm:
-                                browser = 2
+                                browser = 3
                                 run = False
 
                             elif login:
@@ -459,15 +472,14 @@ class Main(Scene):
                                             user = -1
                                             row_key = column_key = 0
                                             self.keyboard_list[0][0].select_effect(True)
-                                            self.keyboard_list[-1][-1].trigger = False
+                                            shift_key.trigger = False
                                             msg = 3
-
                                 else:
                                     username = username_list[user]
                                     self.update_play(username)
-                                    msg = 9
-                                    msg_dict[msg] = username
-                                    confirm = True
+                                    browser = 0
+                                    play = True
+                                    run  = False
 
                             else: login = True
 
@@ -507,7 +519,8 @@ class Main(Scene):
                                             self.screen = pygame.display.set_mode((self.screen.get_width(), self.screen.get_height()), pygame.RESIZABLE)
                                         self.load_size(username, self.screen.get_width(), self.screen.get_height())
                                         browser = 0
-                                        run = False
+                                        play = True
+                                        run  = False
 
                                     # Scale other screen dimensions
                                     elif not self.fullscreen:
@@ -517,7 +530,8 @@ class Main(Scene):
                                             self.screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
                                             self.load_size(username, width, height)
                                             browser = 0
-                                            run = False
+                                            play = True
+                                            run  = False
 
                             elif login:
                                 self.board.show = not self.board.show
@@ -570,7 +584,7 @@ class Main(Scene):
                     elif  login: self.command_list[0].text = username_list[user]
                     else:        self.command_list[0].text = button_list[select][index]
 
-                    if login and cursor == 0: self.command_list[0].many = True
+                    if login and not create and not confirm and cursor == 0: self.command_list[0].many = True
                     else: self.command_list[0].many = False
 
                 self.command.update()
@@ -582,7 +596,7 @@ class Main(Scene):
 
                         if self.keyboard != self.keyboard_list[row_key][column_key]:
                             self.keyboard.select_effect(False)
-                            if self.keyboard != self.keyboard_list[-1][-1]:
+                            if self.keyboard != shift_key:
                                 if  self.keyboard.trigger:
                                     self.keyboard.trigger = False
                                     self.keyboard.active_effect(False)
@@ -597,10 +611,10 @@ class Main(Scene):
                                 self.keyboard.active_effect(True)
                                 press_key = False
 
-                        if self.keyboard_list[-1][-1].trigger:
+                        if shift_key.trigger:
                             self.keyboard.text = self.keyboard.text.upper()
                             self.keyboard_list[-1][-3].text = "_"
-                            self.keyboard_list[-1][-1].select_effect(True)
+                            shift_key.select_effect(True)
                         else:
                             self.keyboard.text = self.keyboard.text.lower()
                             self.keyboard_list[-1][-3].text = "-"
@@ -622,6 +636,14 @@ class Main(Scene):
 
                     self.config.update()
                     self.config.draw()
+
+            if not login and not create and not confirm and not self.board.show:
+                if self.intro_logo.fade    < 255: self.intro_logo.fade += 15
+            elif  self.intro_logo.fade >   0: self.intro_logo.fade -= 15
+
+            self.intro_logo.color = ([self.intro_logo.fade]*3)
+            self.intro_logo.update()
+            if self.intro_logo.fade != 0: self.intro_logo.draw()
 
             self.board.update()
             self.board.draw()
@@ -653,9 +675,8 @@ class Menu(Scene):
     def reset(self, SCREEN_W, SCREEN_H):
         self.statue    = pygame.image.load(statue_img).convert_alpha()
         self.bg_rect   = self.statue.get_rect(midbottom=(SCREEN_W//2, SCREEN_H))
-        self.spaceship = Icon(self.screen, 'spaceships', 4, center=(self.bg_rect.centerx, self.bg_rect.centery//1.55))
-        self.symbol    = Icon(self.screen, 'symbol', 1.5, center=(self.bg_rect.centerx*1.08, self.bg_rect.centery*1.15))
-        self.portal = Portal(self.screen, center=(SCREEN_W//2, SCREEN_H//2.5))
+        self.spaceship = Icon(self.screen, 'spaceships', 0.5, midbottom=(self.bg_rect.centerx, self.bg_rect.centery-126))
+        self.symbol    = Icon(self.screen, 'symbol',    0.18, midbottom=(self.bg_rect.centerx+1, self.bg_rect.centery+63))
 
     def main_loop(self, play):
         user_data = self.load_username()
@@ -710,18 +731,18 @@ class Menu(Scene):
                     if event.key == pygame.K_LEFT: # Back select
                         if not confirm:
                             self.symbol.trigger_effect(True)
-                            self.portal_loop_fx.play()
+                            self.portal_loop_fx.play(-1)
                         else:
                             self.spaceship.trigger_effect(True)
-                            self.select_loop_fx.play()
+                            self.select_loop_fx.play(-1)
 
                     if event.key == pygame.K_RIGHT: # Next select
                         if not confirm:
                             self.symbol.trigger_effect(True)
-                            self.portal_loop_fx.play()
+                            self.portal_loop_fx.play(-1)
                         else:
                             self.spaceship.trigger_effect(True)
-                            self.select_loop_fx.play()
+                            self.select_loop_fx.play(-1)
 
                     if event.key == pygame.K_SPACE: # Turnback select
                         if not confirm:
@@ -736,25 +757,21 @@ class Menu(Scene):
                             confirm = True
                             self.start_fx.play()
                         else:
+                            browser = 2
                             run = False
                             self.start_fx.play()
 
                     if event.key == pygame.K_UP:
-                        if self.volume(pygame.mixer.music) < 1.0: # Turn up the volume
-                            vol = self.volume(pygame.mixer.music, + 0.1)
-                            pygame.mixer.music.set_volume(vol)
                             self.select_fx.play()
 
                     if event.key == pygame.K_DOWN:
-                        if self.volume(pygame.mixer.music) > 0.0: # Turn down the volume
-                            vol = self.volume(pygame.mixer.music, - 0.1)
-                            pygame.mixer.music.set_volume(vol)
                             self.select_fx.play()
 
                     if event.key == pygame.K_ESCAPE: # Quit game
                         browser = -1
                         run = False
 
+                    # Reset the inactivity timer by pressing any key
                     self.timer_list[0].frame_num = 0
 
                 # keyboard release
@@ -765,12 +782,14 @@ class Menu(Scene):
                                 style -= 1
                             else: style = 2
                             self.symbol.trigger_effect(False)
+                            self.portal_loop_fx.stop()
                             self.select_fx.play()
                         else:
                             if model > 0:
                                 model -= 1
-                            else: model = 5
+                            else: model = 2
                             self.spaceship.trigger_effect(False)
+                            self.select_loop_fx.stop()
                             self.confirm_fx.play()
 
                     if event.key == pygame.K_RIGHT: # Next select
@@ -779,12 +798,14 @@ class Menu(Scene):
                                 style += 1
                             else: style = 0
                             self.symbol.trigger_effect(False)
+                            self.portal_loop_fx.stop()
                             self.select_fx.play()
                         else:
-                            if model < 5:
+                            if model < 2:
                                 model += 1
                             else: model = 0
                             self.spaceship.trigger_effect(False)
+                            self.select_loop_fx.stop()
                             self.confirm_fx.play()
 
             # Clear screen and set background color
@@ -792,16 +813,14 @@ class Menu(Scene):
 
             ''' --- AREA TO UPDATE AND DRAW --- '''
 
-            # self.portal.update()
-            # self.portal.draw()
-            self.screen.blit(self.statue, self.bg_rect)
-
-            self.symbol.draw()
-            if not confirm:
-                self.symbol.update(style, model)
-            else:
+            if confirm:
                 self.spaceship.update(style, model)
                 self.spaceship.draw()
+
+            self.screen.blit(self.statue, self.bg_rect)
+
+            self.symbol.update(style, model, confirm)
+            self.symbol.draw()
 
             # Limit delay without event activity
             if self.timer_list[0].countdown(1, True):
@@ -816,6 +835,75 @@ class Menu(Scene):
         return browser, play
 
 
+class Load(Scene):
+
+    def __init__(self):
+        super().__init__()
+        self.game_over_fx = self.sound('game_over')
+
+    def reset(self, SCREEN_W, SCREEN_H):
+        self.loading_logo   = Logo(self.screen, 'loading',   center=(SCREEN_W//2, SCREEN_H//3))
+        self.game_over_logo = Logo(self.screen, 'game_over', center=(SCREEN_W//2, SCREEN_H//3))
+        self.message        = View(self.screen, center=(SCREEN_W//2, SCREEN_H//1.2), letter=2, size=20)
+
+    def main_loop(self, play):
+        user_data = self.load_username()
+        SCREEN_W  = user_data[14]
+        SCREEN_H  = user_data[15]
+
+        self.reset(SCREEN_W, SCREEN_H)
+        index = random.randint(0, len(advice_dict) - 1)
+
+        if play: self.game_over_fx.play()
+
+        browser = 1
+        run = True
+        while run:
+            # Limit frames per second
+            self.clock.tick(FPS)
+
+            for event in pygame.event.get():
+                # Quit game
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+                # Keyboard presses
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        browser = 1
+                        run = False
+
+                    if event.key == pygame.K_ESCAPE:
+                        browser = -1
+                        run = False
+
+            # Clear screen and set background color
+            self.screen.fill(pygame.Color('Black'))
+
+            ''' --- AREA TO UPDATE AND DRAW --- '''
+
+            if not play:
+                self.loading_logo.update()
+                self.loading_logo.draw()
+            else:
+                self.game_over_logo.update()
+                self.game_over_logo.draw()
+
+            self.message.text = advice_dict[index]
+            self.message.update()
+            self.message.draw()
+
+            if self.timer_list[0].countdown(0.01, True):
+                browser = 1
+                run = False
+
+            # Update screen
+            pygame.display.update()
+
+        return browser, play
+
+
 class Game(Scene):
 
     def __init__(self):
@@ -826,9 +914,7 @@ class Game(Scene):
         self.meteor_group    = pygame.sprite.Group()
         self.explosion_group = pygame.sprite.Group()
         self.item_group      = pygame.sprite.Group()
-
         self.canvas_group    = pygame.sprite.Group()
-        self.settings        = pygame.sprite.Group()
 
         self.meteor_list_copy = []
         self.group_list = [self.bullet_group, self.missile_group, self.enemy_group, self.meteor_group, self.explosion_group, self.item_group]
@@ -850,40 +936,63 @@ class Game(Scene):
 
         self.pause_fx        = self.sound('pause')
         self.select_fx       = self.sound('select')
+        self.confirm_fx      = self.sound('confirm')
         self.win_fx          = self.sound('win')
-        self.game_over_fx    = self.sound('game_over')
+        self.death_fx        = self.sound('death')
 
         self.enemy_sfx_list  = [self.empty_ammo_fx, self.bullet_fx, self.empty_load_fx, self.missile_fx, self.missile_cd_fx, self.missile_exp_fx, self.explosion_fx, self.item_standby_fx, self.item_get_fx]
-        self.sfx_list        = [self.move_fx, self.backmove_fx, self.turbo_fx, self.explosion_fx, self.pause_fx, self.select_fx, self.win_fx, self.game_over_fx]
+        self.sfx_list        = [self.move_fx, self.backmove_fx, self.turbo_fx, self.explosion_fx, self.pause_fx, self.select_fx, self.confirm_fx, self.win_fx, self.death_fx]
         self.sfx_list.extend(self.enemy_sfx_list)
 
+        self.loading = Load()
+
     def reset(self, SCREEN_W, SCREEN_H):
-        self.intro_fade = Screen_fade(self.screen, 'intro', pygame.Color('Black'), 4, SCREEN_W, SCREEN_H)
-        self.death_fade = Screen_fade(self.screen, 'death', pygame.Color('Black'), 4, SCREEN_W, SCREEN_H)
+        self.intro_fade = Screen_fade(self.screen, 'intro', pygame.Color('Black'), 3, SCREEN_W, SCREEN_H)
+        self.death_fade = Screen_fade(self.screen, 'death', pygame.Color('Black'), 3, SCREEN_W, SCREEN_H)
 
         self.lives_canvas   = Canvas(self.screen, 'lives',  0, -3, 9, midtop=(SCREEN_W*0.300, 0))
         self.ammo_canvas    = Canvas(self.screen, 'ammo',   0, -2, 1, midtop=(SCREEN_W*0.350, 8))
         self.load_canvas    = Canvas(self.screen, 'load',   0,  0, 7, midtop=(SCREEN_W*0.400, 2))
         self.weapon_canvas  = Canvas(self.screen, 'weapon', 1, -4, 3, midtop=(SCREEN_W*0.455, 6))
         self.speed_canvas   = Canvas(self.screen, 'speed',  1,  2, 5, midtop=(SCREEN_W*0.500, 4))
-        self.turbo_canvas   = Canvas(self.screen, 'turbo',  1,  4, 7, midtop=(SCREEN_W*0.548, 1))
+        self.turbo_canvas   = Canvas(self.screen, 'turbo',  1,  4, 7, midtop=(SCREEN_W*0.548, 2))
         self.shield_canvas  = Canvas(self.screen, 'shield', 0,  2, 9, midtop=(SCREEN_W*0.601, 0))
         self.freeze_canvas  = Canvas(self.screen, 'freeze', 0, -1, 9, midtop=(SCREEN_W*0.652, 0))
         self.atomic_canvas  = Canvas(self.screen, 'atomic', 0,  3, 1, midtop=(SCREEN_W*0.695, 8))
-        self.timer_view     = View(self.screen, topleft =(SCREEN_W*0.01, SCREEN_H*0.05), size=20)
-        self.level_view     = View(self.screen, topleft =(SCREEN_W*0.15, SCREEN_H*0.07), color=pygame.Color('Pink'))
-        self.highscore_view = View(self.screen, topright=(SCREEN_W-SCREEN_W//30, SCREEN_H*0.015), size=20, color=pygame.Color('Orange'))
-        self.score_view     = View(self.screen, topright=(SCREEN_W-SCREEN_W//30, SCREEN_H*0.055), size=20, color=pygame.Color('Cyan'))
 
-        self.paused  = View(self.screen, center=(SCREEN_W//2, SCREEN_H//3), letter=0, size=60, color=pygame.Color('Red'))
-        self.loading = Logo(self.screen, 'loading', center=(SCREEN_W//2, SCREEN_H//2))
+        self.timer_view     = View(self.screen, topleft =(SCREEN_W*0.01, SCREEN_H*0.05), size=25)
+        self.level_view     = View(self.screen, topleft =(SCREEN_W*0.15, SCREEN_H*0.07), color=pygame.Color('Brown'))
+        self.highscore_view = View(self.screen, topright=(SCREEN_W-SCREEN_W//30, SCREEN_H*0.015), size=20, color=pygame.Color('Orange'))
+        self.score_view     = View(self.screen, topright=(SCREEN_W-SCREEN_W//30, SCREEN_H*0.055), size=20, color=pygame.Color('Purple'))
+
+        self.paused = View(self.screen, '', 5, 80, pygame.Color('Black'), center=(SCREEN_W//2, SCREEN_H//3.5))
+        self.board  = Board(self.screen, midbottom=(SCREEN_W//2, 0))
 
         self.canvas_group.empty()
         self.canvas_group.add(self.lives_canvas, self.ammo_canvas, self.load_canvas, self.weapon_canvas, self.speed_canvas, self.turbo_canvas,\
         self.shield_canvas, self.freeze_canvas, self.atomic_canvas, self.timer_view, self.level_view, self.highscore_view, self.score_view)
 
-        self.settings.empty()
-        self.settings.add(self.paused)
+    def command_buttons(self, SCREEN_W, SCREEN_H):
+        self.command_list = []
+        margin_y = SCREEN_H//2
+
+        button_list = button_list_def('game')
+        for btn in range(len(button_list[0])):
+            temp_var = Button(self.screen, button_list[0][btn], center=(SCREEN_W//2, btn * SCREEN_H//8 + margin_y))
+            if btn % 2 == 0:
+                temp_var.flip_x = True
+            self.command_list.append(temp_var)
+
+        self.command_list[0].select_effect(True)
+
+    def config_buttons(self, SCREEN_W, SCREEN_H):
+        self.config_list = []
+        margin_y = SCREEN_H//4.5
+
+        for bar in range(len(bar_list[:-1])):
+            self.config_list.append(Bar(self.screen, bar_list[bar], center=(SCREEN_W//2, bar * SCREEN_H//10 + margin_y)))
+
+        self.config_list[0].gage.active_effect(True)
 
     # Function to empty level
     def empty_level(self):
@@ -898,7 +1007,7 @@ class Game(Scene):
     def environment_create(self, init_planet, SCREEN_W, SCREEN_H):
         background = Background(self.screen, SCREEN_W, SCREEN_H, bg_img)
         farground   = Farground(self.screen, SCREEN_W, SCREEN_H, STARS)
-        origin_planet  = Planet(self.screen, 'origin' , init_planet, SCREEN_W, SCREEN_H, midbottom=(SCREEN_W//2, SCREEN_H))
+        origin_planet  = Planet(self.screen, 'origin' , init_planet, SCREEN_W, SCREEN_H, midbottom=(SCREEN_W//2, SCREEN_H+SCREEN_H*0.25))
         destiny_planet = Planet(self.screen, 'destiny', init_planet, SCREEN_W, SCREEN_H, midbottom=(SCREEN_W//2, 0))
 
         self.environment_list = [background, farground, origin_planet, destiny_planet]
@@ -932,7 +1041,8 @@ class Game(Scene):
 
             self.meteor_list.append(temp_list)
 
-    def process_data(self, username, weapon, level, score, enemy, meteor, lives, init_planet):
+    def process_data(self, username, weapon, level, score, enemy, meteor, lives, init_planet, play):
+        self.loading.main_loop(play)
         self.empty_level()
         self.load_data(username, weapon, level, score, enemy, meteor)
         user_data = self.db.read_data(username)[0]
@@ -948,6 +1058,8 @@ class Game(Scene):
         SCREEN_H = user_data[15]
 
         self.reset(SCREEN_W, SCREEN_H)
+        self.command_buttons(SCREEN_W, SCREEN_H)
+        self.config_buttons(SCREEN_W, SCREEN_H)
         temp_list = [weapon, level, score, enemy, meteor, SCREEN_W, SCREEN_H]
 
         # Create sprites
@@ -960,15 +1072,6 @@ class Game(Scene):
         self.timer_list[0].frame_num = 0
 
         return user_data
-
-    def config_buttons(self, SCREEN_W, SCREEN_H):
-        self.config_list = []
-        margin_y = SCREEN_H//2
-
-        for bar in range(len(bar_list[:-1])):
-            self.config_list.append(Bar(self.screen, bar_list[bar], center=(SCREEN_W//2, bar * SCREEN_H//10 + margin_y)))
-
-        self.config_list[0].gage.active_effect(True)
 
     def main_loop(self, play):
         user_data = self.load_username()
@@ -990,21 +1093,21 @@ class Game(Scene):
         SCREEN_W  = user_data[14]
         SCREEN_H  = user_data[15]
 
-        init_planet = random.randint(1, 9)
-
-        self.process_data(username, 1, level, 0, 0, 0, LIVES, init_planet)
-
         pygame.mixer.music.set_volume(music)
         for sfx in self.sfx_list:
             sfx.set_volume(sound)
 
-        bar = 0
-        scan_list = [music, sound]
-        self.config_buttons(SCREEN_W, SCREEN_H)
+        init_planet = random.randint(1, 6)
+        # TODO WARNING! This process data will stop the screen until finished
+        self.process_data(username, 1, level, 0, 0, 0, LIVES, init_planet, play)
 
-        pause = False
-        restart = False
-        death = False
+        cursor = bar = 0
+        scan_list = [music, sound]
+
+        pause     = False
+        death     = False
+        restart   = False
+        game_over = False
 
         shoot = False
         shoot_bullets = False
@@ -1014,7 +1117,6 @@ class Game(Scene):
         trick_list = [True] * 3
 
         browser = 1
-        play = True
         run = True
         while run:
             # Limit frames per second
@@ -1038,16 +1140,17 @@ class Game(Scene):
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
                         if pause:
-                            if self.config_list[bar].gage == self.config_list[0].gage:
-                                if self.volume(pygame.mixer.music) > 0.0: # Turn down the volume
-                                    scan_list[0] = self.volume(pygame.mixer.music, - 0.1)
-                                    pygame.mixer.music.set_volume(scan_list[0])
+                            if self.command_list[1].trigger:
+                                if self.config_list[bar].gage == self.config_list[0].gage:
+                                    if self.volume(pygame.mixer.music) > 0.0: # Turn down the volume
+                                        scan_list[0] = self.volume(pygame.mixer.music, - 0.1)
+                                        pygame.mixer.music.set_volume(scan_list[0])
 
-                            elif self.config_list[bar].gage == self.config_list[1].gage:
-                                if self.volume(self.sfx_list[0]) > 0.0: # Turn down the sound
-                                    for sfx in self.sfx_list:
-                                        scan_list[1] = self.volume(sfx, - 0.1)
-                                        sfx.set_volume(scan_list[1])
+                                elif self.config_list[bar].gage == self.config_list[1].gage:
+                                    if self.volume(self.sfx_list[0]) > 0.0: # Turn down the sound
+                                        for sfx in self.sfx_list:
+                                            scan_list[1] = self.volume(sfx, - 0.1)
+                                            sfx.set_volume(scan_list[1])
 
                             self.select_fx.play()
 
@@ -1057,16 +1160,17 @@ class Game(Scene):
 
                     if event.key == pygame.K_RIGHT:
                         if pause:
-                            if self.config_list[bar].gage == self.config_list[0].gage:
-                                if self.volume(pygame.mixer.music) < 1.0: # Turn up the volume
-                                    scan_list[0] = self.volume(pygame.mixer.music, + 0.1)
-                                    pygame.mixer.music.set_volume(scan_list[0])
+                            if self.command_list[1].trigger:
+                                if self.config_list[bar].gage == self.config_list[0].gage:
+                                    if self.volume(pygame.mixer.music) < 1.0: # Turn up the volume
+                                        scan_list[0] = self.volume(pygame.mixer.music, + 0.1)
+                                        pygame.mixer.music.set_volume(scan_list[0])
 
-                            elif self.config_list[bar].gage == self.config_list[1].gage:
-                                if self.volume(self.sfx_list[0]) < 1.0: # Turn up the sound
-                                    for sfx in self.sfx_list:
-                                        scan_list[1] = self.volume(sfx, + 0.1)
-                                        sfx.set_volume(scan_list[1])
+                                elif self.config_list[bar].gage == self.config_list[1].gage:
+                                    if self.volume(self.sfx_list[0]) < 1.0: # Turn up the sound
+                                        for sfx in self.sfx_list:
+                                            scan_list[1] = self.volume(sfx, + 0.1)
+                                            sfx.set_volume(scan_list[1])
 
                             self.select_fx.play()
 
@@ -1074,57 +1178,95 @@ class Game(Scene):
                             self.player.moving_right = True # Moving right
                             self.move_fx.play()
 
-                    if event.key == pygame.K_UP:
+                    if event.key == pygame.K_UP: # Moving up & Up select
                         if pause:
-                            if bar > 0:
-                                bar -= 1
-                            else: bar = len(self.config_list) - 1
-                            self.config_list[bar].gage.active_effect(True)
+                            if self.command_list[1].trigger:
+                                if bar > 0:
+                                    bar -= 1
+                                else: bar = len(self.config_list) - 1
+                                self.config_list[bar].gage.active_effect(True)
+
+                            else:
+                                if cursor > 0:
+                                    cursor -= 1
+                                else: cursor = len(self.command_list) - 1
+                                self.command_list[cursor].select_effect(True)
+
+                            self.board.show = False
                             self.select_fx.play()
 
                         elif not self.player.win:
-                            self.player.moving_up = True # Moving up
+                            self.player.moving_up = True
                             self.move_fx.play()
 
-                    if event.key == pygame.K_DOWN:
+                    if event.key == pygame.K_DOWN: # Moving down & Down select
                         if pause:
-                            if bar < len(self.config_list) - 1:
-                                bar += 1
-                            else: bar = 0
-                            self.config_list[bar].gage.active_effect(True)
+                            if self.command_list[1].trigger:
+                                if bar < len(self.config_list) - 1:
+                                    bar += 1
+                                else: bar = 0
+                                self.config_list[bar].gage.active_effect(True)
+
+                            else:
+                                if cursor < len(self.command_list) - 1:
+                                    cursor += 1
+                                else: cursor = 0
+                                self.command_list[cursor].select_effect(True)
+
+                            self.board.show = False
                             self.select_fx.play()
 
                         elif not self.player.win:
-                            self.player.moving_down = True # Moving down
+                            self.player.moving_down = True
                             self.move_fx.play()
-
-                    if event.key == pygame.K_SPACE: # Turbo
-                        if self.player.alive and not self.player.spawn and not self.player.win:
-                            self.player.turbo = True
-                            self.turbo_fx.play()
-                        else: restart = True
 
                     if event.key == pygame.K_r: # Shoot bullets
                         if not self.player.win: shoot = True
+
                     if event.key == pygame.K_e: # Throw missiles
                         if not self.player.win: throw = True
 
-                    if event.key == pygame.K_RETURN: # Pause and Settings
-                        pause = not pause
+                    if event.key == pygame.K_SPACE: # Turbo and Return
                         if pause:
-                            pygame.mixer.music.pause()
-                            self.load_volume(username, scan_list[0], scan_list[1])
-                        else:
-                            pygame.mixer.music.unpause()
+                            if self.command_list[1].trigger:
+                                self.command_list[1].trigger = False
+                                self.config.show = False
+                                self.load_volume(username, scan_list[0], scan_list[1])
 
-                        self.pause_fx.play()
+                            elif self.command_list[2].trigger:
+                                self.command_list[2].trigger = False
+                                self.board.show = False
+
+                            else:
+                                if game_over:
+                                    game_over = False
+                                    browser = 1
+                                    run = False
+                                elif self.death_fade.fade_complete or self.player.auto_init: restart = True
+                                self.command_list[cursor].trigger = False
+                                cursor = 0
+                                pause  = False
+                                pygame.mixer.music.unpause()
+                                self.pause_fx.play()
+                        else:
+                            if self.player.alive and not self.player.spawn and not self.player.win:
+                                self.player.turbo = True
+                                self.turbo_fx.play()
+
+                    if event.key == pygame.K_RETURN: # Pause and Confirm DOWN
+                        if pause:
+                            self.command_list[cursor].trigger = True
+                            self.command_list[cursor].active_effect(True)
+                            self.confirm_fx.play()
 
                     if event.key == pygame.K_ESCAPE: # Exit game
-                        browser = -1
+                        browser = -2
                         run = False
-                        self.game_over_fx.play()
 
-                # keyboard release
+                    # Reset the inactivity timer by pressing any key
+                    if game_over: self.timer_list[0].frame_num = 0
+
+                # Keyboard release
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT: # Moving left
                         self.player.moving_left = False
@@ -1143,33 +1285,109 @@ class Game(Scene):
                         throw_missiles = False
 
                     if event.key == pygame.K_SPACE: # Turbo
-                        self.player.turbo = False
-                        self.backmove_fx.play()
+                        if not pause and self.player.alive and not self.player.spawn and not self.player.win:
+                            self.player.turbo = False
+                            self.backmove_fx.play()
+
+                    if event.key == pygame.K_RETURN: # Confirm UP
+                        if pause:
+                            # Button - Continue & Restart
+                            if self.command_list[0].trigger:
+                                if game_over:
+                                    game_over = False
+                                    browser = 1
+                                    run = False
+                                elif self.death_fade.fade_complete or self.player.auto_init:
+                                    restart = True
+
+                                cursor = 0
+                                pause  = False
+                                pygame.mixer.music.unpause()
+                                self.pause_fx.play()
+
+                            # Button - Settings
+                            elif self.command_list[1].trigger:
+                                self.config.show = not self.config.show
+                                if not self.config.show:
+                                    self.command_list[1].trigger = False
+                                    self.load_volume(username, scan_list[0], scan_list[1])
+
+                            # Button - Help
+                            elif self.command_list[2].trigger:
+                                self.board.show = not self.board.show
+                                if self.board.show:
+                                    self.board.create_textline(GUIDE, midleft=(self.board.rect.width//3, self.board.rect.top))
+
+                            # Button - Exit
+                            elif self.command_list[3].trigger:
+                                browser = -2
+                                run = False
+
+                            self.command_list[cursor].active_effect(False)
+
+                        elif not self.player.spawn:
+                            pause = True
+                            pygame.mixer.music.pause()
+                            self.pause_fx.play()
 
             # Clear screen and set background color
             self.screen.fill(pygame.Color('Black'))
 
             ''' --- AREA TO UPDATE AND DRAW --- '''
 
-            if pause: # Pause and volume control
-                self.paused.text = "P A U S E"
+            # Pause commands
+            if pause:
+                if game_over:
+                    # Limit delay without event activity
+                    if self.timer_list[1].countdown(0.5, True):
+                        game_over = False
+                        browser = 1
+                        run = False
+                else:
+                    if self.command_list[cursor].trigger or self.board.show:
+                        if self.paused.fade >   0: self.paused.fade -= 15
+                    elif   self.paused.fade < 255: self.paused.fade += 15
 
-                self.settings.update()
-                self.settings.draw(self.screen)
+                    if self.player.win:
+                        self.paused.text = 'N E X T'
+                        self.paused.color = (0, self.paused.fade, 0)
+                    elif self.player.alive:
+                        self.paused.text = 'P A U S E'
+                        self.paused.color = (self.paused.fade, 0, 0)
+                    else:
+                        self.paused.text = 'R E S T A R T'
+                        self.paused.color = (0, 0, self.paused.fade)
 
-                for self.config in self.config_list:
-                    self.config_list[bar].gage.trigger = True
-                    if self.config != self.config_list[bar] and self.config.gage.trigger:
-                        self.config.gage.active_effect(False)
-                        self.config.gage.trigger = False
+                    self.paused.update()
+                    self.paused.draw()
 
-                    self.config_list[0].displace_effect(scan_list[0])
-                    self.config_list[1].displace_effect(scan_list[1])
+                for self.command in self.command_list:
+                    if self.command != self.command_list[cursor]:
+                        self.command.select_effect(False)
+                        self.command.trigger = False
 
-                    self.config.update()
-                    self.config.draw()
+                    self.command.update()
+                    self.command.draw()
+
+                if self.command_list[1].trigger:
+                    for self.config in self.config_list:
+                        self.config_list[bar].gage.trigger = True
+                        if self.config != self.config_list[bar] and self.config.gage.trigger:
+                            self.config.gage.active_effect(False)
+                            self.config.gage.trigger = False
+
+                        self.config_list[0].displace_effect(scan_list[0])
+                        self.config_list[1].displace_effect(scan_list[1])
+
+                        self.config.update()
+                        self.config.draw()
+
+                self.board.update()
+                self.board.draw()
 
             else:
+                self.paused.fade = 0
+
                 # Update the time of the next surge of meteors
                 if not self.surge_start and self.timer_list[0].delay(level * 60 // 4 * (self.surge_index + 1), True):
                     self.surge_start = True
@@ -1183,12 +1401,12 @@ class Game(Scene):
                             self.surge_start = False
                             self.enemy.retired = True
                             self.item_create('random', self.player, SCREEN_W, SCREEN_H)
-                            self.music(4, scan_list[0])
+                            self.music(5, scan_list[0])
                         else:
                             self.surge_end = True
                             self.enemy.retired = False
                             self.item_create('random', self.player, SCREEN_W, SCREEN_H)
-                            self.music(2, scan_list[0])
+                            self.music(3, scan_list[0])
 
                 for self.environment in self.environment_list:
                     self.environment.update(self.player)
@@ -1201,6 +1419,7 @@ class Game(Scene):
                 self.missile_group.update()
                 self.missile_group.draw(self.screen)
 
+                self.player.check_alive(self.explosion_fx)
                 self.player.update()
                 self.player.draw()
 
@@ -1243,7 +1462,7 @@ class Game(Scene):
                         self.intro_fade.fade_counter = 0
                         self.player.spawn = False
 
-                    if self.player.collide and self.timer_list[0].time(1, True):
+                    if self.player.collide and self.timer_list[0].time(0.5, True):
                         self.player.collide = False
 
                     # Shoot bullets
@@ -1259,37 +1478,53 @@ class Game(Scene):
 
                     # Level countdown
                     if not self.player.win and self.timer_list[0].level_timer(level, self.player, True):
-                        self.timer_list[0].text_time = 0
+                        self.timer_list[0].text_time = 'WIN !'
+                        self.enemy.retired = True
                         self.player.win = True
+                        pygame.mixer.music.stop()
                         self.win_fx.play()
 
                     # Check if player has completed the level
                     elif self.player.win:
-                        if self.player.auto_movement() or self.player.auto_land and restart:
+                        if self.player.auto_movement() or restart:
                             level += 1
                             init_planet = self.environment.destiny_planet
-                            user_data = self.process_data(username, self.player.weapon, level, self.player.score, self.player.dead_enemy, self.player.dead_meteor, self.player.lives, init_planet)
+                            user_data = self.process_data(username, self.player.weapon, level, self.player.score, self.player.dead_enemy, self.player.dead_meteor, self.player.lives, init_planet, play)
                             highscore = user_data[7]
+                            self.player.win = False
                             restart = False
+                            play = False
+                            self.music(3, scan_list[0])
+                            pygame.mixer.music.play()
                 else:
-                    if not death:
+                    if not death and not self.death_fade.fade_complete:
+                        pygame.mixer.music.stop()
+                        self.death_fx.play()
                         death = True
-                        self.game_over_fx.play()
-
                     # Restart the level if the player has lost
-                    elif death and self.death_fade.fade():
-                        if restart:
+                    elif not game_over and self.death_fade.fade():
+                        if death:
+                            pause = True
+                            death = False
+                        elif restart:
+                            death = restart = False
                             self.death_fade.fade_counter = 0
                             self.player.lives -= 1
                             if self.player.lives > 0:
                                 init_planet = self.environment.origin_planet
-                                user_data = self.process_data(username, 1, level, self.player.score, 0, 0, self.player.lives, init_planet)
-                                highscore = user_data[7]
+                                user_data   = self.process_data(username, 1, level, self.player.score, 0, 0, self.player.lives, init_planet, play)
+                                highscore   = user_data[7]
                                 self.player.score = 0
                                 self.player.alive = True
-                                death   = False
-                                restart = False
-                            else: run = False
+                                play = False
+                                self.music(3, scan_list[0])
+                                pygame.mixer.music.play()
+                            else:
+                                play = True
+                                self.loading.main_loop(play)
+                                game_over = True
+                                browser = 1
+                                run = False
 
             # Zone for user interface bar
             pygame.draw.rect(self.screen, pygame.Color('Black'), (0, 0, SCREEN_W, SCREEN_H//10))
@@ -1309,14 +1544,10 @@ class Game(Scene):
             self.shield_canvas.switch(self.player.shield)
             self.freeze_canvas.switch(self.player.freeze)
             self.atomic_canvas.switch(self.player.atomic)
-            self.timer_view.text = f"Time: {self.timer_list[0].text_time}"
-            self.level_view.text = f"Level < {level} >"
+            self.timer_view.text = f"T- {self.timer_list[0].text_time}"
+            self.level_view.text = f"Level: {level}"
             self.score_view.text = f"Score: {self.player.score}"
             self.highscore_view.compare(self.player.score, highscore, "New Highscore", f"Highscore: {highscore}")
-
-            if death and not restart:
-                self.loading.update()
-                self.loading.draw()
 
             for canvas in self.canvas_group:
                 canvas.update()
@@ -1349,8 +1580,9 @@ class Record(Scene):
         if play: select = 1
         else:    select = 0
 
-        for btn in  range(len(record_btn_list[select])):
-            temp_var = Button(self.screen, record_btn_list[select][btn], center=(SCREEN_W//2, btn * SCREEN_H//8 + margin_y))
+        button_list = button_list_def('record')
+        for btn in  range(len(button_list[select])):
+            temp_var = Button(self.screen, button_list[select][btn], center=(SCREEN_W//2, btn * SCREEN_H//8 + margin_y))
             if btn % 2 == 0:
                 temp_var.flip_x = True
             self.command_list.append(temp_var)
@@ -1358,7 +1590,6 @@ class Record(Scene):
         self.command_list[0].select_effect(True)
 
     def reset(self, play, SCREEN_W, SCREEN_H):
-        self.game_over_logo = Logo(self.screen, 'game_over', midtop=(SCREEN_W//2, SCREEN_H*0.01))
         self.ranking_view   = View(self.screen, center=(SCREEN_W//2, SCREEN_H//8), letter=0, size=30)
         self.idle_time_view = View(self.screen, midbottom=(SCREEN_W//2, SCREEN_H-SCREEN_H*0.02), letter=2, size=20)
         self.board = Board(self.screen, midbottom=(SCREEN_W//2, 0))
@@ -1375,8 +1606,8 @@ class Record(Scene):
         if ranking_data[0][0] != 'empty':
             # Update the top ranking list of the users highscore
             for user in range(len(ranking_data)):
-                temp_var = View(self.screen, midbottom=(SCREEN_W//2, user * -SCREEN_H//16 + margin_y), letter=3, size=30, color=pygame.Color('Black'))
-                temp_var.text = f"Ranking {len(ranking_data)-user}: {ranking_data[user][0]} -> {ranking_data[user][6]}"
+                temp_var = View(self.screen, bottomleft=(SCREEN_W//3.5, user * -SCREEN_H//16 + margin_y), letter=3, size=30, color=pygame.Color('Black'))
+                temp_var.text = f"Ranking {len(ranking_data)-user}:  {ranking_data[user][0]} -> {ranking_data[user][7]}"
                 self.ranking_list.append(temp_var)
 
     def main_loop(self, play):
@@ -1488,10 +1719,6 @@ class Record(Scene):
 
                         # Button - Credits
                         elif self.command_list[2].trigger:
-                            if play:
-                                self.game_over = not game_over
-                                self.timer_list[0].count = 0
-
                             self.board.show = not self.board.show
                             if self.board.show:
                                 self.board.create_textline(CREDITS, center=(self.board.rect.centerx, self.board.rect.top))
@@ -1510,12 +1737,7 @@ class Record(Scene):
 
             ''' --- AREA TO UPDATE AND DRAW --- '''
 
-            if play and game_over:
-                self.game_over_logo.update()
-                self.game_over_logo.draw()
-                if self.timer_list[0].time(10, True): game_over = False
-
-            elif not self.board.show:
+            if not self.board.show:
                 for ranking in self.ranking_list:
                     if self.ranking_list[-1].rect.y < SCREEN_H//5.5:
                         ranking.delta_y += 0.2

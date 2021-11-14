@@ -3,7 +3,7 @@ import pygame
 from .         import __author__
 from .settings import CAPTION, SCENE
 from .manager  import logo_icon
-from .scenes   import Main, Menu, Game, Record
+from .scenes   import Main, Menu, Load, Game, Record
 
 
 class Controller():
@@ -17,7 +17,7 @@ class Controller():
         pygame.display.set_icon(pygame.image.load(logo_icon))
 
         # Tuple of all scenes
-        self.scene_tuple = (Main(), Menu(), Game(), Record())
+        self.scene_tuple = (Main(), Menu(), Load(), Game(), Record())
 
     def launch_manager(self):
         i = SCENE

@@ -52,7 +52,7 @@ class Enemy(Sprite_sheet):
         self.max_health = self.health
 
         # Load enemy image
-        self.create_animation(100, 100, enemy_action_dict)
+        self.create_animation(200, 200, enemy_action_dict, scale=0.5)
         explosion_img, explosion_dict = explosion_type_def(2)
         self.sheet = pygame.image.load(explosion_img).convert_alpha()
         self.create_animation(100, 100, explosion_dict)
@@ -103,9 +103,9 @@ class Enemy(Sprite_sheet):
         if   select == 0:
             return (random.randint(100, screen_w-screen_w//10), -100)
         elif select == 1:
-            return (-100*number, screen_h//5)
-        elif select == 2:
             return (random.randint(100, screen_w-screen_w//10), -100)
+        elif select == 2:
+            return (-100*number, screen_h//5)
 
     def update(self):
         # Update enemy events
@@ -215,9 +215,9 @@ class Enemy(Sprite_sheet):
             if self.select == 0:
                 self.patrol_ai()
             if self.select == 1:
-                self.faster_ai()
-            if self.select == 2:
                 self.kamikaze_ai()
+            if self.select == 2:
+                self.faster_ai()
 
             # pygame.draw.rect(self.screen, (255, 0, 0), self.vision)
 
@@ -264,6 +264,59 @@ class Enemy(Sprite_sheet):
                 self.ai_stop = True
                 self.shoot(self.empty_ammo_fx, self.bullet_fx) # Shoot
             else: self.ai_stop = False
+
+            # Update ai vision as the enemy moves
+            self.vision.midtop = (self.rect.centerx, self.rect.centery)
+
+    def kamikaze_ai(self):
+        if self.ai_spawn:
+            if self.limit_up():
+                self.flip_y = True
+                self.ai_moving_down = True
+            else:
+                self.ai_moving_down = False
+                self.ai_spawn = False
+        else:
+            # Check if fallen off the map
+            if self.rect.bottom < 0:
+                self.kill()
+
+            # Check if the ai in near the player
+            if self.vision.colliderect(self.player.rect):
+                if self.load > 0:
+                    self.ai_stop = True
+                    self.throw(self.empty_load_fx, self.missile_fx, self.missile_cd_fx, self.missile_exp_fx) # Throw
+                elif self.throw_cooldown == 0:
+                    self.ai_moving_left = self.ai_moving_right = False
+                    self.ai_moving_down = True
+            else:
+                self.ai_stop = False
+                self.ai_moving_down = False
+
+                # Check the x limits of the screen
+                if self.limit_left() or self.limit_right():
+                    self.direction_x *= -1
+
+                if not self.idling and random.randint(1, self.idling_timer) == 1:
+                    self.ai_moving_left = self.ai_moving_right = False
+                    self.idling_counter = self.idling_timer
+                    self.idling = True
+                else:
+                    if not self.idling:
+                        if self.direction_x == 1:
+                            self.ai_moving_right = True
+                        else: self.ai_moving_right = False
+                        self.ai_moving_left = not self.ai_moving_right
+
+                        self.idling_counter += 1
+                        if self.idling_counter > self.rect.width:
+                            self.direction_x  *= -1
+                            self.idling_counter *= -1
+
+                    else:
+                        self.idling_counter -= 1
+                        if self.idling_counter <= 0:
+                            self.idling = False
 
             # Update ai vision as the enemy moves
             self.vision.midtop = (self.rect.centerx, self.rect.centery)
@@ -339,59 +392,6 @@ class Enemy(Sprite_sheet):
             # Update ai vision as the enemy moves
             self.vision.midtop = (self.rect.centerx, self.rect.centery)
 
-    def kamikaze_ai(self):
-        if self.ai_spawn:
-            if self.limit_up():
-                self.flip_y = True
-                self.ai_moving_down = True
-            else:
-                self.ai_moving_down = False
-                self.ai_spawn = False
-        else:
-            # Check if fallen off the map
-            if self.rect.bottom < 0:
-                self.kill()
-
-            # Check if the ai in near the player
-            if self.vision.colliderect(self.player.rect):
-                if self.load > 0:
-                    self.ai_stop = True
-                    self.throw(self.empty_load_fx, self.missile_fx, self.missile_cd_fx, self.missile_exp_fx) # Throw
-                elif self.throw_cooldown == 0:
-                    self.ai_moving_left = self.ai_moving_right = False
-                    self.ai_moving_down = True
-            else:
-                self.ai_stop = False
-                self.ai_moving_down = False
-
-                # Check the x limits of the screen
-                if self.limit_left() or self.limit_right():
-                    self.direction_x *= -1
-
-                if not self.idling and random.randint(1, self.idling_timer) == 1:
-                    self.ai_moving_left = self.ai_moving_right = False
-                    self.idling_counter = self.idling_timer
-                    self.idling = True
-                else:
-                    if not self.idling:
-                        if self.direction_x == 1:
-                            self.ai_moving_right = True
-                        else: self.ai_moving_right = False
-                        self.ai_moving_left = not self.ai_moving_right
-
-                        self.idling_counter += 1
-                        if self.idling_counter > self.rect.width:
-                            self.direction_x  *= -1
-                            self.idling_counter *= -1
-
-                    else:
-                        self.idling_counter -= 1
-                        if self.idling_counter <= 0:
-                            self.idling = False
-
-            # Update ai vision as the enemy moves
-            self.vision.midtop = (self.rect.centerx, self.rect.centery)
-
     # Create item
     def item_chance(self, spawn):
         chance = random.randint(0, 100)
@@ -411,7 +411,6 @@ class Enemy(Sprite_sheet):
                 if self.player.shield: self.player.shield = False
                 else:
                     self.player.health -= 50
-                    self.player.max_speed = self.player.init_speed
                     self.player.less_time = False
                     self.player.freeze    = False
 
@@ -433,8 +432,8 @@ class Enemy(Sprite_sheet):
 
             self.animation_cooldown = self.animation_cooldown // 2
             self.update_action('destroy')
-
-        else: self.update_action('idle')
+        else:
+            self.update_action('idle')
 
     def limit_left(self, value=0):
         return self.rect.left + self.delta_x < self.rect.width//10 + value

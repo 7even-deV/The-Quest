@@ -36,11 +36,26 @@ msg_dict = {
     6 : "Select a user",
     7 : "Press <Space> to write and <Enter> to confirm",
 }
+advice_dict = {
+    0 : "Watch out for missiles, they will sound before they explode",
+    1 : "Dragon items will detonate anything in range",
+    2 : "Play in moderation and share the experience",
+    3 : "Your weapon can hit up to 4 bullets per shot",
+    4 : "The faster enemy only fire 1 time in each encounter",
+    5 : "Remember to use the turbo, you will reduce the travel time",
+}
 
-logo_icon     = 'Assets/Images/logo_7z.ico'
 
-statue_img    = 'Assets/Images/statue.png'
-bg_img        = 'Assets/Images/background.jpg'
+logo_icon  = 'Assets/Images/logo_7z.ico'
+
+statue_img = 'Assets/Images/statue.png'
+bg_img     = 'Assets/Images/background.jpg'
+
+
+# Define fonts
+def font_type_def(font):
+    font_tuple = ("GameCuben", "FixedsysTTF", "LibreFranklinThin", "NasalizationRg", "PoetsenOne", "SpaceAge")
+    return f'Assets/Fonts/{font_tuple[font]}.ttf'
 
 
 def button_def():
@@ -51,52 +66,56 @@ def button_def():
     }
     return button_img, button_dict
 
-button_list = [
-    [
-    "Account",
-    "Records",
-    "History",
-    "Exit",
-    ],[
-    "Login",
-    "Delete",
-    "Guide",
-    "Back",
-    ],[
-    "Play",
-    "Edit",
-    "Configs",
-    "Back",
-    ]
-]
 
-record_btn_list = [
-    [
-    "Top-ranking",
-    "Main-menu",
-    "Credits",
-    "Exit",
-    ],[
-    "Continue",
-    "Main-menu",
-    "Credits",
-    "Back",
-    ]
-]
-
-
-def bar_def():
-    bar_img = 'Assets/Images/bar.png'
-    bar_dict = {
-        'displace' : (1, 1, 1, 1),
-    }
-    return bar_img, bar_dict
-
-bar_list = [
-    "Music vol.",
-    "Sound vol.",
-    "Window size",
-]
+def button_list_def(scene):
+    if   scene == 'main':
+        button_list = [
+            [
+            "Account",
+            "Records",
+            "History",
+            "Exit",
+            ],[
+            "Login",
+            "Delete",
+            "Guide",
+            "Back",
+            ],[
+            "Play",
+            "Edit",
+            "Configs",
+            "Back",
+            ]
+        ]
+    elif scene == 'game':
+        button_list = [
+            [
+            "Continue",
+            "Settings",
+            "Help",
+            "Exit",
+            ],[
+            "Restart",
+            "Settings",
+            "Help",
+            "Exit",
+            ]
+        ]
+    elif scene == 'record':
+        button_list = [
+            [
+            "Top-ranking",
+            "Main-menu",
+            "Credits",
+            "Exit",
+            ],[
+            "Continue",
+            "Main-menu",
+            "Credits",
+            "Back",
+            ]
+        ]
+    return button_list
 
 
 def key_def():
@@ -112,6 +131,20 @@ keyboard_list = [
     ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
     ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ñ'],
     ['z', 'x', 'c', 'v', 'b', 'n', 'm', '-', '<<', '±'],
+]
+
+
+def bar_def():
+    bar_img = 'Assets/Images/bar.png'
+    bar_dict = {
+        'displace' : (1, 1, 1, 1),
+    }
+    return bar_img, bar_dict
+
+bar_list = [
+    "Music vol.",
+    "Sound vol.",
+    "Window size",
 ]
 
 
@@ -138,12 +171,6 @@ def logo_type_def(logo):
     return logo_img, logo_dict, logo_size
 
 
-# Define fonts
-def font_type_def(font):
-    font_tuple = ("GameCube", "Fixedsys500c", "LibreFranklin", "PoetsenOne")
-    return f'Assets/Fonts/{font_tuple[font]}.ttf'
-
-
 def icon_type_def(icon):
     icon_img = f'Assets/Images/{icon}.png'
 
@@ -152,46 +179,28 @@ def icon_type_def(icon):
             'dps_1'  : (1, 1, 1, 1), # Circle
             'dps_2'  : (1, 1, 1, 1), # Circle
             'dps_3'  : (1, 1, 1, 1), # Circle
-            'dps_4'  : (1, 1, 1, 1), # Circle
-            'dps_5'  : (1, 1, 1, 1), # Circle
-            'dps_6'  : (1, 1, 1, 1), # Circle
 
             'tank_1' : (1, 1, 1, 2), # Square
             'tank_2' : (1, 1, 1, 2), # Square
             'tank_3' : (1, 1, 1, 2), # Square
-            'tank_4' : (1, 1, 1, 2), # Square
-            'tank_5' : (1, 1, 1, 2), # Square
-            'tank_6' : (1, 1, 1, 2), # Square
 
             'heal_1' : (1, 1, 1, 3), # Triangle
             'heal_2' : (1, 1, 1, 3), # Triangle
             'heal_3' : (1, 1, 1, 3), # Triangle
-            'heal_4' : (1, 1, 1, 3), # Triangle
-            'heal_5' : (1, 1, 1, 3), # Triangle
-            'heal_6' : (1, 1, 1, 3), # Triangle
         }
     elif icon == 'spaceships':
         icon_type_dict = {
             'dps_1'  : (2, 1, 1, 1), # Dps
             'dps_2'  : (2, 1, 2, 1), # Dps
             'dps_3'  : (2, 1, 3, 1), # Dps
-            'dps_4'  : (2, 1, 4, 1), # Dps
-            'dps_5'  : (2, 1, 5, 1), # Dps
-            'dps_6'  : (2, 1, 6, 1), # Dps
 
             'tank_1' : (2, 1, 1, 3), # Tank
             'tank_2' : (2, 1, 2, 3), # Tank
             'tank_3' : (2, 1, 3, 3), # Tank
-            'tank_4' : (2, 1, 4, 3), # Tank
-            'tank_5' : (2, 1, 5, 3), # Tank
-            'tank_6' : (2, 1, 6, 3), # Tank
 
             'heal_1' : (2, 1, 1, 5), # Heal
             'heal_2' : (2, 1, 2, 5), # Heal
             'heal_3' : (2, 1, 3, 5), # Heal
-            'heal_4' : (2, 1, 4, 5), # Heal
-            'heal_5' : (2, 1, 5, 5), # Heal
-            'heal_6' : (2, 1, 6, 5), # Heal
         }
     return icon_img, icon_type_dict
 
@@ -293,9 +302,6 @@ def planet_def():
         'planet_4' : (1, 1, 2, 1),
         'planet_5' : (1, 1, 2, 2),
         'planet_6' : (1, 1, 2, 3),
-        'planet_7' : (1, 1, 3, 1),
-        'planet_8' : (1, 1, 3, 2),
-        'planet_9' : (1, 1, 3, 3),
     }
     return planet_img, planet_dict
 
@@ -311,7 +317,7 @@ def explosion_type_def(num):
 
 # Load music and sounds
 def load_music(music):
-    scene_music_list = ['main', 'menu', 'game', 'record', 'danger']
+    scene_music_list = ['main', 'menu', 'record', 'game', 'record', 'danger']
     return f'Assets/Audio/_music_{scene_music_list[music]}.ogg'
 
 
